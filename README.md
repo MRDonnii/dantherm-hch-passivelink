@@ -1,6 +1,6 @@
 # Dantherm HCH PassiveLink
 
-![Dantherm HCH PassiveLink logo](assets/logo.png)
+<img src="assets/logo.png" alt="Dantherm HCH PassiveLink logo" width="180">
 
 An unofficial, strictly read-only Home Assistant integration for a Dantherm HCH5 MK1 with HAC1. It decodes the existing internal Modbus RTU traffic without becoming a second bus master.
 
