@@ -1,7 +1,11 @@
 {
   "title": "Dantherm HCH PassiveLink",
   "config": {
-    "step": {"user": {"title": "Forbind til den passive RS485-gateway", "description": "Uofficiel community-integration, som ikke er udviklet, leveret, godkendt eller supporteret af Dantherm Group. Bussen har allerede en aktiv master, som overskriver eksternt sendte værdier igen. For sikker og stabil drift benyttes derfor en read-only rå TCP-strøm. Integrationen sender aldrig forespørgsler eller kommandoer.", "data": {"host": "Værtsnavn eller IP-adresse", "port": "TCP-port"}}},
+    "step": {
+      "user": {"title": "Vælg passiv RS485-forbindelse", "description": "Vælg en transparent RS485-over-TCP-adapter eller en USB-RS485-adapter direkte i Home Assistant-maskinen. Begge tilstande er read-only.", "data": {"connection_type": "Forbindelsestype"}},
+      "tcp": {"title": "Forbind via RS485 over TCP", "description": "Indtast adressen på adapterens rå TCP-strøm. Integrationen sender aldrig forespørgsler eller kommandoer.", "data": {"host": "Værtsnavn eller IP-adresse", "port": "TCP-port"}},
+      "serial": {"title": "Forbind via USB-RS485", "description": "Angiv den stabile enhedssti, helst /dev/serial/by-id/.... Porten åbnes read-only i 19200 8E1, og integrationen kalder aldrig write().", "data": {"serial_port": "Seriel enhedssti"}}
+    },
     "error": {"cannot_connect": "Der blev oprettet forbindelse, men ingen gyldig Dantherm RTU-trafik blev modtaget."},
     "abort": {"already_configured": "Denne gateway er allerede konfigureret."}
   },

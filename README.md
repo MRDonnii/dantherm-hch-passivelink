@@ -8,7 +8,9 @@ An unofficial, strictly read-only Home Assistant integration for a Dantherm HCH5
 
 ## Safety model
 
-The integration opens a raw TCP socket and **only receives bytes**. It contains no socket write call and no Modbus request generator. Use it with a transparent RS485-to-Ethernet adapter, such as the Waveshare industrial adapter linked in the project documentation, configured for raw TCP and `19200 8E1`. Disable polling, Modbus TCP conversion, MQTT and any heartbeat or registration data sent over the serial port.
+The integration supports a raw TCP stream or a USB-RS485 adapter connected directly to the Home Assistant host. Both modes **only receive bytes** and contain no Modbus request generator or serial write call. Configure the serial side as `19200 8E1`. For Ethernet adapters, disable polling, Modbus TCP conversion, MQTT and any heartbeat or registration data sent over the serial port.
+
+For direct USB use, select **USB-RS485** during setup and enter a stable path such as `/dev/serial/by-id/...`. Home Assistant must have permission to access that device, and no other process may open the same serial port.
 
 Do not use an M-Bus gateway. M-Bus is electrically incompatible with RS485.
 

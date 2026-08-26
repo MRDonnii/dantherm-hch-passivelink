@@ -1,7 +1,11 @@
 {
   "title": "Dantherm HCH PassiveLink",
   "config": {
-    "step": {"user": {"title": "Connect to the passive RS485 gateway", "description": "Unofficial community integration, not developed, supplied, approved or supported by Dantherm Group. The bus already has an active master which rewrites externally changed values. A receive-only raw TCP stream is therefore used for safe and stable operation. The integration never sends requests or commands.", "data": {"host": "Host or IP address", "port": "TCP port"}}},
+    "step": {
+      "user": {"title": "Choose the passive RS485 connection", "description": "Choose a transparent RS485-over-TCP adapter or a USB-RS485 adapter connected directly to the Home Assistant host. Both modes are read-only.", "data": {"connection_type": "Connection type"}},
+      "tcp": {"title": "Connect using RS485 over TCP", "description": "Enter the address of the adapter's raw TCP stream. The integration never sends requests or commands.", "data": {"host": "Host or IP address", "port": "TCP port"}},
+      "serial": {"title": "Connect using USB-RS485", "description": "Enter the stable device path, preferably /dev/serial/by-id/.... The port is opened read-only at 19200 8E1 and the integration never calls write().", "data": {"serial_port": "Serial device path"}}
+    },
     "error": {"cannot_connect": "Connected, but no valid Dantherm RTU traffic was received."},
     "abort": {"already_configured": "This gateway is already configured."}
   },

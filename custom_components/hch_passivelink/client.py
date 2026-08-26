@@ -6,6 +6,8 @@ import asyncio
 import logging
 from collections.abc import Callable
 
+import serial
+
 from .parser import DanthermDecoder, RtuStreamParser
 
 _LOGGER = logging.getLogger(__name__)
@@ -67,6 +69,87 @@ class PassiveLinkClient:
                 if writer is not None:
                     writer.close()
                     await writer.wait_closed()
+
+    async def stop(self) -> None:
+        self._stopped = True
+
+
+class PassiveSerialClient:
+    """Receive-only USB-RS485 client using 19200 8E1."""
+
+    def __init__(self, port: str, update: Callable[[dict[str, object]], None]) -> None:
+        self.port = port
+        self._update = update
+        self.decoder = DanthermDecoder(self._threadsafe_update)
+        self.parser = RtuStreamParser(self.decoder.decode)
+        self._stopped = False
+        self.connected = False
+        self._loop: asyncio.AbstractEventLoop | None = None
+
+    def _threadsafe_update(self, data: dict[str, object]) -> None:
+        if self._loop is not None:
+            self._loop.call_soon_threadsafe(self._update, data)
+
+    @staticmethod
+    def _open(port: str, timeout: float = 1) -> serial.Serial:
+        connection = serial.Serial(
+            port=port,
+            baudrate=19200,
+            bytesize=serial.EIGHTBITS,
+            parity=serial.PARITY_EVEN,
+            stopbits=serial.STOPBITS_ONE,
+            timeout=timeout,
+            exclusive=True,
+        )
+        try:
+            connection.rts = False
+            connection.dtr = False
+        except (AttributeError, OSError):
+            pass
+        return connection
+
+    def _probe_blocking(self, timeout: float) -> None:
+        event = False
+
+        def decoded(_frame: bytes) -> None:
+            nonlocal event
+            event = True
+
+        parser = RtuStreamParser(decoded)
+        deadline = __import__("time").monotonic() + timeout
+        with self._open(self.port, min(timeout, 1)) as connection:
+            while not event and __import__("time").monotonic() < deadline:
+                parser.feed(connection.read(4096))
+        if not event:
+            raise ConnectionError("No valid Modbus RTU traffic received")
+
+    async def probe(self, timeout: float = 8) -> None:
+        await asyncio.to_thread(self._probe_blocking, timeout)
+
+    def _read_blocking(self) -> None:
+        with self._open(self.port) as connection:
+            self.connected = True
+            if self._loop is not None:
+                self._loop.call_soon_threadsafe(self._update, dict(self.decoder.data))
+            while not self._stopped:
+                chunk = connection.read(4096)
+                if chunk:
+                    self.parser.feed(chunk)
+
+    async def run(self) -> None:
+        self._loop = asyncio.get_running_loop()
+        delay = 1
+        while not self._stopped:
+            try:
+                await asyncio.to_thread(self._read_blocking)
+            except (OSError, serial.SerialException) as err:
+                self.connected = False
+                self._update(dict(self.decoder.data))
+                _LOGGER.debug("PassiveLink serial reconnect: %s", err)
+                await asyncio.sleep(delay)
+                delay = min(delay * 2, 30)
+            else:
+                delay = 1
 
     async def stop(self) -> None:
         self._stopped = True
