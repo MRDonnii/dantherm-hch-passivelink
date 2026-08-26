@@ -10,6 +10,14 @@ def frame(body: bytes) -> bytes:
     return body + crc16(body).to_bytes(2, "little")
 
 
+def test_bus_frame_rate_counts_recent_frames():
+    decoder = DanthermDecoder(lambda _: None)
+    for _ in range(3):
+        decoder.decode(frame(bytes.fromhex("010600420019")))
+    assert decoder.data["bus_frame_rate"] == 3
+    assert decoder.data["bus_traffic"] is True
+
+
 def test_fragmented_temperature_response():
     updates = []
     decoder = DanthermDecoder(updates.append)

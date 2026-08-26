@@ -44,7 +44,10 @@
       "bypass_raw": {"name": "Bypass råstatus"},
       "status_code": {"name": "Statuskode"},
       "afterheat_raw": {"name": "Eftervarme råstatus"},
-      "command_raw": {"name": "Betjeningskommando råværdi"}
+      "command_raw": {"name": "Betjeningskommando råværdi"},
+      "outdoor_temperature_source": {"name": "Kilde til udetemperatur", "state": {"unit_sensor": "Anlæggets egen føler", "weather_entity": "Vejrentitet"}},
+      "air_quality_index": {"name": "Luftkvalitet", "state": {"good": "God", "moderate": "Moderat", "poor": "Dårlig"}},
+      "bus_frame_rate": {"name": "RS485-telegrammer pr. minut"}
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass aktiv"},
@@ -54,6 +57,19 @@
       "hac1_connected": {"name": "HAC1-forbindelse"},
       "bus_traffic": {"name": "RS485-bustrafik"},
       "filter_alarm": {"name": "Filteralarm"}
+    },
+    "button": {
+      "filter_reset": {"name": "Nulstil filterinterval"}
+    }
+  },
+  "issues": {
+    "connection_lost": {
+      "title": "Ingen forbindelse til RS485-gatewayen",
+      "description": "Dantherm HCH PassiveLink har ikke kunnet forbinde til den konfigurerede RS485-gateway i mere end 15 minutter. Kontrollér gatewayens strøm, netværk og at den transparente TCP-strøm stadig er aktiv. Åbn integrationens indstillinger, hvis adressen har ændret sig."
+    },
+    "hac1_disconnected": {
+      "title": "HAC1-indeklimamodulet svarer ikke",
+      "description": "Der er stadig RS485-trafik fra Dantherm-anlægget, men HAC1-modulet (CO₂/indeklima) har ikke rapporteret sig som forbundet i mere end 15 minutter. Kontrollér HAC1-modulets kabling og strøm."
     }
   }
 }

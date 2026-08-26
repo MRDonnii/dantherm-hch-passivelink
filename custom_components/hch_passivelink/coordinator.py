@@ -1,18 +1,25 @@
 """Coordinator for HCH PassiveLink."""
 
 import logging
+import time
 from datetime import timedelta
 
 from homeassistant.components import persistent_notification
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from .const import DOMAIN
 from .filter import filter_values
 
 STORE_VERSION = 1
+DEFAULT_FILTER_INTERVAL_DAYS = 360
+HEALTH_ISSUE_DELAY = 900
+ISSUE_CONNECTION_LOST = "connection_lost"
+ISSUE_HAC1_DISCONNECTED = "hac1_disconnected"
 _LOGGER = logging.getLogger(__name__)
 
 class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
@@ -46,6 +53,8 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         self._outdoor_weather_entity = outdoor_weather_entity
         self._external_outdoor_temperature: float | None = None
         self._remove_weather_listener = None
+        self._disconnected_since: float | None = None
+        self._hac1_lost_since: float | None = None
 
     async def async_load_filter_state(self) -> None:
         """Load filter state before entities are created."""
@@ -91,7 +100,10 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         supply = data.get("supply_temperature")
         extract = data.get("extract_temperature")
         exhaust = data.get("exhaust_temperature")
-        outdoor = self._external_outdoor_temperature if self._external_outdoor_temperature is not None else data.get("outdoor_temperature")
+        use_weather = self._external_outdoor_temperature is not None
+        outdoor = self._external_outdoor_temperature if use_weather else data.get("outdoor_temperature")
+        if outdoor is not None:
+            data["outdoor_temperature_source"] = "weather_entity" if use_weather else "unit_sensor"
         if isinstance(supply, (int, float)) and isinstance(extract, (int, float)):
             data["supply_extract_delta"] = round(supply - extract, 1)
         if all(isinstance(value, (int, float)) for value in (outdoor, extract, exhaust)):
@@ -100,6 +112,44 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
                 data["heat_recovery_efficiency"] = None
             else:
                 data["heat_recovery_efficiency"] = round((extract - exhaust) / span * 100, 1)
+
+    def _update_air_quality(self, data: dict[str, object]) -> None:
+        co2 = data.get("co2")
+        if not isinstance(co2, (int, float)):
+            return
+        if co2 < 800:
+            data["air_quality_index"] = "good"
+        elif co2 <= 1200:
+            data["air_quality_index"] = "moderate"
+        else:
+            data["air_quality_index"] = "poor"
+
+    def _update_health_issues(self) -> None:
+        now = time.monotonic()
+        connected = self.client.connected
+        if connected:
+            self._disconnected_since = None
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_CONNECTION_LOST)
+        else:
+            self._disconnected_since = self._disconnected_since or now
+            if now - self._disconnected_since > HEALTH_ISSUE_DELAY:
+                ir.async_create_issue(
+                    self.hass, DOMAIN, ISSUE_CONNECTION_LOST,
+                    is_fixable=False, severity=ir.IssueSeverity.WARNING,
+                    translation_key=ISSUE_CONNECTION_LOST,
+                )
+        hac1_connected = self.data.get("hac1_connected")
+        if not connected or hac1_connected is not False:
+            self._hac1_lost_since = None
+            ir.async_delete_issue(self.hass, DOMAIN, ISSUE_HAC1_DISCONNECTED)
+        else:
+            self._hac1_lost_since = self._hac1_lost_since or now
+            if now - self._hac1_lost_since > HEALTH_ISSUE_DELAY:
+                ir.async_create_issue(
+                    self.hass, DOMAIN, ISSUE_HAC1_DISCONNECTED,
+                    is_fixable=False, severity=ir.IssueSeverity.WARNING,
+                    translation_key=ISSUE_HAC1_DISCONNECTED,
+                )
 
     async def _async_save_filter_state(self) -> None:
         data: dict[str, object] = {}
@@ -133,7 +183,21 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         if self._filter_reset_epoch is not None and self._filter_interval_days is not None:
             merged.update(filter_values(self._filter_reset_epoch, self._filter_interval_days))
         self._update_derived_temperatures(merged)
+        self._update_air_quality(merged)
         self.async_set_updated_data(merged)
+        self._schedule_notification_check()
+        self._update_health_issues()
+
+    def async_reset_filter(self) -> None:
+        """Reset the filter cycle to now, keeping the last known interval."""
+        self._filter_reset_epoch = time.time()
+        if self._filter_interval_days is None:
+            self._filter_interval_days = DEFAULT_FILTER_INTERVAL_DAYS
+        self._filter_notification_reset_epoch = None
+        merged = dict(self.data)
+        merged.update(filter_values(self._filter_reset_epoch, self._filter_interval_days))
+        self.async_set_updated_data(merged)
+        self.hass.async_create_task(self._async_save_filter_state())
         self._schedule_notification_check()
 
     async def _async_update_filter_clock(self, _now) -> None:
