@@ -31,6 +31,38 @@ A transparent RS485-to-Ethernet adapter is suitable when it can expose the obser
 
 ### Adapter setup
 
+![Passive RS485 wiring diagram](docs/rs485-wiring.svg)
+
+#### Wiring the RS485 side
+
+Turn off the ventilation system and adapter while making or changing the
+wiring. Leave the existing HAC1/HCP4-to-HCH connection intact: PassiveLink is a
+**parallel receive-only tap**, not a replacement controller and not a new bus
+master.
+
+| Existing RS485 bus | Waveshare / common adapter label | USB-RS485 label |
+| --- | --- | --- |
+| `A`, `485+` or `D+` | `485A` / `A+` | `A` / `D+` |
+| `B`, `485-` or `D-` | `485B` / `B-` | `B` / `D-` |
+| Signal reference, if present | `GND` / `SGND` | `GND` |
+
+Connect A to A and B to B in parallel with the two existing bus conductors. Do
+not infer wire function from colour alone. Manufacturers do not always use A/B
+consistently; if no valid frames are received, power down and swap only A and B.
+Connect signal ground only when both device manuals provide a signal-reference
+terminal—never connect protective earth or a power-supply conductor as RS485
+ground.
+
+Do not add another 120 Ω terminator just because an adapter has a termination
+switch. The existing working bus is already terminated for its topology; an
+extra terminator on a short parallel tap can load it unnecessarily. Keep the
+new branch short, use a twisted pair, and have an authorised installer handle
+the connection if the Dantherm terminals or cable functions are uncertain.
+
+For the Waveshare RS485 TO POE ETH (B), use the PoE RJ45 socket only for
+Ethernet and power. The RS485 pair belongs on the separate screw terminals
+marked `485A` and `485B`; an RJ45 plug is not itself an RS485 pinout.
+
 Configure the adapter before adding the integration:
 
 - serial interface: RS485;
@@ -39,6 +71,7 @@ Configure the adapter before adding the integration:
 - network mode: transparent/raw TCP server;
 - protocol conversion: disabled;
 - active polling, MQTT and serial heartbeat/registration packets: disabled.
+- termination resistor: unchanged/off unless the existing bus design requires it.
 
 Connect the adapter passively to the same RS485 A/B pair and enter the adapter's own IP address and TCP listening port in Home Assistant. The address and port are chosen in the adapter configuration and are not fixed by this integration.
 
@@ -55,6 +88,8 @@ restart because a passive listener cannot request them again.
 Names and setup text are included in Danish and English and follow the selected Home Assistant language.
 
 ## Installation with HACS
+
+[![Open your Home Assistant instance and add this repository to HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MRDonnii&repository=dantherm-hch-passivelink&category=integration)
 
 1. Use `https://github.com/MRDonnii/dantherm-hch-passivelink` as a HACS custom repository.
 2. In HACS, add that URL as a custom repository of type **Integration**.
