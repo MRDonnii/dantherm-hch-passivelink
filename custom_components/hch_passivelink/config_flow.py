@@ -79,3 +79,90 @@ class PassiveLinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({vol.Required(CONF_SERIAL_PORT): str}),
             errors=errors,
         )
+
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        return PassiveLinkOptionsFlow(config_entry)
+
+
+class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
+    """Change transport without replacing the config entry or entities."""
+
+    def __init__(self, config_entry) -> None:
+        self._config_entry = config_entry
+        self._connection_type = CONNECTION_TCP
+
+    @property
+    def _current(self) -> dict:
+        return {**self._config_entry.data, **self._config_entry.options}
+
+    async def async_step_init(self, user_input: dict | None = None) -> FlowResult:
+        current = self._current
+        if user_input is not None:
+            self._connection_type = user_input[CONF_CONNECTION_TYPE]
+            if self._connection_type == CONNECTION_SERIAL:
+                return await self.async_step_serial()
+            return await self.async_step_tcp()
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({
+                vol.Required(
+                    CONF_CONNECTION_TYPE,
+                    default=current.get(CONF_CONNECTION_TYPE, CONNECTION_TCP),
+                ): vol.In({
+                    CONNECTION_TCP: "RS485 over TCP",
+                    CONNECTION_SERIAL: "USB-RS485",
+                })
+            }),
+        )
+
+    async def async_step_tcp(self, user_input: dict | None = None) -> FlowResult:
+        current = self._current
+        errors = {}
+        if user_input is not None:
+            try:
+                await PassiveLinkClient(
+                    user_input[CONF_HOST], user_input[CONF_PORT], lambda _: None
+                ).probe()
+            except (OSError, ConnectionError, asyncio.TimeoutError):
+                errors["base"] = "cannot_connect"
+            else:
+                return self.async_create_entry(
+                    title="",
+                    data={CONF_CONNECTION_TYPE: CONNECTION_TCP, **user_input},
+                )
+        return self.async_show_form(
+            step_id="tcp",
+            data_schema=vol.Schema({
+                vol.Required(CONF_HOST, default=current.get(CONF_HOST, "")): str,
+                vol.Required(
+                    CONF_PORT, default=current.get(CONF_PORT, DEFAULT_PORT)
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
+            }),
+            errors=errors,
+        )
+
+    async def async_step_serial(self, user_input: dict | None = None) -> FlowResult:
+        current = self._current
+        errors = {}
+        if user_input is not None:
+            try:
+                await PassiveSerialClient(
+                    user_input[CONF_SERIAL_PORT], lambda _: None
+                ).probe()
+            except (OSError, ConnectionError, asyncio.TimeoutError):
+                errors["base"] = "cannot_connect"
+            else:
+                return self.async_create_entry(
+                    title="",
+                    data={CONF_CONNECTION_TYPE: CONNECTION_SERIAL, **user_input},
+                )
+        return self.async_show_form(
+            step_id="serial",
+            data_schema=vol.Schema({
+                vol.Required(
+                    CONF_SERIAL_PORT, default=current.get(CONF_SERIAL_PORT, "")
+                ): str
+            }),
+            errors=errors,
+        )

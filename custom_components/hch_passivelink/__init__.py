@@ -19,19 +19,26 @@ PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 PassiveLinkConfigEntry = ConfigEntry[PassiveLinkCoordinator]
 
 
+async def _async_reload_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) -> None:
+    """Reload after connection options change."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) -> bool:
-    connection_type = entry.data.get(CONF_CONNECTION_TYPE, CONNECTION_TCP)
+    config = {**entry.data, **entry.options}
+    connection_type = config.get(CONF_CONNECTION_TYPE, CONNECTION_TCP)
     if connection_type == CONNECTION_SERIAL:
-        client = PassiveSerialClient(entry.data[CONF_SERIAL_PORT], lambda _: None)
+        client = PassiveSerialClient(config[CONF_SERIAL_PORT], lambda _: None)
         task_name = "Dantherm HCH PassiveLink USB-RS485"
     else:
-        client = PassiveLinkClient(entry.data[CONF_HOST], entry.data[CONF_PORT], lambda _: None)
+        client = PassiveLinkClient(config[CONF_HOST], config[CONF_PORT], lambda _: None)
         task_name = "Dantherm HCH PassiveLink TCP"
     coordinator = PassiveLinkCoordinator(hass, client)
     client.set_update_callback(coordinator.async_set_updated_data)
     entry.runtime_data = coordinator
     coordinator.task = entry.async_create_background_task(hass, client.run(), task_name)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
     return True
 
 

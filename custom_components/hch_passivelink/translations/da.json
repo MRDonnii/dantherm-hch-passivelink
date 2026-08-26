@@ -9,6 +9,14 @@
     "error": {"cannot_connect": "Der blev oprettet forbindelse, men ingen gyldig Dantherm RTU-trafik blev modtaget."},
     "abort": {"already_configured": "Denne gateway er allerede konfigureret."}
   },
+  "options": {
+    "step": {
+      "init": {"title": "Forbindelsesindstillinger", "description": "Skift mellem RS485 over TCP og en USB-RS485-adapter. Den nye forbindelse testes, før den gemmes.", "data": {"connection_type": "Forbindelsestype"}},
+      "tcp": {"title": "RS485 over TCP", "data": {"host": "Værtsnavn eller IP-adresse", "port": "TCP-port"}},
+      "serial": {"title": "USB-RS485", "data": {"serial_port": "Seriel enhedssti"}}
+    },
+    "error": {"cannot_connect": "Ingen gyldig Dantherm RTU-trafik blev modtaget fra den valgte forbindelse."}
+  },
   "entity": {
     "sensor": {
       "outdoor_temperature": {"name": "Udelufttemperatur"},
