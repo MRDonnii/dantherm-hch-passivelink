@@ -58,7 +58,12 @@ def test_supply_air_setpoint_from_hac1_write_block():
 
 
 def test_tcp_client_callback_can_be_rebound():
-    from client import PassiveLinkClient
+    import types
+
+    package = types.ModuleType("hch_passivelink")
+    package.__path__ = [str(Path(__file__).parents[1] / "custom_components" / "hch_passivelink")]
+    sys.modules.setdefault("hch_passivelink", package)
+    from hch_passivelink.client import PassiveLinkClient
 
     initial = []
     rebound = []
