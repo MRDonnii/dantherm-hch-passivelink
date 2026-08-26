@@ -52,7 +52,7 @@ Names and setup text are included in Danish and English and follow the selected 
 
 ## Installation with HACS
 
-1. Publish this folder as `https://github.com/donnii/dantherm-hch-passivelink`.
+1. Use `https://github.com/MRDonnii/dantherm-hch-passivelink` as a HACS custom repository.
 2. In HACS, add that URL as a custom repository of type **Integration**.
 3. Install **Dantherm HCH PassiveLink** and restart Home Assistant.
 4. Add the integration under **Settings → Devices & services**.
