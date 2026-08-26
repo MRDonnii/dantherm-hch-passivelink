@@ -8,10 +8,7 @@ An unofficial, strictly read-only Home Assistant integration for a Dantherm HCH5
 
 ## Safety model
 
-The integration opens a raw TCP socket and **only receives bytes**. It contains no socket write call and no Modbus request generator. Use it with:
-
-- the included receive-only Lenovo USB-RS485 gateway (`10.0.0.11:4196`), or
-- a transparent RS485-to-Ethernet adapter configured for raw TCP, `19200 8E1`, with polling, Modbus TCP conversion, MQTT and serial heartbeat disabled.
+The integration opens a raw TCP socket and **only receives bytes**. It contains no socket write call and no Modbus request generator. Use it with a transparent RS485-to-Ethernet adapter, such as the Waveshare industrial adapter linked in the project documentation, configured for raw TCP and `19200 8E1`. Disable polling, Modbus TCP conversion, MQTT and any heartbeat or registration data sent over the serial port.
 
 Do not use an M-Bus gateway. M-Bus is electrically incompatible with RS485.
 
@@ -28,7 +25,20 @@ Because writes would be unreliable, temporary and potentially disruptive, read-o
 - the Home Assistant integration only receives and decodes that stream;
 - neither the gateway nor the integration may poll, acknowledge or write to the bus.
 
-An ordinary transparent RS485-to-Ethernet adapter is suitable later only if it can be configured so that no network client, heartbeat, polling feature or protocol conversion can cause serial transmission. The supplied Lenovo gateway additionally rejects incoming TCP data, making its receive-only behaviour explicit.
+A transparent RS485-to-Ethernet adapter is suitable when it can expose the observed serial bytes as a raw TCP stream without generating its own serial traffic. The integration never writes data to its TCP connection. Do not connect other software that sends data through the adapter.
+
+### Adapter setup
+
+Configure the adapter before adding the integration:
+
+- serial interface: RS485;
+- baud rate: `19200`;
+- data format: `8E1` (8 data bits, even parity, 1 stop bit);
+- network mode: transparent/raw TCP server;
+- protocol conversion: disabled;
+- active polling, MQTT and serial heartbeat/registration packets: disabled.
+
+Connect the adapter passively to the same RS485 A/B pair and enter the adapter's own IP address and TCP listening port in Home Assistant. The address and port are chosen in the adapter configuration and are not fixed by this integration.
 
 A detailed Danish explanation of the findings is available in [docs/findings.da.md](docs/findings.da.md).
 
@@ -44,9 +54,9 @@ Names and setup text are included in Danish and English and follow the selected 
 2. In HACS, add that URL as a custom repository of type **Integration**.
 3. Install **Dantherm HCH PassiveLink** and restart Home Assistant.
 4. Add the integration under **Settings → Devices & services**.
-5. Enter `10.0.0.11` and port `4196`.
+5. Enter the IP address and raw TCP listening port configured on the RS485-to-Ethernet adapter.
 
-Later, replace only the host and port with those of a transparent RS485-to-Ethernet adapter. Stable entity unique IDs preserve dashboards and history.
+If the adapter address changes later, reconfigure the integration with its new host and port.
 
 ## Compatibility
 

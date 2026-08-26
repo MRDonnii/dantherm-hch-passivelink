@@ -29,8 +29,7 @@ class PassiveLinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(title=DEFAULT_NAME, data=user_input)
         schema = vol.Schema({
-            vol.Required(CONF_HOST, default="10.0.0.11"): str,
+            vol.Required(CONF_HOST): str,
             vol.Required(CONF_PORT, default=DEFAULT_PORT): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
         })
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
-

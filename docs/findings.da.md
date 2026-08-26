@@ -27,7 +27,9 @@ Read-only er derfor et bevidst design- og sikkerhedsvalg: skrivning ville være 
 
 En senere adapter skal kunne levere en transparent rå TCP-strøm med de samme serielle indstillinger (`19200 8E1`). Modbus TCP-konvertering, automatisk polling, MQTT-polling, heartbeat-data og andre funktioner, der kan sende bytes på RS485-bussen, skal være slået fra.
 
-En almindelig transparent adapter kan fysisk sende, hvis en TCP-klient skriver til den. Den er derfor kun sikker i denne løsning, når konfigurationen og den tilsluttede software garanterer, at der aldrig skrives. Lenovo-gatewayen er stærkere sikret, fordi den afviser indgående TCP-data og ikke videresender dem til RS485.
+En almindelig transparent adapter kan fysisk sende, hvis en TCP-klient skriver til den. Den skal derfor konfigureres uden automatisk seriel trafik, og der må ikke forbindes anden software, som sender data gennem den. Dantherm HCH PassiveLink skriver aldrig til TCP-forbindelsen og fungerer alene som modtager.
+
+Adapterens IP-adresse og TCP-port bestemmes af brugeren i adapterens opsætning. Integrationen er ikke bundet til en bestemt computer, IP-adresse eller adapterport.
 
 M-Bus er en anden elektrisk og protokolmæssig standard end RS485 og kan ikke anvendes som erstatning.
 
