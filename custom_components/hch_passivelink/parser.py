@@ -118,6 +118,21 @@ class DanthermDecoder:
                         and values[1] % 256 == 0 \
                         and 5 <= values[1] // 256 <= 40:
                     self._set(afterheat_setpoint=values[1] // 256)
+            elif register == 180 and count == 5 and byte_count == 10:
+                values = [
+                    int.from_bytes(frame[i:i + 2], "big")
+                    for i in range(7, 17, 2)
+                ]
+                # Registers 182 and 183 are the two optional thermostat
+                # setpoints. HCP4 writes 0x8000 when a setpoint is OFF.
+                def thermostat_value(value: int) -> str:
+                    return "off" if value == 0x8000 else str(value)
+
+                if all(value == 0x8000 or 5 <= value <= 40 for value in values[2:4]):
+                    self._set(
+                        afterheat_room_setpoint=thermostat_value(values[2]),
+                        afterheat_extract_setpoint=thermostat_value(values[3]),
+                    )
             return
         if function in (3, 4) and len(frame) == 8:
             return
