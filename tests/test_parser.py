@@ -1,0 +1,40 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parents[1] / "custom_components" / "hch_passivelink"))
+
+from parser import DanthermDecoder, RtuStreamParser, crc16
+
+
+def frame(body: bytes) -> bytes:
+    return body + crc16(body).to_bytes(2, "little")
+
+
+def test_fragmented_temperature_response():
+    updates = []
+    decoder = DanthermDecoder(updates.append)
+    parser = RtuStreamParser(decoder.decode)
+    body = bytes.fromhex("0104080576094c083705a2")
+    message = frame(body)
+    parser.feed(message[:4])
+    parser.feed(message[4:])
+    assert decoder.data["outdoor_temperature"] == 13.98
+    assert decoder.data["supply_temperature"] == 23.80
+    assert decoder.data["extract_temperature"] == 21.03
+    assert decoder.data["exhaust_temperature"] == 14.42
+
+
+def test_fan_registers_and_mode():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("010600420019")))
+    decoder.decode(frame(bytes.fromhex("01060043000d")))
+    assert decoder.data["extract_fan_percent"] == 25
+    assert decoder.data["supply_fan_percent"] == 13
+    assert decoder.data["current_level"] == "level_1"
+
+
+def test_bad_crc_is_ignored():
+    decoder = DanthermDecoder(lambda _: None)
+    parser = RtuStreamParser(decoder.decode)
+    parser.feed(bytes.fromhex("0106004200190000"))
+    assert "extract_fan_percent" not in decoder.data

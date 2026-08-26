@@ -1,0 +1,38 @@
+{
+  "title": "HCH PassiveLink",
+  "config": {
+    "step": {"user": {"title": "Connect to the passive RS485 gateway", "description": "Enter the address of a receive-only raw TCP stream. The integration never transmits data.", "data": {"host": "Host or IP address", "port": "TCP port"}}},
+    "error": {"cannot_connect": "Connected, but no valid Dantherm RTU traffic was received."},
+    "abort": {"already_configured": "This gateway is already configured."}
+  },
+  "entity": {
+    "sensor": {
+      "outdoor_temperature": {"name": "Outdoor air temperature"},
+      "supply_temperature": {"name": "Supply air temperature"},
+      "extract_temperature": {"name": "Extract air temperature"},
+      "exhaust_temperature": {"name": "Exhaust air temperature"},
+      "co2": {"name": "CO₂"},
+      "afterheat_setpoint": {"name": "After-heater setpoint"},
+      "extract_fan_rpm": {"name": "Extract fan speed"},
+      "supply_fan_rpm": {"name": "Supply fan speed"},
+      "extract_fan_percent": {"name": "Extract fan control"},
+      "supply_fan_percent": {"name": "Supply fan control"},
+      "operating_mode": {"name": "Operating mode", "state": {"fireplace": "Fireplace", "standby": "Standby", "auto_or_boost": "Automatic or boost", "manual_1": "Manual level 1", "manual_2": "Manual level 2", "manual_3": "Manual level 3", "auto_or_scheduled": "Automatic or scheduled"}},
+      "current_level": {"name": "Current ventilation level", "state": {"off": "Off", "level_1": "Level 1", "level_2": "Level 2", "level_3": "Level 3", "boost": "Boost"}},
+      "filter_interval_days": {"name": "Observed filter interval"},
+      "heat_recovery_raw": {"name": "Heat recovery raw value"},
+      "bypass_raw": {"name": "Bypass raw status"},
+      "status_code": {"name": "Status code"},
+      "afterheat_raw": {"name": "After-heater raw status"},
+      "command_raw": {"name": "Control command raw value"}
+    },
+    "binary_sensor": {
+      "bypass_active": {"name": "Bypass active"},
+      "fireplace": {"name": "Fireplace mode"},
+      "standby": {"name": "Standby"},
+      "night_mode": {"name": "Night mode"},
+      "hac1_connected": {"name": "HAC1 connection"},
+      "bus_traffic": {"name": "RS485 bus traffic"}
+    }
+  }
+}

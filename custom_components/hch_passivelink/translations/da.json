@@ -1,0 +1,38 @@
+{
+  "title": "HCH PassiveLink",
+  "config": {
+    "step": {"user": {"title": "Forbind til den passive RS485-gateway", "description": "Indtast adressen på en read-only rå TCP-strøm. Integrationen sender aldrig data.", "data": {"host": "Værtsnavn eller IP-adresse", "port": "TCP-port"}}},
+    "error": {"cannot_connect": "Der blev oprettet forbindelse, men ingen gyldig Dantherm RTU-trafik blev modtaget."},
+    "abort": {"already_configured": "Denne gateway er allerede konfigureret."}
+  },
+  "entity": {
+    "sensor": {
+      "outdoor_temperature": {"name": "Udelufttemperatur"},
+      "supply_temperature": {"name": "Indblæsningstemperatur"},
+      "extract_temperature": {"name": "Udsugningstemperatur"},
+      "exhaust_temperature": {"name": "Afkasttemperatur"},
+      "co2": {"name": "CO₂"},
+      "afterheat_setpoint": {"name": "Eftervarme-setpunkt"},
+      "extract_fan_rpm": {"name": "Udsugningsventilator hastighed"},
+      "supply_fan_rpm": {"name": "Indblæsningsventilator hastighed"},
+      "extract_fan_percent": {"name": "Udsugningsventilator styring"},
+      "supply_fan_percent": {"name": "Indblæsningsventilator styring"},
+      "operating_mode": {"name": "Driftstilstand", "state": {"fireplace": "Pejs", "standby": "Standby", "auto_or_boost": "Automatisk eller boost", "manual_1": "Manuelt trin 1", "manual_2": "Manuelt trin 2", "manual_3": "Manuelt trin 3", "auto_or_scheduled": "Automatisk eller ugeprogram"}},
+      "current_level": {"name": "Aktuelt ventilationstrin", "state": {"off": "Slukket", "level_1": "Trin 1", "level_2": "Trin 2", "level_3": "Trin 3", "boost": "Boost"}},
+      "filter_interval_days": {"name": "Observeret filterinterval"},
+      "heat_recovery_raw": {"name": "Varmegenvinding råværdi"},
+      "bypass_raw": {"name": "Bypass råstatus"},
+      "status_code": {"name": "Statuskode"},
+      "afterheat_raw": {"name": "Eftervarme råstatus"},
+      "command_raw": {"name": "Betjeningskommando råværdi"}
+    },
+    "binary_sensor": {
+      "bypass_active": {"name": "Bypass aktiv"},
+      "fireplace": {"name": "Pejsefunktion"},
+      "standby": {"name": "Standby"},
+      "night_mode": {"name": "Natdrift"},
+      "hac1_connected": {"name": "HAC1-forbindelse"},
+      "bus_traffic": {"name": "RS485-bustrafik"}
+    }
+  }
+}
