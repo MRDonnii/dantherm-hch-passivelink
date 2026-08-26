@@ -6,6 +6,15 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 from .coordinator import PassiveLinkCoordinator
 
+AFTERHEAT_KEYS = {
+    "afterheat_setpoint",
+    "afterheat_room_setpoint",
+    "afterheat_extract_setpoint",
+    "afterheat_supply_setpoint",
+    "afterheat_temperature",
+    "afterheat_raw",
+}
+
 
 class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
     _attr_has_entity_name = True
@@ -14,12 +23,21 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
         super().__init__(coordinator)
         self.key = key
         self._attr_unique_id = f"hch5_mk1_hac1_{key}"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, "hch5_mk1_hac1")},
-            name="Dantherm HCH PassiveLink",
-            manufacturer="Dantherm",
-            model="HCH5 MK1 + HAC1",
-        )
+        if key in AFTERHEAT_KEYS:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, "hch5_mk1_hac1_afterheat")},
+                name="Eftervarme",
+                manufacturer="Dantherm",
+                model="HAC1 eftervarme",
+                via_device=(DOMAIN, "hch5_mk1_hac1"),
+            )
+        else:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, "hch5_mk1_hac1")},
+                name="Dantherm HCH PassiveLink",
+                manufacturer="Dantherm",
+                model="HCH5 MK1 + HAC1",
+            )
 
     @property
     def available(self) -> bool:
