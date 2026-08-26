@@ -11,7 +11,7 @@
   },
   "options": {
     "step": {
-      "init": {"title": "Connection and filter warning", "description": "Change the connection and choose when the filter warning is sent. HA always creates a persistent notification. Optionally enter a mobile notification service such as notify.mobile_app_my_phone.", "data": {"connection_type": "Connection type", "filter_notify_enabled": "Enable filter warning", "filter_notify_days": "Warn when this many days remain", "filter_notify_service": "Mobile notification service (optional)"}},
+      "init": {"title": "Connection, calculation and filter warning", "description": "Change the connection, optionally select a weather entity as the outdoor temperature source, and configure the filter warning. The unit's outdoor-air sensor is used when this is empty.", "data": {"connection_type": "Connection type", "outdoor_weather_entity": "Weather entity for outdoor temperature (optional)", "filter_notify_enabled": "Enable filter warning", "filter_notify_days": "Warn when this many days remain", "filter_notify_service": "Mobile notification service (optional)"}},
       "tcp": {"title": "RS485 over TCP", "data": {"host": "Host or IP address", "port": "TCP port"}},
       "serial": {"title": "USB-RS485", "data": {"serial_port": "Serial device path"}}
     },
@@ -31,6 +31,8 @@
       "supply_fan_rpm": {"name": "Supply fan speed"},
       "extract_fan_percent": {"name": "Extract fan control"},
       "supply_fan_percent": {"name": "Supply fan control"},
+      "heat_recovery_efficiency": {"name": "Temperature efficiency"},
+      "supply_extract_delta": {"name": "Supply/extract temperature delta"},
       "operating_mode": {"name": "Operating mode", "state": {"fireplace": "Fireplace", "standby": "Standby", "auto_or_boost": "Automatic or boost", "manual_1": "Manual level 1", "manual_2": "Manual level 2", "manual_3": "Manual level 3", "auto_or_scheduled": "Automatic or scheduled"}},
       "current_level": {"name": "Current ventilation level", "state": {"off": "Off", "level_1": "Level 1", "level_2": "Level 2", "level_3": "Level 3", "boost": "Boost"}},
       "filter_interval_days": {"name": "Observed filter interval"},

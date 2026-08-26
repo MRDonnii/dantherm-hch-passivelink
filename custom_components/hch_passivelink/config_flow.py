@@ -8,6 +8,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import selector
 
 from .client import PassiveLinkClient, PassiveSerialClient
 from .const import (
@@ -18,6 +19,7 @@ from .const import (
     CONF_FILTER_NOTIFY_DAYS,
     CONF_FILTER_NOTIFY_ENABLED,
     CONF_FILTER_NOTIFY_SERVICE,
+    CONF_OUTDOOR_WEATHER_ENTITY,
     DEFAULT_FILTER_NOTIFY_DAYS,
     DEFAULT_NAME,
     DEFAULT_PORT,
@@ -109,6 +111,7 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 CONF_FILTER_NOTIFY_ENABLED: user_input[CONF_FILTER_NOTIFY_ENABLED],
                 CONF_FILTER_NOTIFY_DAYS: user_input[CONF_FILTER_NOTIFY_DAYS],
                 CONF_FILTER_NOTIFY_SERVICE: user_input[CONF_FILTER_NOTIFY_SERVICE].strip(),
+                CONF_OUTDOOR_WEATHER_ENTITY: user_input.get(CONF_OUTDOOR_WEATHER_ENTITY, ""),
             }
             if self._connection_type == CONNECTION_SERIAL:
                 return await self.async_step_serial()
@@ -137,6 +140,10 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                     CONF_FILTER_NOTIFY_SERVICE,
                     default=current.get(CONF_FILTER_NOTIFY_SERVICE, ""),
                 ): str,
+                vol.Optional(
+                    CONF_OUTDOOR_WEATHER_ENTITY,
+                    default=current.get(CONF_OUTDOOR_WEATHER_ENTITY, ""),
+                ): selector.EntitySelector(selector.EntitySelectorConfig(domain="weather")),
             }),
         )
 

@@ -6,6 +6,7 @@ from datetime import timedelta
 from homeassistant.components import persistent_notification
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -24,6 +25,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         notify_enabled: bool,
         notify_days: int,
         notify_service: str,
+        outdoor_weather_entity: str,
     ) -> None:
         super().__init__(hass, logger=__import__("logging").getLogger(__name__), name="Dantherm HCH PassiveLink")
         self.data = {}
@@ -41,6 +43,9 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         self._notify_days = notify_days
         self._notify_service = notify_service.strip()
         self._notification_check_pending = False
+        self._outdoor_weather_entity = outdoor_weather_entity
+        self._external_outdoor_temperature: float | None = None
+        self._remove_weather_listener = None
 
     async def async_load_filter_state(self) -> None:
         """Load filter state before entities are created."""
@@ -63,6 +68,38 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             self.hass, self._async_update_filter_clock, timedelta(hours=1)
         )
         self._schedule_notification_check()
+        if self._outdoor_weather_entity:
+            self._read_weather_temperature(self.hass.states.get(self._outdoor_weather_entity))
+            self._remove_weather_listener = async_track_state_change_event(
+                self.hass, [self._outdoor_weather_entity], self._async_weather_changed
+            )
+
+    def _read_weather_temperature(self, state) -> None:
+        value = state.attributes.get("temperature") if state is not None else None
+        try:
+            self._external_outdoor_temperature = float(value)
+        except (TypeError, ValueError):
+            self._external_outdoor_temperature = None
+
+    async def _async_weather_changed(self, event) -> None:
+        self._read_weather_temperature(event.data.get("new_state"))
+        merged = dict(self.data)
+        self._update_derived_temperatures(merged)
+        self.async_set_updated_data(merged)
+
+    def _update_derived_temperatures(self, data: dict[str, object]) -> None:
+        supply = data.get("supply_temperature")
+        extract = data.get("extract_temperature")
+        exhaust = data.get("exhaust_temperature")
+        outdoor = self._external_outdoor_temperature if self._external_outdoor_temperature is not None else data.get("outdoor_temperature")
+        if isinstance(supply, (int, float)) and isinstance(extract, (int, float)):
+            data["supply_extract_delta"] = round(supply - extract, 1)
+        if all(isinstance(value, (int, float)) for value in (outdoor, extract, exhaust)):
+            span = extract - outdoor
+            if data.get("bypass_active") or span < 2:
+                data["heat_recovery_efficiency"] = None
+            else:
+                data["heat_recovery_efficiency"] = round((extract - exhaust) / span * 100, 1)
 
     async def _async_save_filter_state(self) -> None:
         data: dict[str, object] = {}
@@ -95,6 +132,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             merged.setdefault("night_mode", self._night_mode)
         if self._filter_reset_epoch is not None and self._filter_interval_days is not None:
             merged.update(filter_values(self._filter_reset_epoch, self._filter_interval_days))
+        self._update_derived_temperatures(merged)
         self.async_set_updated_data(merged)
         self._schedule_notification_check()
 
@@ -168,6 +206,9 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         if self._remove_filter_timer is not None:
             self._remove_filter_timer()
             self._remove_filter_timer = None
+        if self._remove_weather_listener is not None:
+            self._remove_weather_listener()
+            self._remove_weather_listener = None
 
     @property
     def available(self) -> bool:
