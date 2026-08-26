@@ -35,6 +35,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         self._filter_reset_epoch: float | None = None
         self._filter_interval_days: int | None = None
         self._filter_notification_reset_epoch: float | None = None
+        self._night_mode: bool | None = None
         self._remove_filter_timer = None
         self._notify_enabled = notify_enabled
         self._notify_days = notify_days
@@ -48,6 +49,10 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             reset = stored.get("reset_epoch")
             interval = stored.get("interval_days")
             notified_reset = stored.get("notification_reset_epoch")
+            night_mode = stored.get("night_mode")
+            if isinstance(night_mode, bool):
+                self._night_mode = night_mode
+                self.data["night_mode"] = night_mode
             if isinstance(reset, (int, float)) and isinstance(interval, int) and interval > 0:
                 self._filter_reset_epoch = float(reset)
                 self._filter_interval_days = interval
@@ -60,25 +65,34 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         self._schedule_notification_check()
 
     async def _async_save_filter_state(self) -> None:
-        if self._filter_reset_epoch is None or self._filter_interval_days is None:
-            return
-        data: dict[str, object] = {
-            "reset_epoch": self._filter_reset_epoch,
-            "interval_days": self._filter_interval_days,
-        }
+        data: dict[str, object] = {}
+        if self._filter_reset_epoch is not None and self._filter_interval_days is not None:
+            data.update(
+                reset_epoch=self._filter_reset_epoch,
+                interval_days=self._filter_interval_days,
+            )
         if self._filter_notification_reset_epoch is not None:
             data["notification_reset_epoch"] = self._filter_notification_reset_epoch
-        await self._filter_store.async_save(data)
+        if self._night_mode is not None:
+            data["night_mode"] = self._night_mode
+        if data:
+            await self._filter_store.async_save(data)
 
     def async_handle_update(self, data: dict[str, object]) -> None:
         """Merge decoded traffic with persistent filter data."""
         interval = data.get("filter_interval_days")
+        night_mode = data.get("night_mode")
+        if isinstance(night_mode, bool) and night_mode != self._night_mode:
+            self._night_mode = night_mode
+            self.hass.async_create_task(self._async_save_filter_state())
         if isinstance(interval, int) and interval > 0:
             changed = interval != self._filter_interval_days
             self._filter_interval_days = interval
             if changed and self._filter_reset_epoch is not None:
                 self.hass.async_create_task(self._async_save_filter_state())
         merged = dict(data)
+        if self._night_mode is not None:
+            merged.setdefault("night_mode", self._night_mode)
         if self._filter_reset_epoch is not None and self._filter_interval_days is not None:
             merged.update(filter_values(self._filter_reset_epoch, self._filter_interval_days))
         self.async_set_updated_data(merged)

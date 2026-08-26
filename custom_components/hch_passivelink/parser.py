@@ -86,8 +86,9 @@ class DanthermDecoder:
         self.data: dict[str, object] = {}
         self._on_update = on_update
         self._special_mode_flag: int | None = None
-        self._last_explicit_command = 0.0
+        self._last_explicit_command = float("-inf")
         self._night_transition_until = 0.0
+        self._night_transition_registers: set[int] = set()
         self._filter_command_until = 0.0
         self._pending_auto_until = 0.0
         self._pending_manual3_until = 0.0
@@ -182,8 +183,12 @@ class DanthermDecoder:
         now = time.monotonic()
         if register == 66:
             self._set(extract_fan_percent=value)
+            if now <= self._night_transition_until:
+                self._night_transition_registers.add(register)
         elif register == 67:
             self._set(supply_fan_percent=value)
+            if now <= self._night_transition_until:
+                self._night_transition_registers.add(register)
         elif register == 68:
             self._set(afterheat_raw=value)
         elif register == 76:
@@ -194,6 +199,7 @@ class DanthermDecoder:
                 self._last_explicit_command = now
             elif value == 172 and now - self._last_explicit_command > 10:
                 self._night_transition_until = now + 2
+                self._night_transition_registers.clear()
             if value == 168:
                 self._filter_command_until = now + 2
             if value == 172:
@@ -213,9 +219,10 @@ class DanthermDecoder:
         supply = self.data.get("supply_fan_percent")
         if not isinstance(extract, int) or not isinstance(supply, int):
             return
-        if now <= self._night_transition_until:
+        if now <= self._night_transition_until and self._night_transition_registers == {66, 67}:
             self._set(night_mode=(extract, supply) == (25, 13))
             self._night_transition_until = 0
+            self._night_transition_registers.clear()
         manual3_distance = (extract - 85) ** 2 + (supply - 73) ** 2
         if now <= self._pending_manual3_until and manual3_distance <= 100:
             self._external_mode = "manual_3"
