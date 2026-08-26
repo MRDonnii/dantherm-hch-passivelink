@@ -8,9 +8,11 @@ Integrationens registerfortolkning er baseret på observationer fra denne konkre
 
 ## Hvorfor integrationen kun læser
 
-Den eksisterende forbindelse fungerer som en single-master Modbus RTU-bus. Den aktive master har ikke en mekanisme, som giver Home Assistant lov til at blive en ekstra master eller koordinerer, hvornår en ekstra master må sende.
+Den eksisterende forbindelse drives som en single-master Modbus RTU-bus. Det betyder ikke, at en anden enhed fysisk er forhindret i at sende. En ekstra enhed kan teknisk sende en gyldig kommando, og anlægget kan nå at acceptere den.
 
-Hvis Home Assistant eller en RS485-til-Ethernet-adapter også begyndte at sende forespørgsler, ville der være to uafhængige mastere på samme ledningspar. Telegrammer kan dermed kollidere og give CRC-fejl, timeouts og ustabil kommunikation. Der ville også være risiko for at forstyrre den eksisterende styring eller utilsigtet sende en kommando til anlægget.
+Den eksisterende master fortsætter imidlertid sin normale styringscyklus og skriver efterfølgende sine egne værdier igen. En værdi sendt af Home Assistant vil derfor typisk kun være midlertidig og derefter blive overskrevet af den oprindelige master.
+
+Hvis Home Assistant eller en RS485-til-Ethernet-adapter også begyndte at sende forespørgsler, ville der desuden være to uafhængige sendere på samme ledningspar uden koordinering. Telegrammer kan kollidere og give CRC-fejl, timeouts og ustabil kommunikation. Der ville også være risiko for at forstyrre den eksisterende styring eller skabe utilsigtet adfærd.
 
 Vi behøver ikke at tage den risiko. Den eksisterende master spørger allerede efter de relevante data, og svarene kan aflæses passivt. Løsningen er derfor bevidst bygget som en sniffer:
 
@@ -19,7 +21,7 @@ Vi behøver ikke at tage den risiko. Den eksisterende master spørger allerede e
 3. Home Assistant-integrationen modtager og afkoder strømmen.
 4. Integrationen sender ingen Modbus-forespørgsler, kvitteringer eller kommandoer.
 
-Read-only er således et sikkerhedskrav i denne løsning og ikke en funktion, der blot mangler at blive implementeret.
+Read-only er derfor et bevidst design- og sikkerhedsvalg: skrivning ville være upålidelig, kortvarig og potentielt forstyrrende. Det er ikke, fordi kommandoer er fysisk umulige at sende.
 
 ## Krav til en senere RS485-til-Ethernet-adapter
 

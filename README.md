@@ -19,9 +19,9 @@ Do not use an M-Bus gateway. M-Bus is electrically incompatible with RS485.
 
 Our observations of the HCH5 MK1 + HAC1 installation show an existing controller acting as the Modbus RTU master. It continuously sends requests, and the ventilation unit replies as a slave. Those request/response frames already contain the operating values needed by Home Assistant, so this integration can decode them without polling the unit itself.
 
-Modbus RTU on this installation is a single-master bus. Adding Home Assistant or an Ethernet adapter as another active master would make two devices transmit independently on the same RS485 pair. Their frames can overlap, cause CRC and timeout errors, disturb the existing controller and potentially lead to unintended commands. The existing master provides no coordination mechanism for a second master.
+The installation is operated as a single-master Modbus RTU bus. A second device can technically transmit a valid command, and the unit may accept it temporarily. However, the existing master continues its normal control cycle and writes its own state again, so the external value is overwritten. Two independent transmitters on the same RS485 pair also have no arbitration: their frames can overlap, cause CRC and timeout errors, disturb the existing controller and potentially produce unintended behaviour.
 
-For that reason, read-only operation is a deliberate safety requirement rather than a missing feature:
+Because writes would be unreliable, temporary and potentially disruptive, read-only operation is a deliberate design and safety choice rather than a missing feature:
 
 - the gateway listens to both directions of the existing RS485 exchange;
 - the gateway forwards the observed bytes as an unchanged raw TCP stream;
