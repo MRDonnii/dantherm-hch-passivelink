@@ -85,6 +85,16 @@ The after-heater thermostat settings are only transmitted when the HCP4 writes
 them. PassiveLink restores their last observed states after a Home Assistant
 restart because a passive listener cannot request them again.
 
+The supply-air setpoint is not continuously present on every observed bus.
+When it is absent, the upstream serial gateway must optionally perform a
+read-only Modbus query of HAC1 registers 185–189 and forward the complete RTU
+response to its raw TCP clients. This is how the reference gateway obtains the
+value. It does not write a setting, but it does transmit a read request and is
+therefore not strictly passive during that query. Do not enable such polling on
+a bus where a second requester cannot be operated safely. A plain transparent
+adapter without this upstream query can still expose the other passive values,
+while the supply-air setpoint remains unavailable until observed.
+
 Names and setup text are included in Danish and English and follow the selected Home Assistant language.
 
 ## Installation with HACS
