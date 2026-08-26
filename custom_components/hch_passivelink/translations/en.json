@@ -1,7 +1,7 @@
 {
   "title": "Dantherm HCH PassiveLink",
   "config": {
-    "step": {"user": {"title": "Connect to the passive RS485 gateway", "description": "Unofficial community integration, not developed, supplied, approved or supported by Dantherm Group. Enter the address of a receive-only raw TCP stream. The integration never transmits data.", "data": {"host": "Host or IP address", "port": "TCP port"}}},
+    "step": {"user": {"title": "Connect to the passive RS485 gateway", "description": "Unofficial community integration, not developed, supplied, approved or supported by Dantherm Group. The Dantherm bus already has an active master and does not support an uncoordinated second master. Enter the address of a receive-only raw TCP stream. The integration never sends requests or commands.", "data": {"host": "Host or IP address", "port": "TCP port"}}},
     "error": {"cannot_connect": "Connected, but no valid Dantherm RTU traffic was received."},
     "abort": {"already_configured": "This gateway is already configured."}
   },

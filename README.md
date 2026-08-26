@@ -15,6 +15,23 @@ The integration opens a raw TCP socket and **only receives bytes**. It contains 
 
 Do not use an M-Bus gateway. M-Bus is electrically incompatible with RS485.
 
+## Why it is read-only
+
+Our observations of the HCH5 MK1 + HAC1 installation show an existing controller acting as the Modbus RTU master. It continuously sends requests, and the ventilation unit replies as a slave. Those request/response frames already contain the operating values needed by Home Assistant, so this integration can decode them without polling the unit itself.
+
+Modbus RTU on this installation is a single-master bus. Adding Home Assistant or an Ethernet adapter as another active master would make two devices transmit independently on the same RS485 pair. Their frames can overlap, cause CRC and timeout errors, disturb the existing controller and potentially lead to unintended commands. The existing master provides no coordination mechanism for a second master.
+
+For that reason, read-only operation is a deliberate safety requirement rather than a missing feature:
+
+- the gateway listens to both directions of the existing RS485 exchange;
+- the gateway forwards the observed bytes as an unchanged raw TCP stream;
+- the Home Assistant integration only receives and decodes that stream;
+- neither the gateway nor the integration may poll, acknowledge or write to the bus.
+
+An ordinary transparent RS485-to-Ethernet adapter is suitable later only if it can be configured so that no network client, heartbeat, polling feature or protocol conversion can cause serial transmission. The supplied Lenovo gateway additionally rejects incoming TCP data, making its receive-only behaviour explicit.
+
+A detailed Danish explanation of the findings is available in [docs/findings.da.md](docs/findings.da.md).
+
 ## Entities
 
 Temperatures, CO₂, after-heater setpoint, both fan speeds and control percentages, operating mode, ventilation level, bypass, fireplace/standby/night states, HAC1 connectivity and raw diagnostic values. Unverified raw values are disabled by default and are deliberately not presented with misleading units.
