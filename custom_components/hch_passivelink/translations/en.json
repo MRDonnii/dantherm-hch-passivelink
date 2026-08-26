@@ -12,7 +12,7 @@
       "extract_temperature": {"name": "Extract air temperature"},
       "exhaust_temperature": {"name": "Exhaust air temperature"},
       "co2": {"name": "CO₂"},
-      "afterheat_setpoint": {"name": "After-heater setpoint"},
+      "afterheat_setpoint": {"name": "Supply air setpoint"},
       "extract_fan_rpm": {"name": "Extract fan speed"},
       "supply_fan_rpm": {"name": "Supply fan speed"},
       "extract_fan_percent": {"name": "Extract fan control"},

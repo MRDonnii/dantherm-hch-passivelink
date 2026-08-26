@@ -48,3 +48,10 @@ def test_write_multiple_request_is_kept_as_one_frame():
     parser.feed(message[:8])
     parser.feed(message[8:])
     assert frames == [message]
+
+
+def test_supply_air_setpoint_from_hac1_write_block():
+    decoder = DanthermDecoder(lambda _: None)
+    body = bytes.fromhex("401000b900050aff011600000f18fee201")
+    decoder.decode(frame(body))
+    assert decoder.data["afterheat_setpoint"] == 22

@@ -105,13 +105,27 @@ class DanthermDecoder:
     def decode(self, frame: bytes) -> None:
         self._set(last_frame_monotonic=time.monotonic(), bus_traffic=True)
         slave, function = frame[0], frame[1]
+        if slave == 0x40 and function == 16 and len(frame) >= 19:
+            register = int.from_bytes(frame[2:4], "big")
+            count = int.from_bytes(frame[4:6], "big")
+            byte_count = frame[6]
+            if register == 185 and count == 5 and byte_count == 10:
+                values = [
+                    int.from_bytes(frame[i:i + 2], "big")
+                    for i in range(7, 17, 2)
+                ]
+                if values[0] & 0xFF == 1 and values[2] == 15 \
+                        and values[1] % 256 == 0 \
+                        and 5 <= values[1] // 256 <= 40:
+                    self._set(afterheat_setpoint=values[1] // 256)
+            return
         if function in (3, 4) and len(frame) == 8:
             return
         if slave == 0x40 and function == 3 and len(frame) == 15 and frame[2] == 10:
             values = [int.from_bytes(frame[i:i + 2], "big") for i in range(3, 13, 2)]
             if values[:3] == [0x3000, 0x1100, 0] and 300 <= values[3] <= 10000:
                 self._set(co2=values[3], hac1_connected=True)
-            elif values[0] == 1 and values[2] == 15 and values[1] % 256 == 0 \
+            elif values[0] & 0xFF == 1 and values[2] == 15 and values[1] % 256 == 0 \
                     and 5 <= values[1] // 256 <= 40:
                 self._set(afterheat_setpoint=values[1] // 256)
             return

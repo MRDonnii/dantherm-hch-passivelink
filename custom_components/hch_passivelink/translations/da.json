@@ -12,7 +12,7 @@
       "extract_temperature": {"name": "Udsugningstemperatur"},
       "exhaust_temperature": {"name": "Afkasttemperatur"},
       "co2": {"name": "CO₂"},
-      "afterheat_setpoint": {"name": "Eftervarme-setpunkt"},
+      "afterheat_setpoint": {"name": "Indblæsning setpoint"},
       "extract_fan_rpm": {"name": "Udsugningsventilator hastighed"},
       "supply_fan_rpm": {"name": "Indblæsningsventilator hastighed"},
       "extract_fan_percent": {"name": "Udsugningsventilator styring"},
