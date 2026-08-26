@@ -38,3 +38,13 @@ def test_bad_crc_is_ignored():
     parser = RtuStreamParser(decoder.decode)
     parser.feed(bytes.fromhex("0106004200190000"))
     assert "extract_fan_percent" not in decoder.data
+
+
+def test_write_multiple_request_is_kept_as_one_frame():
+    frames = []
+    parser = RtuStreamParser(frames.append)
+    body = bytes.fromhex("401000b400050a00150016800080000000")
+    message = frame(body)
+    parser.feed(message[:8])
+    parser.feed(message[8:])
+    assert frames == [message]

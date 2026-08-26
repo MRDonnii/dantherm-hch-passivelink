@@ -43,7 +43,17 @@ class RtuStreamParser:
                 byte_count = self._buffer[offset + 2]
                 if byte_count and byte_count <= 250 and byte_count % 2 == 0:
                     lengths.insert(0, 5 + byte_count)
-            elif function in (6, 16):
+            elif function == 6:
+                lengths.append(8)
+            elif function == 16:
+                # A write-multiple-registers response is 8 bytes. A request
+                # carries a byte count at offset 6 and is 9 + byte_count bytes.
+                # Try the longer request first so its payload cannot be
+                # discarded while passively observing both bus directions.
+                if offset + 7 <= len(self._buffer):
+                    byte_count = self._buffer[offset + 6]
+                    if byte_count and byte_count <= 250 and byte_count % 2 == 0:
+                        lengths.append(9 + byte_count)
                 lengths.append(8)
             else:
                 offset += 1
