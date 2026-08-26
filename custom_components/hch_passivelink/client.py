@@ -61,7 +61,8 @@ class PassiveLinkClient:
                     try:
                         chunk = await asyncio.wait_for(reader.read(4096), timeout=15)
                     except asyncio.TimeoutError as err:
-                        self.decoder._set(bus_traffic=False)
+                        self.decoder._frame_times.clear()
+                        self.decoder._set(bus_traffic=False, bus_frame_rate=0)
                         raise ConnectionError("No RS485 traffic for 15 seconds") from err
                     if not chunk:
                         raise ConnectionError("TCP stream closed")

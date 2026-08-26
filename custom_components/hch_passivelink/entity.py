@@ -19,6 +19,7 @@ INDOOR_CLIMATE_KEYS = {
     "room_temperature",
     "relative_humidity",
     "air_quality",
+    "air_quality_index",
 }
 FILTER_KEYS = {
     "filter_interval_days",
@@ -27,6 +28,7 @@ FILTER_KEYS = {
     "filter_status",
     "filter_alarm",
     "filter_source",
+    "filter_reset",
 }
 
 

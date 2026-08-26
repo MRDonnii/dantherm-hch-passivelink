@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from collections import deque
 from collections.abc import Callable
 
 KNOWN_SLAVES = {1, 0x40}
@@ -93,6 +94,7 @@ class DanthermDecoder:
         self._pending_auto_until = 0.0
         self._pending_manual3_until = 0.0
         self._external_mode: str | None = None
+        self._frame_times: deque[float] = deque()
 
     def _set(self, **values: object) -> None:
         changed = False
@@ -104,7 +106,15 @@ class DanthermDecoder:
             self._on_update(dict(self.data))
 
     def decode(self, frame: bytes) -> None:
-        self._set(last_frame_monotonic=time.monotonic(), bus_traffic=True)
+        now = time.monotonic()
+        self._frame_times.append(now)
+        while self._frame_times and now - self._frame_times[0] > 60:
+            self._frame_times.popleft()
+        self._set(
+            last_frame_monotonic=now,
+            bus_traffic=True,
+            bus_frame_rate=len(self._frame_times),
+        )
         slave, function = frame[0], frame[1]
         if slave == 0x40 and function == 16 and len(frame) >= 19:
             register = int.from_bytes(frame[2:4], "big")

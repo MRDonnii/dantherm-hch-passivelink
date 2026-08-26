@@ -3,6 +3,7 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 
 from .client import PassiveLinkClient, PassiveSerialClient
 from .const import (
@@ -17,10 +18,15 @@ from .const import (
     DEFAULT_FILTER_NOTIFY_DAYS,
     CONNECTION_SERIAL,
     CONNECTION_TCP,
+    DOMAIN,
 )
-from .coordinator import PassiveLinkCoordinator
+from .coordinator import (
+    ISSUE_CONNECTION_LOST,
+    ISSUE_HAC1_DISCONNECTED,
+    PassiveLinkCoordinator,
+)
 
-PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON]
 PassiveLinkConfigEntry = ConfigEntry[PassiveLinkCoordinator]
 
 
@@ -61,4 +67,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry)
     await entry.runtime_data.async_shutdown()
     if entry.runtime_data.task:
         entry.runtime_data.task.cancel()
+    ir.async_delete_issue(hass, DOMAIN, ISSUE_CONNECTION_LOST)
+    ir.async_delete_issue(hass, DOMAIN, ISSUE_HAC1_DISCONNECTED)
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
