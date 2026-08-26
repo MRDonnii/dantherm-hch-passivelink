@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Passive RS485 connection for Dantherm HCH PassiveLink</title>
+  <desc id="desc">The existing controller and ventilation unit remain connected. A receive-only RS485 adapter is connected in parallel to A and B.</desc>
+  <defs>
+    <style>
+      .box{fill:#111827;stroke:#64748b;stroke-width:3;rx:24}.adapter{fill:#0f3d3e;stroke:#2dd4bf;stroke-width:4;rx:24}
+      .title{fill:#f8fafc;font:700 28px system-ui,sans-serif}.text{fill:#cbd5e1;font:20px system-ui,sans-serif}
+      .small{fill:#94a3b8;font:17px system-ui,sans-serif}.label{fill:#f8fafc;font:700 20px system-ui,sans-serif}
+      .a{stroke:#f97316;stroke-width:8;fill:none}.b{stroke:#3b82f6;stroke-width:8;fill:none}.tap{stroke-dasharray:12 9}
+      .nodeA{fill:#f97316}.nodeB{fill:#3b82f6}.ok{fill:#14b8a6}.warn{fill:#fbbf24}
+    </style>
+  </defs>
+  <rect width="1200" height="720" fill="#0b1220"/>
+  <text x="600" y="52" text-anchor="middle" class="title">Passiv RS485-tilslutning / Passive RS485 connection</text>
+
+  <rect x="55" y="115" width="300" height="175" class="box"/>
+  <text x="205" y="160" text-anchor="middle" class="title">HAC1 / HCP4</text>
+  <text x="205" y="197" text-anchor="middle" class="text">Eksisterende master</text>
+  <text x="205" y="228" text-anchor="middle" class="small">Existing controller</text>
+  <circle cx="330" cy="250" r="10" class="nodeA"/><circle cx="330" cy="275" r="10" class="nodeB"/>
+
+  <rect x="845" y="115" width="300" height="175" class="box"/>
+  <text x="995" y="160" text-anchor="middle" class="title">Dantherm HCH</text>
+  <text x="995" y="197" text-anchor="middle" class="text">Ventilationsanlæg</text>
+  <text x="995" y="228" text-anchor="middle" class="small">Existing Modbus slave</text>
+  <circle cx="870" cy="250" r="10" class="nodeA"/><circle cx="870" cy="275" r="10" class="nodeB"/>
+
+  <path d="M330 250 H870" class="a"/><path d="M330 275 H870" class="b"/>
+  <text x="600" y="238" text-anchor="middle" class="label">A / 485+ / D+</text>
+  <text x="475" y="312" text-anchor="middle" class="label">B / 485− / D−</text>
+
+  <path d="M600 250 V390" class="a tap"/><path d="M640 275 V390" class="b tap"/>
+  <circle cx="600" cy="250" r="12" class="nodeA"/><circle cx="640" cy="275" r="12" class="nodeB"/>
+
+  <rect x="425" y="390" width="390" height="170" class="adapter"/>
+  <text x="620" y="433" text-anchor="middle" class="title">RS485-adapter</text>
+  <text x="620" y="468" text-anchor="middle" class="text">Waveshare PoE eller USB</text>
+  <text x="515" y="512" class="label">A → 485A</text><text x="660" y="512" class="label">B → 485B</text>
+  <text x="620" y="542" text-anchor="middle" class="small">Kun lytning · Receive only · 19200 8E1</text>
+
+  <circle cx="90" cy="615" r="12" class="ok"/><text x="115" y="622" class="text">Parallel tap; original bus remains intact</text>
+  <circle cx="90" cy="660" r="12" class="warn"/><text x="115" y="667" class="text">No extra terminator unless required by bus topology</text>
+  <circle cx="680" cy="615" r="12" class="warn"/><text x="705" y="622" class="text">Never connect Ethernet/PoE wires to RS485 terminals</text>
+</svg>

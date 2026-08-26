@@ -8,5 +8,5 @@
   "issue_tracker": "https://github.com/MRDonnii/dantherm-hch-passivelink/issues",
   "name": "Dantherm HCH PassiveLink",
   "requirements": ["pyserial==3.5"],
-  "version": "0.2.2"
+  "version": "0.2.3"
 }
