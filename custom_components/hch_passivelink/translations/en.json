@@ -25,6 +25,8 @@
       "exhaust_temperature": {"name": "Exhaust air temperature"},
       "co2": {"name": "CO₂"},
       "afterheat_setpoint": {"name": "Supply air setpoint"},
+      "afterheat_room_setpoint": {"name": "Room setpoint"},
+      "afterheat_extract_setpoint": {"name": "Extract air setpoint"},
       "extract_fan_rpm": {"name": "Extract fan speed"},
       "supply_fan_rpm": {"name": "Supply fan speed"},
       "extract_fan_percent": {"name": "Extract fan control"},

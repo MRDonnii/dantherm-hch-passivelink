@@ -50,6 +50,22 @@ def test_write_multiple_request_is_kept_as_one_frame():
     assert frames == [message]
 
 
+def test_optional_afterheat_setpoints_decode_off():
+    decoder = DanthermDecoder(lambda _: None)
+    body = bytes.fromhex("401000b400050a00150016800080000000")
+    decoder.decode(frame(body))
+    assert decoder.data["afterheat_room_setpoint"] == "off"
+    assert decoder.data["afterheat_extract_setpoint"] == "off"
+
+
+def test_optional_afterheat_setpoints_decode_temperatures():
+    decoder = DanthermDecoder(lambda _: None)
+    body = bytes.fromhex("401000b400050a001500160014000f0000")
+    decoder.decode(frame(body))
+    assert decoder.data["afterheat_room_setpoint"] == "20"
+    assert decoder.data["afterheat_extract_setpoint"] == "15"
+
+
 def test_supply_air_setpoint_from_hac1_write_block():
     decoder = DanthermDecoder(lambda _: None)
     body = bytes.fromhex("401000b900050aff011600000f18fee201")
