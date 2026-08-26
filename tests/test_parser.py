@@ -66,6 +66,14 @@ def test_optional_afterheat_setpoints_decode_temperatures():
     assert decoder.data["afterheat_extract_setpoint"] == "15"
 
 
+def test_optional_afterheat_off_states_from_periodic_read():
+    decoder = DanthermDecoder(lambda _: None)
+    body = bytes.fromhex("40030a0aa20989800080000000")
+    decoder.decode(frame(body))
+    assert decoder.data["afterheat_room_setpoint"] == "off"
+    assert decoder.data["afterheat_extract_setpoint"] == "off"
+
+
 def test_supply_air_setpoint_from_hac1_write_block():
     decoder = DanthermDecoder(lambda _: None)
     body = bytes.fromhex("401000b900050aff011600000f18fee201")
