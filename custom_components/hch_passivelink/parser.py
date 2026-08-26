@@ -143,6 +143,20 @@ class DanthermDecoder:
             elif values[0] & 0xFF == 1 and values[2] == 15 and values[1] % 256 == 0 \
                     and 5 <= values[1] // 256 <= 40:
                 self._set(afterheat_setpoint=values[1] // 256)
+            elif values[4] == 0 and all(
+                value == 0x8000 or 5 <= value <= 40 for value in values[2:4]
+            ):
+                # The regularly read register 180 block repeats the two
+                # optional thermostat states, so OFF remains observable even
+                # when PassiveLink missed the original HCP4 write request.
+                self._set(
+                    afterheat_room_setpoint=(
+                        "off" if values[2] == 0x8000 else str(values[2])
+                    ),
+                    afterheat_extract_setpoint=(
+                        "off" if values[3] == 0x8000 else str(values[3])
+                    ),
+                )
             return
         if slave != 1:
             return
