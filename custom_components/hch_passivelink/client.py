@@ -23,6 +23,13 @@ class PassiveLinkClient:
         self._stopped = False
         self.connected = False
 
+    def set_update_callback(
+        self, update: Callable[[dict[str, object]], None]
+    ) -> None:
+        """Attach the Home Assistant coordinator after client construction."""
+        self._update = update
+        self.decoder._on_update = update
+
     async def probe(self, timeout: float = 8) -> None:
         """Verify that the endpoint yields at least one valid decoded update."""
         event = asyncio.Event()
@@ -85,6 +92,12 @@ class PassiveSerialClient:
         self._stopped = False
         self.connected = False
         self._loop: asyncio.AbstractEventLoop | None = None
+
+    def set_update_callback(
+        self, update: Callable[[dict[str, object]], None]
+    ) -> None:
+        """Attach the Home Assistant coordinator after client construction."""
+        self._update = update
 
     def _threadsafe_update(self, data: dict[str, object]) -> None:
         if self._loop is not None:

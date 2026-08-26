@@ -55,3 +55,15 @@ def test_supply_air_setpoint_from_hac1_write_block():
     body = bytes.fromhex("401000b900050aff011600000f18fee201")
     decoder.decode(frame(body))
     assert decoder.data["afterheat_setpoint"] == 22
+
+
+def test_tcp_client_callback_can_be_rebound():
+    from client import PassiveLinkClient
+
+    initial = []
+    rebound = []
+    client = PassiveLinkClient("127.0.0.1", 4196, initial.append)
+    client.set_update_callback(rebound.append)
+    client.decoder.decode(frame(bytes.fromhex("010600420019")))
+    assert initial == []
+    assert rebound[-1]["extract_fan_percent"] == 25
