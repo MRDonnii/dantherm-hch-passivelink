@@ -15,6 +15,7 @@ DESCRIPTIONS = (
     BinarySensorEntityDescription(key="night_mode", translation_key="night_mode"),
     BinarySensorEntityDescription(key="hac1_connected", translation_key="hac1_connected", device_class=BinarySensorDeviceClass.CONNECTIVITY, entity_category=EntityCategory.DIAGNOSTIC),
     BinarySensorEntityDescription(key="bus_traffic", translation_key="bus_traffic", device_class=BinarySensorDeviceClass.CONNECTIVITY, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="filter_alarm", translation_key="filter_alarm", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
 )
 
 
@@ -30,4 +31,3 @@ class PassiveLinkBinarySensor(PassiveLinkEntity, BinarySensorEntity):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     async_add_entities(PassiveLinkBinarySensor(entry.runtime_data, description) for description in DESCRIPTIONS)
-

@@ -203,7 +203,9 @@ class DanthermDecoder:
         elif register == 168 and now <= self._filter_command_until and 3 <= value <= 12:
             self._set(filter_interval_days=value * 30)
         elif register == 146:
-            self._set(hac1_connected=value == 1)
+            # Observed connected states include both 1 and 3; zero is the
+            # disconnected state.
+            self._set(hac1_connected=value != 0)
         self._update_mode(now)
 
     def _update_mode(self, now: float) -> None:

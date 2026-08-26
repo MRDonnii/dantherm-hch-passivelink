@@ -34,6 +34,10 @@
       "operating_mode": {"name": "Driftstilstand", "state": {"fireplace": "Pejs", "standby": "Standby", "auto_or_boost": "Automatisk eller boost", "manual_1": "Manuelt trin 1", "manual_2": "Manuelt trin 2", "manual_3": "Manuelt trin 3", "auto_or_scheduled": "Automatisk eller ugeprogram"}},
       "current_level": {"name": "Aktuelt ventilationstrin", "state": {"off": "Slukket", "level_1": "Trin 1", "level_2": "Trin 2", "level_3": "Trin 3", "boost": "Boost"}},
       "filter_interval_days": {"name": "Observeret filterinterval"},
+      "filter_days_remaining": {"name": "Dage til filterskift"},
+      "filter_life_percent": {"name": "Resterende filterlevetid"},
+      "filter_status": {"name": "Filterstatus", "state": {"ok": "OK", "change_soon": "Skift snart", "overdue": "Overskredet"}},
+      "filter_source": {"name": "Filterdatakilde", "state": {"hcp4_synchronized": "HCP4 synkroniseret"}},
       "heat_recovery_raw": {"name": "Varmegenvinding råværdi"},
       "bypass_raw": {"name": "Bypass råstatus"},
       "status_code": {"name": "Statuskode"},
@@ -46,7 +50,8 @@
       "standby": {"name": "Standby"},
       "night_mode": {"name": "Natdrift"},
       "hac1_connected": {"name": "HAC1-forbindelse"},
-      "bus_traffic": {"name": "RS485-bustrafik"}
+      "bus_traffic": {"name": "RS485-bustrafik"},
+      "filter_alarm": {"name": "Filteralarm"}
     }
   }
 }

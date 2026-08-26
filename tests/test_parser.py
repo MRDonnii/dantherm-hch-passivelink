@@ -33,6 +33,12 @@ def test_fan_registers_and_mode():
     assert decoder.data["current_level"] == "level_1"
 
 
+def test_hac1_connected_bitfield():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("010600920003")))
+    assert decoder.data["hac1_connected"] is True
+
+
 def test_bad_crc_is_ignored():
     decoder = DanthermDecoder(lambda _: None)
     parser = RtuStreamParser(decoder.decode)

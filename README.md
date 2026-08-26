@@ -79,7 +79,12 @@ A detailed Danish explanation of the findings is available in [docs/findings.da.
 
 ## Entities
 
-Temperatures, CO₂, three after-heater thermostat setpoints, both fan speeds and control percentages, operating mode, ventilation level, bypass, fireplace/standby/night states, HAC1 connectivity and raw diagnostic values. Unverified raw values are disabled by default and are deliberately not presented with misleading units.
+Temperatures, CO₂, three after-heater thermostat setpoints, both fan speeds and control percentages, operating mode, ventilation level, bypass, fireplace/standby/night states, HAC1 connectivity, persistent filter life and raw diagnostic values. Unverified raw values are disabled by default and are deliberately not presented with misleading units.
+
+Filter life is kept locally from the last synchronized HCP4 reset time and
+interval. The integration exposes the interval, days remaining, percentage,
+status, alarm and data source, and advances the countdown without requiring
+continuous filter telegrams.
 
 The after-heater thermostat settings are only transmitted when the HCP4 writes
 them. PassiveLink restores their last observed states after a Home Assistant
