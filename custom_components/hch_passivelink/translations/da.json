@@ -1,7 +1,7 @@
 {
-  "title": "HCH PassiveLink",
+  "title": "Dantherm HCH PassiveLink",
   "config": {
-    "step": {"user": {"title": "Forbind til den passive RS485-gateway", "description": "Indtast adressen på en read-only rå TCP-strøm. Integrationen sender aldrig data.", "data": {"host": "Værtsnavn eller IP-adresse", "port": "TCP-port"}}},
+    "step": {"user": {"title": "Forbind til den passive RS485-gateway", "description": "Uofficiel community-integration, som ikke er udviklet, leveret, godkendt eller supporteret af Dantherm Group. Indtast adressen på en read-only rå TCP-strøm. Integrationen sender aldrig data.", "data": {"host": "Værtsnavn eller IP-adresse", "port": "TCP-port"}}},
     "error": {"cannot_connect": "Der blev oprettet forbindelse, men ingen gyldig Dantherm RTU-trafik blev modtaget."},
     "abort": {"already_configured": "Denne gateway er allerede konfigureret."}
   },

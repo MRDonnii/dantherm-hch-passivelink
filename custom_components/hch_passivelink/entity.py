@@ -16,7 +16,7 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
         self._attr_unique_id = f"hch5_mk1_hac1_{key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, "hch5_mk1_hac1")},
-            name="HCH PassiveLink",
+            name="Dantherm HCH PassiveLink",
             manufacturer="Dantherm",
             model="HCH5 MK1 + HAC1",
         )
@@ -24,4 +24,3 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
     @property
     def available(self) -> bool:
         return self.coordinator.available and self.key in self.coordinator.data
-
