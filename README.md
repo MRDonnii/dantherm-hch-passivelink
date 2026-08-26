@@ -1,6 +1,6 @@
 # Dantherm HCH PassiveLink
 
-<img src="assets/logo.png" alt="Dantherm HCH PassiveLink logo" width="180">
+<img src="https://raw.githubusercontent.com/MRDonnii/dantherm-hch-passivelink/main/assets/logo.png" alt="Dantherm HCH PassiveLink logo" width="140">
 
 An unofficial, strictly read-only Home Assistant integration for a Dantherm HCH5 MK1 with HAC1. It decodes the existing internal Modbus RTU traffic without becoming a second bus master.
 
@@ -31,7 +31,7 @@ A transparent RS485-to-Ethernet adapter is suitable when it can expose the obser
 
 ### Adapter setup
 
-![Passive RS485 wiring diagram](docs/rs485-wiring.svg)
+![Passive RS485 wiring diagram](https://raw.githubusercontent.com/MRDonnii/dantherm-hch-passivelink/main/docs/rs485-wiring.svg)
 
 #### Wiring the RS485 side
 
