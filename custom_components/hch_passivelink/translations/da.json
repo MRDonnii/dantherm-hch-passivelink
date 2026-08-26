@@ -11,7 +11,7 @@
   },
   "options": {
     "step": {
-      "init": {"title": "Forbindelse og filteradvarsel", "description": "Skift forbindelsestype og vælg, hvornår filteradvarslen skal sendes. HA opretter altid en vedvarende notifikation. Angiv valgfrit en mobil-notifikationstjeneste, f.eks. notify.mobile_app_min_telefon.", "data": {"connection_type": "Forbindelsestype", "filter_notify_enabled": "Aktivér filteradvarsel", "filter_notify_days": "Advarsel når der er dette antal dage tilbage", "filter_notify_service": "Mobil-notifikationstjeneste (valgfri)"}},
+      "init": {"title": "Forbindelse, beregning og filteradvarsel", "description": "Skift forbindelse, vælg valgfrit en vejrentitet som alternativ udetemperatur, og indstil filteradvarslen. Anlæggets egen udeluftføler bruges, når feltet er tomt.", "data": {"connection_type": "Forbindelsestype", "outdoor_weather_entity": "Vejrentitet som udetemperatur (valgfri)", "filter_notify_enabled": "Aktivér filteradvarsel", "filter_notify_days": "Advarsel når der er dette antal dage tilbage", "filter_notify_service": "Mobil-notifikationstjeneste (valgfri)"}},
       "tcp": {"title": "RS485 over TCP", "data": {"host": "Værtsnavn eller IP-adresse", "port": "TCP-port"}},
       "serial": {"title": "USB-RS485", "data": {"serial_port": "Seriel enhedssti"}}
     },
@@ -31,6 +31,8 @@
       "supply_fan_rpm": {"name": "Indblæsningsventilator hastighed"},
       "extract_fan_percent": {"name": "Udsugningsventilator styring"},
       "supply_fan_percent": {"name": "Indblæsningsventilator styring"},
+      "heat_recovery_efficiency": {"name": "Temperaturvirkningsgrad"},
+      "supply_extract_delta": {"name": "Delta indblæsning/udsugning"},
       "operating_mode": {"name": "Driftstilstand", "state": {"fireplace": "Pejs", "standby": "Standby", "auto_or_boost": "Automatisk eller boost", "manual_1": "Manuelt trin 1", "manual_2": "Manuelt trin 2", "manual_3": "Manuelt trin 3", "auto_or_scheduled": "Automatisk eller ugeprogram"}},
       "current_level": {"name": "Aktuelt ventilationstrin", "state": {"off": "Slukket", "level_1": "Trin 1", "level_2": "Trin 2", "level_3": "Trin 3", "boost": "Boost"}},
       "filter_interval_days": {"name": "Observeret filterinterval"},

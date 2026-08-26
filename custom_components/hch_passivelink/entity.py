@@ -71,4 +71,4 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
 
     @property
     def available(self) -> bool:
-        return self.coordinator.available and self.key in self.coordinator.data
+        return self.coordinator.available and self.key in self.coordinator.data and self.coordinator.data.get(self.key) is not None
