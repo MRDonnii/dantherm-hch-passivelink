@@ -39,6 +39,27 @@ def test_hac1_connected_bitfield():
     assert decoder.data["hac1_connected"] is True
 
 
+def test_night_mode_waits_for_both_fan_registers():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("0106008f00ac")))
+    decoder.decode(frame(bytes.fromhex("010600420019")))
+    assert "night_mode" not in decoder.data
+    decoder.decode(frame(bytes.fromhex("01060043000d")))
+    assert decoder.data["night_mode"] is True
+
+
+def test_night_mode_can_switch_off():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("0106008f00ac")))
+    decoder.decode(frame(bytes.fromhex("010600420019")))
+    decoder.decode(frame(bytes.fromhex("01060043000d")))
+    decoder._last_explicit_command = float("-inf")
+    decoder.decode(frame(bytes.fromhex("0106008f00ac")))
+    decoder.decode(frame(bytes.fromhex("010600420033")))
+    decoder.decode(frame(bytes.fromhex("010600430027")))
+    assert decoder.data["night_mode"] is False
+
+
 def test_bad_crc_is_ignored():
     decoder = DanthermDecoder(lambda _: None)
     parser = RtuStreamParser(decoder.decode)
