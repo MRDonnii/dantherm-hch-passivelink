@@ -15,6 +15,10 @@ from .const import (
     CONF_SERIAL_PORT,
     CONNECTION_SERIAL,
     CONNECTION_TCP,
+    CONF_FILTER_NOTIFY_DAYS,
+    CONF_FILTER_NOTIFY_ENABLED,
+    CONF_FILTER_NOTIFY_SERVICE,
+    DEFAULT_FILTER_NOTIFY_DAYS,
     DEFAULT_NAME,
     DEFAULT_PORT,
     DOMAIN,
@@ -91,6 +95,7 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry) -> None:
         self._config_entry = config_entry
         self._connection_type = CONNECTION_TCP
+        self._notification_options = {}
 
     @property
     def _current(self) -> dict:
@@ -100,6 +105,11 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
         current = self._current
         if user_input is not None:
             self._connection_type = user_input[CONF_CONNECTION_TYPE]
+            self._notification_options = {
+                CONF_FILTER_NOTIFY_ENABLED: user_input[CONF_FILTER_NOTIFY_ENABLED],
+                CONF_FILTER_NOTIFY_DAYS: user_input[CONF_FILTER_NOTIFY_DAYS],
+                CONF_FILTER_NOTIFY_SERVICE: user_input[CONF_FILTER_NOTIFY_SERVICE].strip(),
+            }
             if self._connection_type == CONNECTION_SERIAL:
                 return await self.async_step_serial()
             return await self.async_step_tcp()
@@ -112,7 +122,21 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 ): vol.In({
                     CONNECTION_TCP: "RS485 over TCP",
                     CONNECTION_SERIAL: "USB-RS485",
-                })
+                }),
+                vol.Required(
+                    CONF_FILTER_NOTIFY_ENABLED,
+                    default=current.get(CONF_FILTER_NOTIFY_ENABLED, True),
+                ): bool,
+                vol.Required(
+                    CONF_FILTER_NOTIFY_DAYS,
+                    default=current.get(
+                        CONF_FILTER_NOTIFY_DAYS, DEFAULT_FILTER_NOTIFY_DAYS
+                    ),
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=180)),
+                vol.Optional(
+                    CONF_FILTER_NOTIFY_SERVICE,
+                    default=current.get(CONF_FILTER_NOTIFY_SERVICE, ""),
+                ): str,
             }),
         )
 
@@ -129,7 +153,11 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
             else:
                 return self.async_create_entry(
                     title="",
-                    data={CONF_CONNECTION_TYPE: CONNECTION_TCP, **user_input},
+                    data={
+                        CONF_CONNECTION_TYPE: CONNECTION_TCP,
+                        **user_input,
+                        **self._notification_options,
+                    },
                 )
         return self.async_show_form(
             step_id="tcp",
@@ -155,7 +183,11 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
             else:
                 return self.async_create_entry(
                     title="",
-                    data={CONF_CONNECTION_TYPE: CONNECTION_SERIAL, **user_input},
+                    data={
+                        CONF_CONNECTION_TYPE: CONNECTION_SERIAL,
+                        **user_input,
+                        **self._notification_options,
+                    },
                 )
         return self.async_show_form(
             step_id="serial",

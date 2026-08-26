@@ -10,6 +10,10 @@ from .const import (
     CONF_HOST,
     CONF_PORT,
     CONF_SERIAL_PORT,
+    CONF_FILTER_NOTIFY_DAYS,
+    CONF_FILTER_NOTIFY_ENABLED,
+    CONF_FILTER_NOTIFY_SERVICE,
+    DEFAULT_FILTER_NOTIFY_DAYS,
     CONNECTION_SERIAL,
     CONNECTION_TCP,
 )
@@ -33,7 +37,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
     else:
         client = PassiveLinkClient(config[CONF_HOST], config[CONF_PORT], lambda _: None)
         task_name = "Dantherm HCH PassiveLink TCP"
-    coordinator = PassiveLinkCoordinator(hass, client, entry.entry_id)
+    coordinator = PassiveLinkCoordinator(
+        hass,
+        client,
+        entry.entry_id,
+        notify_enabled=config.get(CONF_FILTER_NOTIFY_ENABLED, True),
+        notify_days=config.get(CONF_FILTER_NOTIFY_DAYS, DEFAULT_FILTER_NOTIFY_DAYS),
+        notify_service=config.get(CONF_FILTER_NOTIFY_SERVICE, ""),
+    )
     await coordinator.async_load_filter_state()
     client.set_update_callback(coordinator.async_handle_update)
     entry.runtime_data = coordinator

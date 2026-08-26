@@ -11,7 +11,7 @@
   },
   "options": {
     "step": {
-      "init": {"title": "Connection settings", "description": "Switch between RS485 over TCP and a USB-RS485 adapter. The new connection is tested before it is saved.", "data": {"connection_type": "Connection type"}},
+      "init": {"title": "Connection and filter warning", "description": "Change the connection and choose when the filter warning is sent. HA always creates a persistent notification. Optionally enter a mobile notification service such as notify.mobile_app_my_phone.", "data": {"connection_type": "Connection type", "filter_notify_enabled": "Enable filter warning", "filter_notify_days": "Warn when this many days remain", "filter_notify_service": "Mobile notification service (optional)"}},
       "tcp": {"title": "RS485 over TCP", "data": {"host": "Host or IP address", "port": "TCP port"}},
       "serial": {"title": "USB-RS485", "data": {"serial_port": "Serial device path"}}
     },

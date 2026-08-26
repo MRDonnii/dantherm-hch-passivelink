@@ -86,6 +86,11 @@ interval. The integration exposes the interval, days remaining, percentage,
 status, alarm and data source, and advances the countdown without requiring
 continuous filter telegrams.
 
+Filter warnings are configurable under the integration's options. Home
+Assistant can create a persistent notification and optionally send the same
+message through a selected `notify.mobile_app_...` service. The warning is sent
+once per filter cycle when the configured remaining-days threshold is reached.
+
 The after-heater thermostat settings are only transmitted when the HCP4 writes
 them. PassiveLink restores their last observed states after a Home Assistant
 restart because a passive listener cannot request them again.
