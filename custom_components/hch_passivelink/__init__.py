@@ -33,8 +33,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
     else:
         client = PassiveLinkClient(config[CONF_HOST], config[CONF_PORT], lambda _: None)
         task_name = "Dantherm HCH PassiveLink TCP"
-    coordinator = PassiveLinkCoordinator(hass, client)
-    client.set_update_callback(coordinator.async_set_updated_data)
+    coordinator = PassiveLinkCoordinator(hass, client, entry.entry_id)
+    await coordinator.async_load_filter_state()
+    client.set_update_callback(coordinator.async_handle_update)
     entry.runtime_data = coordinator
     coordinator.task = entry.async_create_background_task(hass, client.run(), task_name)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -44,6 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
 
 async def async_unload_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) -> bool:
     await entry.runtime_data.client.stop()
+    await entry.runtime_data.async_shutdown()
     if entry.runtime_data.task:
         entry.runtime_data.task.cancel()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

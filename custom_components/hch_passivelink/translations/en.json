@@ -34,6 +34,10 @@
       "operating_mode": {"name": "Operating mode", "state": {"fireplace": "Fireplace", "standby": "Standby", "auto_or_boost": "Automatic or boost", "manual_1": "Manual level 1", "manual_2": "Manual level 2", "manual_3": "Manual level 3", "auto_or_scheduled": "Automatic or scheduled"}},
       "current_level": {"name": "Current ventilation level", "state": {"off": "Off", "level_1": "Level 1", "level_2": "Level 2", "level_3": "Level 3", "boost": "Boost"}},
       "filter_interval_days": {"name": "Observed filter interval"},
+      "filter_days_remaining": {"name": "Days until filter change"},
+      "filter_life_percent": {"name": "Filter life remaining"},
+      "filter_status": {"name": "Filter status", "state": {"ok": "OK", "change_soon": "Change soon", "overdue": "Overdue"}},
+      "filter_source": {"name": "Filter data source", "state": {"hcp4_synchronized": "HCP4 synchronized"}},
       "heat_recovery_raw": {"name": "Heat recovery raw value"},
       "bypass_raw": {"name": "Bypass raw status"},
       "status_code": {"name": "Status code"},
@@ -46,7 +50,8 @@
       "standby": {"name": "Standby"},
       "night_mode": {"name": "Night mode"},
       "hac1_connected": {"name": "HAC1 connection"},
-      "bus_traffic": {"name": "RS485 bus traffic"}
+      "bus_traffic": {"name": "RS485 bus traffic"},
+      "filter_alarm": {"name": "Filter alarm"}
     }
   }
 }

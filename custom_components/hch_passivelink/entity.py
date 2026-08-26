@@ -20,6 +20,14 @@ INDOOR_CLIMATE_KEYS = {
     "relative_humidity",
     "air_quality",
 }
+FILTER_KEYS = {
+    "filter_interval_days",
+    "filter_days_remaining",
+    "filter_life_percent",
+    "filter_status",
+    "filter_alarm",
+    "filter_source",
+}
 
 
 class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
@@ -43,6 +51,14 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
                 name="Eftervarme",
                 manufacturer="Dantherm",
                 model="HAC1 eftervarme",
+                via_device=(DOMAIN, "hch5_mk1_hac1"),
+            )
+        elif key in FILTER_KEYS:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, "hch5_mk1_filter")},
+                name="Filter",
+                manufacturer="Dantherm",
+                model="HCH5 filtertimer",
                 via_device=(DOMAIN, "hch5_mk1_hac1"),
             )
         else:
