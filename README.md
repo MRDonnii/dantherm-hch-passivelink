@@ -83,7 +83,11 @@ Temperatures, CO₂, three after-heater thermostat setpoints, both fan speeds an
 
 Two derived temperature sensors: extraction-side heat-recovery efficiency and the supply/extract temperature delta. An options-flow entity selector lets you pick a `weather.*` entity as the outdoor temperature source instead of the unit's own sensor; a diagnostic sensor reports which source is currently in use. A CO2-derived air quality index (good/moderate/poor) and an RS485 frames-per-minute diagnostic sensor (a leading indicator of wiring/adapter degradation) round out the set.
 
+Valid heat-recovery measurements are classified as good (85% or higher), acceptable (70–84.9%) or low. PassiveLink learns a slowly changing local reference and reports the drop as normal, watch (7.5 percentage points) or degraded (12.5 percentage points). Bypass and invalid temperature spans are excluded. Fan-control and RPM deltas are change indicators, not calibrated airflow measurements.
+
 A "Reset filter interval" button lets you mark the filter as changed from Home Assistant — it only resets the locally tracked cycle and never writes to the bus. If the gateway connection or the HAC1 module stays unreachable for more than 15 minutes, PassiveLink raises a Home Assistant Repairs issue and clears it automatically once the link recovers.
+
+Up to the latest 20 locally confirmed filter changes are retained. The last change and number of recorded changes are available as diagnostic sensors.
 
 Filter life is kept locally from the last synchronized HCP4 reset time and
 interval. The integration exposes the interval, days remaining, percentage,

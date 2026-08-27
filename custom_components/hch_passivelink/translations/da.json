@@ -48,6 +48,14 @@
       "outdoor_temperature_source": {"name": "Kilde til udetemperatur", "state": {"unit_sensor": "Anlæggets egen føler", "weather_entity": "Vejrentitet"}},
       "air_quality_index": {"name": "Luftkvalitet", "state": {"good": "God", "moderate": "Moderat", "poor": "Dårlig"}},
       "bus_frame_rate": {"name": "RS485-telegrammer pr. minut"}
+      ,"heat_recovery_status": {"name": "Status for varmegenvinding", "state": {"good": "God", "acceptable": "Acceptabel", "low": "Lav"}}
+      ,"heat_recovery_trend": {"name": "Udvikling i varmegenvinding", "state": {"normal": "Normal", "watch": "Hold øje", "degraded": "Faldende ydelse"}}
+      ,"heat_recovery_reference": {"name": "Reference for varmegenvinding"}
+      ,"heat_recovery_drop": {"name": "Fald fra reference"}
+      ,"fan_control_delta": {"name": "Ventilatorbalance styring"}
+      ,"fan_rpm_delta": {"name": "Ventilatorbalance omdrejninger"}
+      ,"filter_last_change": {"name": "Seneste filterskift"}
+      ,"filter_change_count": {"name": "Registrerede filterskift"}
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass aktiv"},

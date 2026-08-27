@@ -48,6 +48,14 @@
       "outdoor_temperature_source": {"name": "Outdoor temperature source", "state": {"unit_sensor": "Unit sensor", "weather_entity": "Weather entity"}},
       "air_quality_index": {"name": "Air quality", "state": {"good": "Good", "moderate": "Moderate", "poor": "Poor"}},
       "bus_frame_rate": {"name": "RS485 frames per minute"}
+      ,"heat_recovery_status": {"name": "Heat recovery status", "state": {"good": "Good", "acceptable": "Acceptable", "low": "Low"}}
+      ,"heat_recovery_trend": {"name": "Heat recovery trend", "state": {"normal": "Normal", "watch": "Watch", "degraded": "Performance declining"}}
+      ,"heat_recovery_reference": {"name": "Heat recovery reference"}
+      ,"heat_recovery_drop": {"name": "Drop from reference"}
+      ,"fan_control_delta": {"name": "Fan control balance"}
+      ,"fan_rpm_delta": {"name": "Fan speed balance"}
+      ,"filter_last_change": {"name": "Last filter change"}
+      ,"filter_change_count": {"name": "Recorded filter changes"}
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass active"},
