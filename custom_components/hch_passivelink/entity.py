@@ -12,6 +12,10 @@ AFTERHEAT_KEYS = {
     "afterheat_extract_setpoint",
     "afterheat_supply_setpoint",
     "afterheat_temperature",
+    "heating_coil_before_temperature",
+    "heating_coil_after_temperature",
+    "heating_coil_air_delta",
+    "heating_valve_percent",
     "afterheat_raw",
 }
 INDOOR_CLIMATE_KEYS = {
@@ -46,15 +50,7 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
         super().__init__(coordinator)
         self.key = key
         self._attr_unique_id = f"hch5_mk1_hac1_{key}"
-        if key in PREHEATER_KEYS:
-            self._attr_device_info = DeviceInfo(
-                identifiers={(DOMAIN, "hch5_mk1_water_preheater")},
-                name="Vandforvarme",
-                manufacturer="Community sensor extension",
-                model="2 × DS18B20",
-                via_device=(DOMAIN, "hch5_mk1_hac1"),
-            )
-        elif key in INDOOR_CLIMATE_KEYS:
+        if key in INDOOR_CLIMATE_KEYS:
             self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, "hch5_mk1_hac1_indoor_climate")},
                 name="Indeklima",
@@ -62,7 +58,7 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
                 model="HAC1 indeklimasensor",
                 via_device=(DOMAIN, "hch5_mk1_hac1"),
             )
-        elif key in AFTERHEAT_KEYS:
+        elif key in AFTERHEAT_KEYS or key in PREHEATER_KEYS:
             self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, "hch5_mk1_hac1_afterheat")},
                 name="Eftervarme",

@@ -161,6 +161,9 @@ class DanthermDecoder:
                 # optional thermostat states, so OFF remains observable even
                 # when PassiveLink missed the original HCP4 write request.
                 self._set(
+                    heating_coil_after_temperature=values[0] / 100.0,
+                    heating_coil_before_temperature=values[1] / 100.0,
+                    heating_coil_air_delta=round((values[0] - values[1]) / 100.0, 2),
                     afterheat_room_setpoint=(
                         "off" if values[2] == 0x8000 else str(values[2])
                     ),
@@ -168,6 +171,24 @@ class DanthermDecoder:
                         "off" if values[3] == 0x8000 else str(values[3])
                     ),
                 )
+            return
+        if slave == 1 and function == 3 and len(frame) == 17 and frame[2] == 12:
+            values = [int.from_bytes(frame[i:i + 2], "big") for i in range(3, 15, 2)]
+            if values[0] == 1 and 0 <= values[3] <= 4095:
+                raw_humidity = values[3]
+                room_temperature = self.data.get("room_temperature", 25.0)
+                if not isinstance(room_temperature, (int, float)):
+                    room_temperature = 25.0
+                linear = (
+                    -2.0468
+                    + 0.0367 * raw_humidity
+                    - 1.5955e-6 * raw_humidity**2
+                )
+                compensated = linear + (room_temperature - 25.0) * (
+                    0.01 + 0.00008 * raw_humidity
+                )
+                if 0 <= compensated <= 100:
+                    self._set(relative_humidity=round(compensated, 1))
             return
         if slave != 1:
             return
@@ -201,6 +222,8 @@ class DanthermDecoder:
                 self._night_transition_registers.add(register)
         elif register == 68:
             self._set(afterheat_raw=value)
+            if 0 <= value <= 100:
+                self._set(heating_valve_percent=value)
         elif register == 76:
             self._special_mode_flag = value
         elif register == 143 and value:
@@ -222,6 +245,8 @@ class DanthermDecoder:
             # Observed connected states include both 1 and 3; zero is the
             # disconnected state.
             self._set(hac1_connected=value != 0)
+        elif register == 147 and 500 <= value <= 4000:
+            self._set(room_temperature=value / 100.0)
         self._update_mode(now)
 
     def _update_mode(self, now: float) -> None:
