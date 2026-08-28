@@ -77,7 +77,21 @@ Connect the adapter passively to the same RS485 A/B pair and enter the adapter's
 
 A detailed Danish explanation of the findings is available in [docs/findings.da.md](docs/findings.da.md).
 
-En komplet dansk trin-for-trin-guide til en billig Raspberry Pi 2B og USB-RS485-gateway findes i [docs/raspberry-pi-gateway.da.md](docs/raspberry-pi-gateway.da.md). Guiden indeholder hardware, kabling, fast IP, alle installationskommandoer, automatisk opstart, watchdog og fejlfinding.
+### Raspberry Pi gateway project
+
+The [`gateway/`](gateway/) folder is a self-contained, low-cost Raspberry Pi
+project with the receive-only bridge, systemd services, a reusable
+configuration file and an installer. It is suitable for a Raspberry Pi 2B or
+newer with a Linux-compatible USB-RS485 adapter. The optional DS18B20 water
+temperature extension is isolated from the core bridge and is not required.
+
+- [Gateway project and quick start](gateway/README.md)
+- [Komplet dansk trin-for-trin-guide](docs/raspberry-pi-gateway.da.md)
+- [Complete English step-by-step guide](docs/raspberry-pi-gateway.en.md)
+
+The guides cover hardware, wiring, fixed addressing, installation, automatic
+startup, watchdog recovery, firewalling, Home Assistant setup and
+troubleshooting.
 
 ## Entities
 
