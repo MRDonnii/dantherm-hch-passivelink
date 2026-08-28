@@ -48,6 +48,10 @@
       ,"fan_rpm_delta": {"name": "Ventilatorbalance omdrejninger"}
       ,"filter_last_change": {"name": "Seneste filterskift"}
       ,"filter_change_count": {"name": "Registrerede filterskift"}
+      ,"preheater_flow_temperature": {"name": "Fremløbstemperatur"}
+      ,"preheater_return_temperature": {"name": "Returtemperatur"}
+      ,"preheater_water_delta": {"name": "Vand delta-T"}
+      ,"preheater_activity": {"name": "Varmeoverførsel", "state": {"inactive": "Ingen", "low": "Lav", "normal": "Normal", "high": "Høj"}}
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass aktiv"},
@@ -57,6 +61,7 @@
       "hac1_connected": {"name": "HAC1-forbindelse"},
       "bus_traffic": {"name": "RS485-bustrafik"},
       "filter_alarm": {"name": "Filteralarm"}
+      ,"preheater_sensor_connected": {"name": "Temperaturfølere forbundet"}
     },
     "button": {
       "filter_reset": {"name": "Nulstil filterinterval"}
@@ -74,7 +79,10 @@
           "filter_notify_service": "Mobil-notifikationstjeneste (valgfri)",
           "host": "IP-adresse eller værtsnavn",
           "port": "TCP-port",
-          "serial_port": "USB-enhedssti (kun ved USB-RS485)"
+          "serial_port": "USB-enhedssti (kun ved USB-RS485)",
+          "preheater_sensors_enabled": "Aktivér valgfri vandforvarmefølere",
+          "preheater_sensor_host": "Vandforvarmefølernes IP-adresse",
+          "preheater_sensor_port": "Vandforvarmefølernes HTTP-port"
         }
       },
       "tcp": {

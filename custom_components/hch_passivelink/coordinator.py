@@ -14,6 +14,14 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import DOMAIN
 from .filter import filter_values
 
+AUXILIARY_KEYS = {
+    "preheater_flow_temperature",
+    "preheater_return_temperature",
+    "preheater_water_delta",
+    "preheater_activity",
+    "preheater_sensor_connected",
+}
+
 STORE_VERSION = 1
 DEFAULT_FILTER_INTERVAL_DAYS = 360
 HEALTH_ISSUE_DELAY = 900
@@ -33,6 +41,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         notify_enabled: bool,
         notify_days: int,
         notify_service: str,
+        auxiliary_client=None,
     ) -> None:
         super().__init__(hass, logger=__import__("logging").getLogger(__name__), name="Dantherm HCH PassiveLink")
         self.data = {}
@@ -50,6 +59,8 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         self._notify_days = notify_days
         self._notify_service = notify_service.strip()
         self._notification_check_pending = False
+        self._auxiliary_client = auxiliary_client
+        self._remove_auxiliary_timer = None
         self._disconnected_since: float | None = None
         self._hac1_lost_since: float | None = None
         self._efficiency_reference: float | None = None
@@ -89,6 +100,39 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             self.hass, self._async_update_filter_clock, timedelta(hours=1)
         )
         self._schedule_notification_check()
+        if self._auxiliary_client is not None:
+            self._remove_auxiliary_timer = async_track_time_interval(
+                self.hass, self._async_update_auxiliary, timedelta(seconds=10)
+            )
+            self.hass.async_create_task(self._async_update_auxiliary(None))
+
+    async def _async_update_auxiliary(self, _now) -> None:
+        """Update optional temperatures; failures never affect RS485 data."""
+        values = await self._auxiliary_client.async_fetch()
+        merged = dict(self.data)
+        if values is None:
+            merged.update(
+                preheater_sensor_connected=False,
+                preheater_flow_temperature=None,
+                preheater_return_temperature=None,
+                preheater_water_delta=None,
+                preheater_activity=None,
+            )
+        else:
+            merged.update(values)
+            flow = values["preheater_flow_temperature"]
+            return_temp = values["preheater_return_temperature"]
+            delta = round(abs(flow - return_temp), 2)
+            merged["preheater_water_delta"] = delta
+            if delta < 0.5:
+                merged["preheater_activity"] = "inactive"
+            elif delta < 2.0:
+                merged["preheater_activity"] = "low"
+            elif delta <= 8.0:
+                merged["preheater_activity"] = "normal"
+            else:
+                merged["preheater_activity"] = "high"
+        self.async_set_updated_data(merged)
     def _update_derived_temperatures(self, data: dict[str, object]) -> None:
         supply = data.get("supply_temperature")
         extract = data.get("extract_temperature")
@@ -209,6 +253,9 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             if changed and self._filter_reset_epoch is not None:
                 self.hass.async_create_task(self._async_save_filter_state())
         merged = dict(data)
+        for key in AUXILIARY_KEYS:
+            if key in self.data:
+                merged[key] = self.data[key]
         if self._night_mode is not None:
             merged.setdefault("night_mode", self._night_mode)
         if self._filter_reset_epoch is not None and self._filter_interval_days is not None:
@@ -317,6 +364,9 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         if self._remove_filter_timer is not None:
             self._remove_filter_timer()
             self._remove_filter_timer = None
+        if self._remove_auxiliary_timer is not None:
+            self._remove_auxiliary_timer()
+            self._remove_auxiliary_timer = None
 
     @property
     def available(self) -> bool:

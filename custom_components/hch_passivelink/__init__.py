@@ -3,6 +3,7 @@
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import issue_registry as ir
 
 from .client import PassiveLinkClient, PassiveSerialClient
@@ -14,11 +15,16 @@ from .const import (
     CONF_FILTER_NOTIFY_DAYS,
     CONF_FILTER_NOTIFY_ENABLED,
     CONF_FILTER_NOTIFY_SERVICE,
+    CONF_PREHEATER_SENSORS_ENABLED,
+    CONF_PREHEATER_SENSOR_HOST,
+    CONF_PREHEATER_SENSOR_PORT,
     DEFAULT_FILTER_NOTIFY_DAYS,
+    DEFAULT_PREHEATER_SENSOR_PORT,
     CONNECTION_SERIAL,
     CONNECTION_TCP,
     DOMAIN,
 )
+from .auxiliary import AuxiliaryTemperatureClient
 from .coordinator import (
     ISSUE_CONNECTION_LOST,
     ISSUE_HAC1_DISCONNECTED,
@@ -50,6 +56,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
         notify_enabled=config.get(CONF_FILTER_NOTIFY_ENABLED, True),
         notify_days=config.get(CONF_FILTER_NOTIFY_DAYS, DEFAULT_FILTER_NOTIFY_DAYS),
         notify_service=config.get(CONF_FILTER_NOTIFY_SERVICE, ""),
+        auxiliary_client=(
+            AuxiliaryTemperatureClient(
+                async_get_clientsession(hass),
+                config.get(CONF_PREHEATER_SENSOR_HOST)
+                or config.get(CONF_HOST, "127.0.0.1"),
+                config.get(
+                    CONF_PREHEATER_SENSOR_PORT, DEFAULT_PREHEATER_SENSOR_PORT
+                ),
+            )
+            if config.get(CONF_PREHEATER_SENSORS_ENABLED, False)
+            else None
+        ),
     )
     await coordinator.async_load_filter_state()
     client.set_update_callback(coordinator.async_handle_update)

@@ -15,7 +15,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .coordinator import PassiveLinkCoordinator
-from .entity import PassiveLinkEntity
+from .entity import PREHEATER_KEYS, PassiveLinkEntity
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -49,6 +49,10 @@ DESCRIPTIONS = (
     Description(key="fan_rpm_delta", translation_key="fan_rpm_delta", native_unit_of_measurement="rpm", state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:fan-chevron-up"),
     Description(key="filter_last_change", translation_key="filter_last_change", entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:calendar-check"),
     Description(key="filter_change_count", translation_key="filter_change_count", entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:counter"),
+    Description(key="preheater_flow_temperature", translation_key="preheater_flow_temperature", native_unit_of_measurement=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),
+    Description(key="preheater_return_temperature", translation_key="preheater_return_temperature", native_unit_of_measurement=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT),
+    Description(key="preheater_water_delta", translation_key="preheater_water_delta", native_unit_of_measurement=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT, icon="mdi:delta"),
+    Description(key="preheater_activity", translation_key="preheater_activity", device_class=SensorDeviceClass.ENUM, options=["inactive", "low", "normal", "high"], icon="mdi:radiator"),
     Description(key="operating_mode", translation_key="operating_mode", device_class=SensorDeviceClass.ENUM, options=["fireplace", "standby", "auto_or_boost", "manual_1", "manual_2", "manual_3", "auto_or_scheduled"]),
     Description(key="current_level", translation_key="current_level", device_class=SensorDeviceClass.ENUM, options=["off", "level_1", "level_2", "level_3", "boost"]),
     Description(key="filter_interval_days", translation_key="filter_interval_days", native_unit_of_measurement=UnitOfTime.DAYS, entity_category=EntityCategory.DIAGNOSTIC),
@@ -102,4 +106,10 @@ class PassiveLinkSensor(PassiveLinkEntity, SensorEntity, RestoreEntity):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    async_add_entities(PassiveLinkSensor(entry.runtime_data, description) for description in DESCRIPTIONS)
+    coordinator = entry.runtime_data
+    async_add_entities(
+        PassiveLinkSensor(coordinator, description)
+        for description in DESCRIPTIONS
+        if description.key not in PREHEATER_KEYS
+        or coordinator._auxiliary_client is not None
+    )
