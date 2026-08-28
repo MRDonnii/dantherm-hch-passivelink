@@ -9,14 +9,6 @@
     "error": {"cannot_connect": "Connected, but no valid Dantherm RTU traffic was received."},
     "abort": {"already_configured": "This gateway is already configured."}
   },
-  "options": {
-    "step": {
-      "init": {"title": "Connection, calculation and filter warning", "description": "Change the connection, optionally select a weather entity as the outdoor temperature source, and configure the filter warning. The unit's outdoor-air sensor is used when this is empty.", "data": {"connection_type": "Connection type", "outdoor_weather_entity": "Weather entity for outdoor temperature (optional)", "filter_notify_enabled": "Enable filter warning", "filter_notify_days": "Warn when this many days remain", "filter_notify_service": "Mobile notification service (optional)"}},
-      "tcp": {"title": "RS485 over TCP", "data": {"host": "Host or IP address", "port": "TCP port"}},
-      "serial": {"title": "USB-RS485", "data": {"serial_port": "Serial device path"}}
-    },
-    "error": {"cannot_connect": "No valid Dantherm RTU traffic was received from the selected connection."}
-  },
   "entity": {
     "sensor": {
       "outdoor_temperature": {"name": "Outdoor air temperature"},
@@ -45,7 +37,7 @@
       "status_code": {"name": "Status code"},
       "afterheat_raw": {"name": "After-heater raw status"},
       "command_raw": {"name": "Control command raw value"},
-      "outdoor_temperature_source": {"name": "Outdoor temperature source", "state": {"unit_sensor": "Unit sensor", "weather_entity": "Weather entity"}},
+      "outdoor_temperature_source": {"name": "Outdoor temperature source", "state": {"unit_sensor": "Unit sensor"}},
       "air_quality_index": {"name": "Air quality", "state": {"good": "Good", "moderate": "Moderate", "poor": "Poor"}},
       "bus_frame_rate": {"name": "RS485 frames per minute"}
       ,"heat_recovery_status": {"name": "Heat recovery status", "state": {"good": "Good", "acceptable": "Acceptable", "low": "Low"}}
@@ -68,6 +60,42 @@
     },
     "button": {
       "filter_reset": {"name": "Reset filter interval"}
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Dantherm HCH PassiveLink settings",
+        "description": "Change the connection and edit its address directly here. IP and TCP port are used for RS485 over TCP; the USB path is only used for local USB-RS485. The integration reloads automatically after saving.",
+        "data": {
+          "connection_type": "Connection type",
+          "filter_notify_enabled": "Enable filter replacement notification",
+          "filter_notify_days": "Warn this many days before replacement",
+          "filter_notify_service": "Mobile notification service (optional)",
+          "host": "IP address or host name",
+          "port": "TCP port",
+          "serial_port": "USB device path (USB-RS485 only)"
+        }
+      },
+      "tcp": {
+        "title": "RS485 over TCP",
+        "description": "Enter the IP address and TCP port of the Raspberry Pi gateway or RS485-to-Ethernet adapter.",
+        "data": {
+          "host": "IP address or host name",
+          "port": "TCP port"
+        }
+      },
+      "serial": {
+        "title": "Local USB-RS485 adapter",
+        "description": "Enter the stable device path of the USB adapter, preferably /dev/serial/by-id/....",
+        "data": {
+          "serial_port": "Serial device path"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "The connection could not be validated, or no valid Dantherm traffic was received.",
+      "required": "This field is required for the selected connection type."
     }
   },
   "issues": {

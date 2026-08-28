@@ -38,7 +38,7 @@ DESCRIPTIONS = (
     Description(key="supply_fan_percent", translation_key="supply_fan_percent", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT),
     Description(key="heat_recovery_efficiency", translation_key="heat_recovery_efficiency", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, icon="mdi:heat-wave"),
     Description(key="supply_extract_delta", translation_key="supply_extract_delta", native_unit_of_measurement=UnitOfTemperature.CELSIUS, state_class=SensorStateClass.MEASUREMENT, icon="mdi:swap-vertical"),
-    Description(key="outdoor_temperature_source", translation_key="outdoor_temperature_source", device_class=SensorDeviceClass.ENUM, options=["unit_sensor", "weather_entity"], entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:thermometer-check"),
+    Description(key="outdoor_temperature_source", translation_key="outdoor_temperature_source", device_class=SensorDeviceClass.ENUM, options=["unit_sensor"], entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:thermometer-check"),
     Description(key="air_quality_index", translation_key="air_quality_index", device_class=SensorDeviceClass.ENUM, options=["good", "moderate", "poor"], icon="mdi:leaf"),
     Description(key="bus_frame_rate", translation_key="bus_frame_rate", native_unit_of_measurement="frames/min", state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:pulse"),
     Description(key="heat_recovery_status", translation_key="heat_recovery_status", device_class=SensorDeviceClass.ENUM, options=["good", "acceptable", "low"], icon="mdi:check-decagram-outline"),

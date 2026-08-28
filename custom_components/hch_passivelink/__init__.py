@@ -14,7 +14,6 @@ from .const import (
     CONF_FILTER_NOTIFY_DAYS,
     CONF_FILTER_NOTIFY_ENABLED,
     CONF_FILTER_NOTIFY_SERVICE,
-    CONF_OUTDOOR_WEATHER_ENTITY,
     DEFAULT_FILTER_NOTIFY_DAYS,
     CONNECTION_SERIAL,
     CONNECTION_TCP,
@@ -51,7 +50,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
         notify_enabled=config.get(CONF_FILTER_NOTIFY_ENABLED, True),
         notify_days=config.get(CONF_FILTER_NOTIFY_DAYS, DEFAULT_FILTER_NOTIFY_DAYS),
         notify_service=config.get(CONF_FILTER_NOTIFY_SERVICE, ""),
-        outdoor_weather_entity=config.get(CONF_OUTDOOR_WEATHER_ENTITY, ""),
     )
     await coordinator.async_load_filter_state()
     client.set_update_callback(coordinator.async_handle_update)

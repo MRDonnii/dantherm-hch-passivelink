@@ -77,11 +77,13 @@ Connect the adapter passively to the same RS485 A/B pair and enter the adapter's
 
 A detailed Danish explanation of the findings is available in [docs/findings.da.md](docs/findings.da.md).
 
+En komplet dansk trin-for-trin-guide til en billig Raspberry Pi 2B og USB-RS485-gateway findes i [docs/raspberry-pi-gateway.da.md](docs/raspberry-pi-gateway.da.md). Guiden indeholder hardware, kabling, fast IP, alle installationskommandoer, automatisk opstart, watchdog og fejlfinding.
+
 ## Entities
 
 Temperatures, CO₂, three after-heater thermostat setpoints, both fan speeds and control percentages, operating mode, ventilation level, bypass, fireplace/standby/night states, HAC1 connectivity, persistent filter life and raw diagnostic values. Unverified raw values are disabled by default and are deliberately not presented with misleading units.
 
-Two derived temperature sensors: extraction-side heat-recovery efficiency and the supply/extract temperature delta. An options-flow entity selector lets you pick a `weather.*` entity as the outdoor temperature source instead of the unit's own sensor; a diagnostic sensor reports which source is currently in use. A CO2-derived air quality index (good/moderate/poor) and an RS485 frames-per-minute diagnostic sensor (a leading indicator of wiring/adapter degradation) round out the set.
+Two derived temperature sensors: extraction-side heat-recovery efficiency and the supply/extract temperature delta. Calculations use the ventilation unit's own outdoor-air sensor, so no external weather integration is required. A CO2-derived air quality index (good/moderate/poor) and an RS485 frames-per-minute diagnostic sensor (a leading indicator of wiring/adapter degradation) round out the set.
 
 Valid heat-recovery measurements are classified as good (85% or higher), acceptable (70–84.9%) or low. PassiveLink learns a slowly changing local reference and reports the drop as normal, watch (7.5 percentage points) or degraded (12.5 percentage points). Bypass and invalid temperature spans are excluded. Fan-control and RPM deltas are change indicators, not calibrated airflow measurements.
 
