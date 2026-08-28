@@ -4,6 +4,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 
 from .client import PassiveLinkClient, PassiveSerialClient
@@ -78,6 +80,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
     return True
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, entry: PassiveLinkConfigEntry, device_entry: dr.DeviceEntry
+) -> bool:
+    """Allow removing a device that no longer has any entities.
+
+    Restructuring which device an entity belongs to (e.g. grouping the
+    water preheater under the after-heat unit) can leave the old device
+    behind with zero entities. Let the user delete that leftover from
+    the UI instead of it lingering forever.
+    """
+    registry = er.async_get(hass)
+    return not er.async_entries_for_device(
+        registry, device_entry.id, include_disabled_entities=True
+    )
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) -> bool:
