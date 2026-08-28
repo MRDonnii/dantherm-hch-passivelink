@@ -82,7 +82,8 @@
           "serial_port": "USB-enhedssti (kun ved USB-RS485)",
           "preheater_sensors_enabled": "Aktivér valgfri vandforvarmefølere",
           "preheater_sensor_host": "Vandforvarmefølernes IP-adresse",
-          "preheater_sensor_port": "Vandforvarmefølernes HTTP-port"
+          "preheater_sensor_port": "Vandforvarmefølernes HTTP-port",
+          "preheater_swap_sensors": "Byt frem- og returføler"
         }
       },
       "tcp": {

@@ -15,5 +15,6 @@ CONF_FILTER_NOTIFY_SERVICE = "filter_notify_service"
 CONF_PREHEATER_SENSORS_ENABLED = "preheater_sensors_enabled"
 CONF_PREHEATER_SENSOR_HOST = "preheater_sensor_host"
 CONF_PREHEATER_SENSOR_PORT = "preheater_sensor_port"
+CONF_PREHEATER_SWAP_SENSORS = "preheater_swap_sensors"
 DEFAULT_PREHEATER_SENSOR_PORT = 4197
 DEFAULT_FILTER_NOTIFY_DAYS = 30

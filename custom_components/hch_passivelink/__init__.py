@@ -18,6 +18,7 @@ from .const import (
     CONF_PREHEATER_SENSORS_ENABLED,
     CONF_PREHEATER_SENSOR_HOST,
     CONF_PREHEATER_SENSOR_PORT,
+    CONF_PREHEATER_SWAP_SENSORS,
     DEFAULT_FILTER_NOTIFY_DAYS,
     DEFAULT_PREHEATER_SENSOR_PORT,
     CONNECTION_SERIAL,
@@ -64,6 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
                 config.get(
                     CONF_PREHEATER_SENSOR_PORT, DEFAULT_PREHEATER_SENSOR_PORT
                 ),
+                swap_sensors=config.get(CONF_PREHEATER_SWAP_SENSORS, False),
             )
             if config.get(CONF_PREHEATER_SENSORS_ENABLED, False)
             else None
