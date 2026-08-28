@@ -71,14 +71,14 @@ Find forbindelsesnavnet:
 nmcli connection show
 ```
 
-Eksempel med IP `10.0.0.12/24`, router `10.0.0.1` og DNS `10.0.0.1`:
+Erstat pladsholderne med adresser fra dit eget netværk:
 
 ```bash
 sudo nmcli connection modify "Wired connection 1" \
   ipv4.method manual \
-  ipv4.addresses 10.0.0.12/24 \
-  ipv4.gateway 10.0.0.1 \
-  ipv4.dns 10.0.0.1
+  ipv4.addresses PI_ADRESSE/CIDR \
+  ipv4.gateway ROUTER_ADRESSE \
+  ipv4.dns DNS_ADRESSE
 sudo nmcli connection up "Wired connection 1"
 ```
 
@@ -87,7 +87,7 @@ Tilpas forbindelsesnavn, adresse, gateway og DNS til dit netværk. Kontrollér d
 ```bash
 ip address show eth0
 ip route
-ping -c 3 10.0.0.1
+ping -c 3 ROUTER_ADRESSE
 ```
 
 ## 3. Find USB-RS485-adapteren
@@ -102,12 +102,27 @@ ls -l /dev/serial/by-id/
 Brug altid stien under `/dev/serial/by-id/` i stedet for `/dev/ttyUSB0`, fordi nummeret kan ændre sig efter en genstart. Eksempel:
 
 ```text
-/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A5069RR4-if00-port0
+/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_DIN_SERIE-if00-port0
 ```
 
 Kopiér din egen sti; eksemplet må ikke anvendes ukritisk.
 
-## 4. Installér gatewayprogrammet
+## 4. Installér gatewayprojektet
+
+Den letteste og anbefalede metode er projektets installationsscript. Det kan
+køres igen ved en senere opdatering og gemmer adapterstien i en separat
+konfigurationsfil:
+
+```bash
+git clone https://github.com/MRDonnii/dantherm-hch-passivelink.git
+cd dantherm-hch-passivelink
+sudo gateway/install.sh --device /dev/serial/by-id/DIN_ADAPTER
+```
+
+Fortsæt ved **trin 6**, når scriptet er færdigt. Nedenstående manuelle metode
+er med som reference og til installationer, der ønskes bygget trin for trin.
+
+### Manuel installation
 
 Opret en begrænset systembruger og programmappe:
 
@@ -139,13 +154,17 @@ sudo curl -fsSL \
   -o /etc/systemd/system/dantherm-passivelink.service
 ```
 
-Åbn den:
+Kopiér eksempelkonfigurationen:
 
 ```bash
-sudo nano /etc/systemd/system/dantherm-passivelink.service
+sudo install -d -o root -g passivelink -m 0750 /etc/dantherm-passivelink
+sudo cp gateway/gateway.example.env /etc/dantherm-passivelink/gateway.env
+sudo chown root:passivelink /etc/dantherm-passivelink/gateway.env
+sudo chmod 0640 /etc/dantherm-passivelink/gateway.env
+sudo nano /etc/dantherm-passivelink/gateway.env
 ```
 
-Erstat denne tekst i `ExecStart`:
+Erstat denne tekst:
 
 ```text
 /dev/serial/by-id/REPLACE_WITH_YOUR_ADAPTER
@@ -211,10 +230,10 @@ Tjenesten starter automatisk efter strømbrud og prøver igen hvert tredje sekun
 
 ## 7. Åbn kun porten på lokalnettet
 
-Hvis `ufw` er aktiveret, tillad kun Home Assistant-maskinen. Eksempel hvor Home Assistant har `10.0.0.25`:
+Hvis `ufw` er aktiveret, tillad kun Home Assistant-maskinen:
 
 ```bash
-sudo ufw allow from 10.0.0.25 to any port 4196 proto tcp
+sudo ufw allow from HOME_ASSISTANT_ADRESSE to any port 4196 proto tcp
 ```
 
 Eksponér aldrig port 4196 mod internettet. Brug ikke port-forwarding.
@@ -226,7 +245,7 @@ Eksponér aldrig port 4196 mod internettet. Brug ikke port-forwarding.
 3. Åbn **Indstillinger → Enheder og tjenester → Tilføj integration**.
 4. Vælg **Dantherm HCH PassiveLink**.
 5. Vælg **RS485 over TCP**.
-6. Indtast Pi'ens faste IP, eksempelvis `10.0.0.12`.
+6. Indtast Pi'ens reserverede eller faste IP-adresse.
 7. Indtast port `4196`.
 
 IP, port og forbindelsestype kan senere ændres via integrationens **Konfigurér**-knap uden at slette entiteterne.
