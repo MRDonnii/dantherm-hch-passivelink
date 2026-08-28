@@ -353,8 +353,9 @@ sudo chown root:passivelink /etc/dantherm-passivelink/onewire.json
 sudo chmod 0640 /etc/dantherm-passivelink/onewire.json
 ```
 
-Ret `/etc/dantherm-passivelink/onewire.json`, så `flow_sensor` og
-`return_sensor` indeholder de to adresser fra `ls`-kommandoen. Start derefter:
+Tjenesten finder automatisk to tilsluttede DS18B20-følere. Adresser kan stadig
+låses i `/etc/dantherm-passivelink/onewire.json`, men hvis de gemte adresser
+ikke findes, bruges de to fundne følere automatisk. Start derefter:
 
 ```bash
 sudo systemctl daemon-reload
@@ -366,7 +367,9 @@ Et normalt svar indeholder `available: true` og begge temperaturer. I Home
 Assistant åbnes **Indstillinger → Enheder og tjenester → Dantherm HCH
 PassiveLink → Konfigurer**. Aktivér de valgfrie vandforvarmefølere, angiv Pi'ens
 IP-adresse og port `4197`. Der oprettes en særskilt enhed med fremtemperatur,
-returtemperatur, delta-T, varmeoverførsel og forbindelsesstatus.
+returtemperatur, delta-T, varmeoverførsel og forbindelsesstatus. Hvis frem og
+retur vises omvendt, aktivér **Byt frem- og returføler** i samme indstillinger;
+det kræver ingen ændring på Pi'en.
 
 Delta-T viser, at vandkredsen faktisk overfører varme, men er ikke en måling i
 kW. En rigtig effektberegning kræver desuden en kalibreret måling af vandflowet.

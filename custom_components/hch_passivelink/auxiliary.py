@@ -10,9 +10,12 @@ from aiohttp import ClientError, ClientSession
 class AuxiliaryTemperatureClient:
     """Fetch optional DS18B20 values without affecting the RS485 client."""
 
-    def __init__(self, session: ClientSession, host: str, port: int) -> None:
+    def __init__(
+        self, session: ClientSession, host: str, port: int, *, swap_sensors: bool
+    ) -> None:
         self._session = session
         self._url = f"http://{host}:{port}/temperatures"
+        self._swap_sensors = swap_sensors
 
     async def async_fetch(self) -> dict[str, object] | None:
         try:
@@ -30,6 +33,8 @@ class AuxiliaryTemperatureClient:
             return_temp, (int, float)
         ):
             return None
+        if self._swap_sensors:
+            flow, return_temp = return_temp, flow
         return {
             "preheater_flow_temperature": round(float(flow), 2),
             "preheater_return_temperature": round(float(return_temp), 2),

@@ -82,7 +82,8 @@
           "serial_port": "USB device path (USB-RS485 only)",
           "preheater_sensors_enabled": "Enable optional water preheater sensors",
           "preheater_sensor_host": "Water preheater sensor IP address",
-          "preheater_sensor_port": "Water preheater sensor HTTP port"
+          "preheater_sensor_port": "Water preheater sensor HTTP port",
+          "preheater_swap_sensors": "Swap flow and return sensors"
         }
       },
       "tcp": {

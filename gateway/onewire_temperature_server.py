@@ -14,9 +14,31 @@ LOGGER = logging.getLogger("passivelink-onewire")
 
 class SensorReader:
     def __init__(self, config_path: str) -> None:
-        config = json.loads(Path(config_path).read_text(encoding="utf-8"))
-        self.flow_id = str(config["flow_sensor"]).lower().removeprefix("0x")
-        self.return_id = str(config["return_sensor"]).lower().removeprefix("0x")
+        try:
+            config = json.loads(Path(config_path).read_text(encoding="utf-8"))
+        except (FileNotFoundError, OSError, ValueError):
+            config = {}
+        self.flow_id = self._normalise(config.get("flow_sensor"))
+        self.return_id = self._normalise(config.get("return_sensor"))
+
+    @staticmethod
+    def _normalise(value: object) -> str | None:
+        if not value:
+            return None
+        return str(value).lower().removeprefix("0x")
+
+    def _sensor_ids(self) -> tuple[str | None, str | None]:
+        discovered = sorted(
+            path.name
+            for path in Path("/sys/bus/w1/devices").glob("28-*")
+            if (path / "w1_slave").exists()
+        )
+        configured = [self.flow_id, self.return_id]
+        if all(sensor_id in discovered for sensor_id in configured):
+            return self.flow_id, self.return_id
+        if len(discovered) >= 2:
+            return discovered[0], discovered[1]
+        return None, None
 
     @staticmethod
     def _read(sensor_id: str) -> float | None:
@@ -37,12 +59,15 @@ class SensorReader:
             return None
 
     def payload(self) -> dict[str, object]:
-        flow = self._read(self.flow_id)
-        return_temp = self._read(self.return_id)
+        flow_id, return_id = self._sensor_ids()
+        flow = self._read(flow_id) if flow_id else None
+        return_temp = self._read(return_id) if return_id else None
         return {
             "available": flow is not None and return_temp is not None,
             "flow_temperature": flow,
             "return_temperature": return_temp,
+            "flow_sensor": flow_id,
+            "return_sensor": return_id,
         }
 
 
