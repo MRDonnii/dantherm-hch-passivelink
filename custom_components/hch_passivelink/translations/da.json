@@ -9,14 +9,6 @@
     "error": {"cannot_connect": "Der blev oprettet forbindelse, men ingen gyldig Dantherm RTU-trafik blev modtaget."},
     "abort": {"already_configured": "Denne gateway er allerede konfigureret."}
   },
-  "options": {
-    "step": {
-      "init": {"title": "Forbindelse, beregning og filteradvarsel", "description": "Skift forbindelse, vælg valgfrit en vejrentitet som alternativ udetemperatur, og indstil filteradvarslen. Anlæggets egen udeluftføler bruges, når feltet er tomt.", "data": {"connection_type": "Forbindelsestype", "outdoor_weather_entity": "Vejrentitet som udetemperatur (valgfri)", "filter_notify_enabled": "Aktivér filteradvarsel", "filter_notify_days": "Advarsel når der er dette antal dage tilbage", "filter_notify_service": "Mobil-notifikationstjeneste (valgfri)"}},
-      "tcp": {"title": "RS485 over TCP", "data": {"host": "Værtsnavn eller IP-adresse", "port": "TCP-port"}},
-      "serial": {"title": "USB-RS485", "data": {"serial_port": "Seriel enhedssti"}}
-    },
-    "error": {"cannot_connect": "Ingen gyldig Dantherm RTU-trafik blev modtaget fra den valgte forbindelse."}
-  },
   "entity": {
     "sensor": {
       "outdoor_temperature": {"name": "Udelufttemperatur"},
@@ -45,7 +37,7 @@
       "status_code": {"name": "Statuskode"},
       "afterheat_raw": {"name": "Eftervarme råstatus"},
       "command_raw": {"name": "Betjeningskommando råværdi"},
-      "outdoor_temperature_source": {"name": "Kilde til udetemperatur", "state": {"unit_sensor": "Anlæggets egen føler", "weather_entity": "Vejrentitet"}},
+      "outdoor_temperature_source": {"name": "Kilde til udetemperatur", "state": {"unit_sensor": "Anlæggets egen føler"}},
       "air_quality_index": {"name": "Luftkvalitet", "state": {"good": "God", "moderate": "Moderat", "poor": "Dårlig"}},
       "bus_frame_rate": {"name": "RS485-telegrammer pr. minut"}
       ,"heat_recovery_status": {"name": "Status for varmegenvinding", "state": {"good": "God", "acceptable": "Acceptabel", "low": "Lav"}}
@@ -68,6 +60,42 @@
     },
     "button": {
       "filter_reset": {"name": "Nulstil filterinterval"}
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Indstillinger for Dantherm HCH PassiveLink",
+        "description": "Skift forbindelse og redigér adressen direkte her. IP og TCP-port bruges ved RS485 over TCP; USB-stien bruges kun ved lokal USB-RS485. Integrationen genindlæses automatisk efter lagring.",
+        "data": {
+          "connection_type": "Forbindelsestype",
+          "filter_notify_enabled": "Aktivér besked om filterskift",
+          "filter_notify_days": "Advar dette antal dage før filterskift",
+          "filter_notify_service": "Mobil-notifikationstjeneste (valgfri)",
+          "host": "IP-adresse eller værtsnavn",
+          "port": "TCP-port",
+          "serial_port": "USB-enhedssti (kun ved USB-RS485)"
+        }
+      },
+      "tcp": {
+        "title": "RS485 over TCP",
+        "description": "Indtast IP-adressen og TCP-porten på Raspberry Pi-gatewayen eller RS485-til-Ethernet-adapteren.",
+        "data": {
+          "host": "IP-adresse eller værtsnavn",
+          "port": "TCP-port"
+        }
+      },
+      "serial": {
+        "title": "Lokal USB-RS485-adapter",
+        "description": "Angiv USB-adapterens stabile enhedssti, helst /dev/serial/by-id/....",
+        "data": {
+          "serial_port": "Seriel enhedssti"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Forbindelsen kunne ikke valideres, eller der blev ikke modtaget gyldig Dantherm-trafik.",
+      "required": "Feltet skal udfyldes for den valgte forbindelsestype."
     }
   },
   "issues": {

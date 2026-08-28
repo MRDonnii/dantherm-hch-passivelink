@@ -19,7 +19,6 @@ from .const import (
     CONF_FILTER_NOTIFY_DAYS,
     CONF_FILTER_NOTIFY_ENABLED,
     CONF_FILTER_NOTIFY_SERVICE,
-    CONF_OUTDOOR_WEATHER_ENTITY,
     DEFAULT_FILTER_NOTIFY_DAYS,
     DEFAULT_NAME,
     DEFAULT_PORT,
@@ -105,20 +104,41 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input: dict | None = None) -> FlowResult:
         current = self._current
+        errors = {}
         if user_input is not None:
             self._connection_type = user_input[CONF_CONNECTION_TYPE]
-            self._notification_options = {
+            connection_options = {
+                CONF_CONNECTION_TYPE: self._connection_type,
                 CONF_FILTER_NOTIFY_ENABLED: user_input[CONF_FILTER_NOTIFY_ENABLED],
-                CONF_FILTER_NOTIFY_DAYS: user_input[CONF_FILTER_NOTIFY_DAYS],
+                CONF_FILTER_NOTIFY_DAYS: int(user_input[CONF_FILTER_NOTIFY_DAYS]),
                 CONF_FILTER_NOTIFY_SERVICE: user_input[CONF_FILTER_NOTIFY_SERVICE].strip(),
-                CONF_OUTDOOR_WEATHER_ENTITY: user_input.get(CONF_OUTDOOR_WEATHER_ENTITY, ""),
             }
             if self._connection_type == CONNECTION_SERIAL:
-                return await self.async_step_serial()
-            return await self.async_step_tcp()
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema({
+                serial_port = user_input.get(CONF_SERIAL_PORT, "").strip()
+                if not serial_port:
+                    errors[CONF_SERIAL_PORT] = "required"
+                else:
+                    try:
+                        await PassiveSerialClient(serial_port, lambda _: None).probe()
+                    except (OSError, ConnectionError, asyncio.TimeoutError):
+                        errors["base"] = "cannot_connect"
+                    else:
+                        connection_options[CONF_SERIAL_PORT] = serial_port
+            else:
+                host = user_input.get(CONF_HOST, "").strip()
+                port = user_input[CONF_PORT]
+                if not host:
+                    errors[CONF_HOST] = "required"
+                else:
+                    try:
+                        await PassiveLinkClient(host, port, lambda _: None).probe()
+                    except (OSError, ConnectionError, asyncio.TimeoutError):
+                        errors["base"] = "cannot_connect"
+                    else:
+                        connection_options.update({CONF_HOST: host, CONF_PORT: port})
+            if not errors:
+                return self.async_create_entry(title="", data=connection_options)
+        schema: dict = {
                 vol.Required(
                     CONF_CONNECTION_TYPE,
                     default=current.get(CONF_CONNECTION_TYPE, CONNECTION_TCP),
@@ -135,16 +155,33 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                     default=current.get(
                         CONF_FILTER_NOTIFY_DAYS, DEFAULT_FILTER_NOTIFY_DAYS
                     ),
-                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=180)),
+                ): selector.NumberSelector(selector.NumberSelectorConfig(
+                    min=1,
+                    max=180,
+                    step=1,
+                    mode=selector.NumberSelectorMode.BOX,
+                )),
                 vol.Optional(
                     CONF_FILTER_NOTIFY_SERVICE,
                     default=current.get(CONF_FILTER_NOTIFY_SERVICE, ""),
                 ): str,
                 vol.Optional(
-                    CONF_OUTDOOR_WEATHER_ENTITY,
-                    default=current.get(CONF_OUTDOOR_WEATHER_ENTITY, ""),
-                ): selector.EntitySelector(selector.EntitySelectorConfig(domain="weather")),
-            }),
+                    CONF_HOST,
+                    default=current.get(CONF_HOST, ""),
+                ): str,
+                vol.Required(
+                    CONF_PORT,
+                    default=current.get(CONF_PORT, DEFAULT_PORT),
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
+                vol.Optional(
+                    CONF_SERIAL_PORT,
+                    default=current.get(CONF_SERIAL_PORT, ""),
+                ): str,
+        }
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(schema),
+            errors=errors,
         )
 
     async def async_step_tcp(self, user_input: dict | None = None) -> FlowResult:
