@@ -19,9 +19,13 @@ from .const import (
     CONF_FILTER_NOTIFY_DAYS,
     CONF_FILTER_NOTIFY_ENABLED,
     CONF_FILTER_NOTIFY_SERVICE,
+    CONF_PREHEATER_SENSORS_ENABLED,
+    CONF_PREHEATER_SENSOR_HOST,
+    CONF_PREHEATER_SENSOR_PORT,
     DEFAULT_FILTER_NOTIFY_DAYS,
     DEFAULT_NAME,
     DEFAULT_PORT,
+    DEFAULT_PREHEATER_SENSOR_PORT,
     DOMAIN,
 )
 
@@ -112,6 +116,15 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 CONF_FILTER_NOTIFY_ENABLED: user_input[CONF_FILTER_NOTIFY_ENABLED],
                 CONF_FILTER_NOTIFY_DAYS: int(user_input[CONF_FILTER_NOTIFY_DAYS]),
                 CONF_FILTER_NOTIFY_SERVICE: user_input[CONF_FILTER_NOTIFY_SERVICE].strip(),
+                CONF_PREHEATER_SENSORS_ENABLED: user_input[
+                    CONF_PREHEATER_SENSORS_ENABLED
+                ],
+                CONF_PREHEATER_SENSOR_HOST: user_input.get(
+                    CONF_PREHEATER_SENSOR_HOST, ""
+                ).strip(),
+                CONF_PREHEATER_SENSOR_PORT: user_input[
+                    CONF_PREHEATER_SENSOR_PORT
+                ],
             }
             if self._connection_type == CONNECTION_SERIAL:
                 serial_port = user_input.get(CONF_SERIAL_PORT, "").strip()
@@ -177,6 +190,24 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                     CONF_SERIAL_PORT,
                     default=current.get(CONF_SERIAL_PORT, ""),
                 ): str,
+                vol.Required(
+                    CONF_PREHEATER_SENSORS_ENABLED,
+                    default=current.get(CONF_PREHEATER_SENSORS_ENABLED, False),
+                ): bool,
+                vol.Optional(
+                    CONF_PREHEATER_SENSOR_HOST,
+                    default=current.get(
+                        CONF_PREHEATER_SENSOR_HOST,
+                        current.get(CONF_HOST, ""),
+                    ),
+                ): str,
+                vol.Required(
+                    CONF_PREHEATER_SENSOR_PORT,
+                    default=current.get(
+                        CONF_PREHEATER_SENSOR_PORT,
+                        DEFAULT_PREHEATER_SENSOR_PORT,
+                    ),
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
         }
         return self.async_show_form(
             step_id="init",

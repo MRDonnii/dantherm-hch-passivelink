@@ -48,6 +48,10 @@
       ,"fan_rpm_delta": {"name": "Fan speed balance"}
       ,"filter_last_change": {"name": "Last filter change"}
       ,"filter_change_count": {"name": "Recorded filter changes"}
+      ,"preheater_flow_temperature": {"name": "Flow temperature"}
+      ,"preheater_return_temperature": {"name": "Return temperature"}
+      ,"preheater_water_delta": {"name": "Water delta T"}
+      ,"preheater_activity": {"name": "Heat transfer", "state": {"inactive": "None", "low": "Low", "normal": "Normal", "high": "High"}}
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass active"},
@@ -57,6 +61,7 @@
       "hac1_connected": {"name": "HAC1 connection"},
       "bus_traffic": {"name": "RS485 bus traffic"},
       "filter_alarm": {"name": "Filter alarm"}
+      ,"preheater_sensor_connected": {"name": "Temperature sensors connected"}
     },
     "button": {
       "filter_reset": {"name": "Reset filter interval"}
@@ -74,7 +79,10 @@
           "filter_notify_service": "Mobile notification service (optional)",
           "host": "IP address or host name",
           "port": "TCP port",
-          "serial_port": "USB device path (USB-RS485 only)"
+          "serial_port": "USB device path (USB-RS485 only)",
+          "preheater_sensors_enabled": "Enable optional water preheater sensors",
+          "preheater_sensor_host": "Water preheater sensor IP address",
+          "preheater_sensor_port": "Water preheater sensor HTTP port"
         }
       },
       "tcp": {

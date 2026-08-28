@@ -306,3 +306,67 @@ sudo systemctl status dantherm-passivelink.service --no-pager
 - Den almindelige passive strøm indeholder ikke nødvendigvis alle setpoints hele tiden.
 - Registerfortolkningen er baseret på observeret trafik fra HCH5 MK1 + HAC1.
 - Løsningen er ikke beregnet til HCH5 MKII eller nyere UVC-baserede anlæg.
+# Valgfri udvidelse: to temperaturfølere på vandforvarmen
+
+Denne del er helt valgfri. RS485-broen og Dantherm-integrationen virker uden
+følerne. Følerservicen kører som en selvstændig systemd-tjeneste på port 4197.
+Hvis en føler mangler, tjenesten stopper eller Pi'en ikke kan nås, bliver kun
+vandforvarmens egne entiteter utilgængelige. Dantherm-data på port 4196
+fortsætter uændret.
+
+Der bruges to vandtætte DS18B20-følere: én på fremløbet og én på returen. Begge
+tilsluttes parallelt til Raspberry Pi'ens 1-Wire-bus:
+
+| DS18B20 | Raspberry Pi 2B |
+| --- | --- |
+| VCC | Pin 1, 3,3 V |
+| Data | Pin 7, GPIO4 |
+| GND | Pin 6, GND |
+
+Sæt en 4,7 kΩ modstand mellem Data/GPIO4 og 3,3 V. Brug ikke 5 V på GPIO4.
+Kontrollér altid lederfarverne i følerens datablad; farver er ikke en sikker
+standard. Montér følerne med god termisk kontakt og isolér dem udvendigt.
+
+Aktivér 1-Wire permanent:
+
+```bash
+echo 'dtoverlay=w1-gpio,gpiopin=4' | sudo tee -a /boot/firmware/config.txt
+sudo reboot
+```
+
+Efter genstart vises følernes unikke adresser således:
+
+```bash
+ls -1 /sys/bus/w1/devices/28-*
+```
+
+Installér den separate HTTP-tjeneste fra projektmappen:
+
+```bash
+sudo useradd --system --home /opt/dantherm-passivelink --shell /usr/sbin/nologin passivelink 2>/dev/null || true
+sudo install -d -o passivelink -g passivelink /opt/dantherm-passivelink
+sudo install -d -o root -g passivelink -m 0750 /etc/dantherm-passivelink
+sudo install -o passivelink -g passivelink -m 0755 gateway/onewire_temperature_server.py /opt/dantherm-passivelink/
+sudo install -o root -g root -m 0644 gateway/dantherm-passivelink-onewire.service /etc/systemd/system/
+sudo cp gateway/onewire.example.json /etc/dantherm-passivelink/onewire.json
+sudo chown root:passivelink /etc/dantherm-passivelink/onewire.json
+sudo chmod 0640 /etc/dantherm-passivelink/onewire.json
+```
+
+Ret `/etc/dantherm-passivelink/onewire.json`, så `flow_sensor` og
+`return_sensor` indeholder de to adresser fra `ls`-kommandoen. Start derefter:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now dantherm-passivelink-onewire.service
+curl http://127.0.0.1:4197/temperatures
+```
+
+Et normalt svar indeholder `available: true` og begge temperaturer. I Home
+Assistant åbnes **Indstillinger → Enheder og tjenester → Dantherm HCH
+PassiveLink → Konfigurer**. Aktivér de valgfrie vandforvarmefølere, angiv Pi'ens
+IP-adresse og port `4197`. Der oprettes en særskilt enhed med fremtemperatur,
+returtemperatur, delta-T, varmeoverførsel og forbindelsesstatus.
+
+Delta-T viser, at vandkredsen faktisk overfører varme, men er ikke en måling i
+kW. En rigtig effektberegning kræver desuden en kalibreret måling af vandflowet.
