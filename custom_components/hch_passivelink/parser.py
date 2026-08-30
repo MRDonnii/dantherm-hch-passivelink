@@ -7,10 +7,23 @@ from collections import deque
 from collections.abc import Callable
 
 KNOWN_SLAVES = {1, 0x40}
+TEMPERATURE_KEYS = (
+    "outdoor_temperature", "supply_temperature", "extract_temperature",
+    "exhaust_temperature", "room_temperature",
+    "heating_coil_after_temperature", "heating_coil_before_temperature",
+)
 LEVEL_TARGETS = {
     "off": (0, 0), "level_1": (25, 13), "level_2": (55, 43),
     "level_3": (85, 73), "boost": (100, 88),
 }
+
+
+def temperature_value(raw: int) -> float | None:
+    """Decode signed hundredths, including sensor fault sentinels."""
+    if raw in (0x7FFF, 0x8000):
+        return None
+    value = (raw - 65536 if raw >= 32768 else raw) / 100.0
+    return value if -35 <= value <= 100 else None
 
 
 def crc16(data: bytes) -> int:
@@ -95,6 +108,9 @@ class DanthermDecoder:
         self._pending_manual3_until = 0.0
         self._external_mode: str | None = None
         self._frame_times: deque[float] = deque()
+        self._snapshot_mode = False
+        self._snapshot_at = 0.0
+        self._snapshot_request_at: float | None = None
 
     def _set(self, **values: object) -> None:
         changed = False
@@ -107,6 +123,9 @@ class DanthermDecoder:
 
     def decode(self, frame: bytes) -> None:
         now = time.monotonic()
+        if self._snapshot_mode and now - self._snapshot_at > 30:
+            self._set(**dict.fromkeys(TEMPERATURE_KEYS), temperature_sample_monotonic=now)
+            self._snapshot_at = now
         self._frame_times.append(now)
         while self._frame_times and now - self._frame_times[0] > 60:
             self._frame_times.popleft()
@@ -116,6 +135,26 @@ class DanthermDecoder:
             bus_frame_rate=len(self._frame_times),
         )
         slave, function = frame[0], frame[1]
+        if slave == 0x40 and function == 3 and len(frame) == 8:
+            self._snapshot_request_at = (
+                now if frame[2:6] == bytes.fromhex("00b4001e") else None
+            )
+        if slave == 0x40 and function == 3 and len(frame) == 65 and frame[2] == 60:
+            requested = self._snapshot_request_at
+            self._snapshot_request_at = None
+            if requested is None or now - requested > 2:
+                return
+            values = [int.from_bytes(frame[i:i + 2], "big") for i in range(3, 63, 2)]
+            self._snapshot_mode = True
+            self._snapshot_at = now
+            self._set(
+                **dict(zip(TEMPERATURE_KEYS, (
+                    temperature_value(values[i]) for i in (0, 1, 2, 3, 4, 25, 26)
+                ))),
+                temperature_sample_monotonic=now,
+                temperature_source="hac1_snapshot_180_209",
+            )
+            return
         if slave == 0x40 and function == 16 and len(frame) >= 19:
             register = int.from_bytes(frame[2:4], "big")
             count = int.from_bytes(frame[4:6], "big")
@@ -147,6 +186,16 @@ class DanthermDecoder:
             return
         if function in (3, 4) and len(frame) == 8:
             return
+        if slave == 0x40 and function == 3 and len(frame) == 7 and frame[2] == 2:
+            # Register 184 er HRC2-fjernbetjeningens egen temperaturføler
+            # (T5). Verificeret 2026-08-28 mod HRC2-displayet (rå 2190 =
+            # 21.90 stemte med skærmens 21 grader). Dette register sendes
+            # aldrig passivt af sig selv - gatewayen forespørger det aktivt
+            # hvert 15. sekund og genudsender svaret på den rå TCP-strøm.
+            raw = int.from_bytes(frame[3:5], "big")
+            if not self._snapshot_mode and 500 <= raw <= 4000:
+                self._set(room_temperature=raw / 100.0)
+            return
         if slave == 0x40 and function == 3 and len(frame) == 15 and frame[2] == 10:
             values = [int.from_bytes(frame[i:i + 2], "big") for i in range(3, 13, 2)]
             if values[:3] == [0x3000, 0x1100, 0] and 300 <= values[3] <= 10000:
@@ -160,10 +209,17 @@ class DanthermDecoder:
                 # The regularly read register 180 block repeats the two
                 # optional thermostat states, so OFF remains observable even
                 # when PassiveLink missed the original HCP4 write request.
+                # values[1] ("before coil") blev fysisk verificeret 2026-08-29
+                # ved at afbryde følerne enkeltvis: den er IKKE en luftføler
+                # før varmefladen, men eftervarmefladens indbyggede
+                # antifrost/frostsikringsføler på vandsiden (retur). Der
+                # findes derfor ingen gyldig luft-ΔT over fladen fra disse
+                # to registre.
                 self._set(
-                    heating_coil_after_temperature=values[0] / 100.0,
-                    heating_coil_before_temperature=values[1] / 100.0,
-                    heating_coil_air_delta=round((values[0] - values[1]) / 100.0, 2),
+                    **({} if self._snapshot_mode else {
+                        "heating_coil_after_temperature": temperature_value(values[0]),
+                        "heating_coil_before_temperature": temperature_value(values[1]),
+                    }),
                     afterheat_room_setpoint=(
                         "off" if values[2] == 0x8000 else str(values[2])
                     ),
@@ -195,10 +251,14 @@ class DanthermDecoder:
         if function == 4:
             values = [int.from_bytes(frame[i:i + 2], "big") for i in range(3, len(frame) - 2, 2)]
             if len(values) == 4:
-                self._set(**dict(zip(
-                    ("outdoor_temperature", "supply_temperature", "extract_temperature", "exhaust_temperature"),
-                    (value / 100.0 for value in values),
-                )))
+                if self._snapshot_mode:
+                    return
+                keys = ("outdoor_temperature", "supply_temperature", "extract_temperature", "exhaust_temperature")
+                # Legacy gateways: publish the whole frame atomically too.
+                self._set(
+                    **{key: temperature_value(raw) for key, raw in zip(keys, values)},
+                    temperature_sample_monotonic=now,
+                )
             elif len(values) == 5:
                 raw, extract_rpm, supply_rpm, bypass_raw, status_code = values
                 self._set(
@@ -245,8 +305,10 @@ class DanthermDecoder:
             # Observed connected states include both 1 and 3; zero is the
             # disconnected state.
             self._set(hac1_connected=value != 0)
-        elif register == 147 and 500 <= value <= 4000:
-            self._set(room_temperature=value / 100.0)
+        # NB: register 147 blev tidligere brugt til room_temperature, men er
+        # verificeret 2026-08-28 til blot at spejle indblæsningstemperaturen
+        # som fallback, når ingen ægte rumføler er tilsluttet. Den ægte kilde
+        # er nu register 184 (slave 0x40, HRC2/T5) håndteret ovenfor.
         self._update_mode(now)
 
     def _update_mode(self, now: float) -> None:
