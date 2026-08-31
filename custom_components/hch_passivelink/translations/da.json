@@ -22,7 +22,6 @@
       "heating_coil_before_temperature": {"name": "Luft før varmeflade"},
       "heating_coil_after_temperature": {"name": "Luft efter varmeflade"},
       "heating_coil_air_delta": {"name": "Luft delta-T over varmeflade"},
-      "heating_valve_percent": {"name": "Ventilåbning"},
       "afterheat_room_setpoint": {"name": "Rum setpoint"},
       "afterheat_extract_setpoint": {"name": "Udsugning setpoint"},
       "extract_fan_rpm": {"name": "Udsugningsventilator hastighed"},
@@ -61,6 +60,7 @@
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass aktiv"},
+      "afterheat_active": {"name": "Eftervarme aktiv"},
       "fireplace": {"name": "Pejsefunktion"},
       "standby": {"name": "Standby"},
       "night_mode": {"name": "Natdrift"},

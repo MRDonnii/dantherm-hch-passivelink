@@ -79,6 +79,14 @@ class ParserTests(unittest.TestCase):
         self.stream.feed(data)
         self.assertNotIn("temperature_sample_monotonic", self.decoder.data)
 
+    def test_register_209_is_binary_afterheat_status(self):
+        values = [1672, 2115, 2173, 1719, 2250] + [0] * 20 + [2126, 1717, 32768, 32768, 16]
+        self.stream.feed(snapshot(values))
+        self.assertTrue(self.decoder.data["afterheat_active"])
+        values[29] = 0
+        self.stream.feed(snapshot(values))
+        self.assertFalse(self.decoder.data["afterheat_active"])
+
 
 def coordinator_class():
     # Execute the actual class with small HA boundary stubs, not a copied method.
