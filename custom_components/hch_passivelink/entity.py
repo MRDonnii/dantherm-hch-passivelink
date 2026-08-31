@@ -15,7 +15,7 @@ AFTERHEAT_KEYS = {
     "heating_coil_before_temperature",
     "heating_coil_after_temperature",
     "heating_coil_air_delta",
-    "heating_valve_percent",
+    "afterheat_active",
     "afterheat_raw",
 }
 INDOOR_CLIMATE_KEYS = {

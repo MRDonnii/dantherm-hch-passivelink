@@ -10,6 +10,7 @@ from .entity import PREHEATER_KEYS, PassiveLinkEntity
 
 DESCRIPTIONS = (
     BinarySensorEntityDescription(key="bypass_active", translation_key="bypass_active", device_class=BinarySensorDeviceClass.OPENING),
+    BinarySensorEntityDescription(key="afterheat_active", translation_key="afterheat_active", device_class=BinarySensorDeviceClass.HEAT, icon="mdi:radiator"),
     BinarySensorEntityDescription(key="fireplace", translation_key="fireplace"),
     BinarySensorEntityDescription(key="standby", translation_key="standby"),
     BinarySensorEntityDescription(key="night_mode", translation_key="night_mode"),

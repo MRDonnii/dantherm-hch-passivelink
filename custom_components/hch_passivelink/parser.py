@@ -151,6 +151,9 @@ class DanthermDecoder:
                 **dict(zip(TEMPERATURE_KEYS, (
                     temperature_value(values[i]) for i in (0, 1, 2, 3, 4, 25, 26)
                 ))),
+                # Register 209 is a verified binary afterheat flag: 0=off,
+                # 16=on. It is not a valve-opening percentage.
+                afterheat_active=values[29] == 16,
                 temperature_sample_monotonic=now,
                 temperature_source="hac1_snapshot_180_209",
             )
@@ -282,8 +285,6 @@ class DanthermDecoder:
                 self._night_transition_registers.add(register)
         elif register == 68:
             self._set(afterheat_raw=value)
-            if 0 <= value <= 100:
-                self._set(heating_valve_percent=value)
         elif register == 76:
             self._special_mode_flag = value
         elif register == 143 and value:

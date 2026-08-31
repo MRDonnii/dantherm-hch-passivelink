@@ -22,7 +22,6 @@
       "heating_coil_before_temperature": {"name": "Air before heating coil"},
       "heating_coil_after_temperature": {"name": "Air after heating coil"},
       "heating_coil_air_delta": {"name": "Air delta T across heating coil"},
-      "heating_valve_percent": {"name": "Valve opening"},
       "afterheat_room_setpoint": {"name": "Room setpoint"},
       "afterheat_extract_setpoint": {"name": "Extract air setpoint"},
       "extract_fan_rpm": {"name": "Extract fan speed"},
@@ -61,6 +60,7 @@
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass active"},
+      "afterheat_active": {"name": "Afterheat active"},
       "fireplace": {"name": "Fireplace mode"},
       "standby": {"name": "Standby"},
       "night_mode": {"name": "Night mode"},
