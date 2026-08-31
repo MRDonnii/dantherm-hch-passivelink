@@ -22,7 +22,6 @@
       "heating_coil_before_temperature": {"name": "Luft før varmeflade"},
       "heating_coil_after_temperature": {"name": "Luft efter varmeflade"},
       "heating_coil_air_delta": {"name": "Luft delta-T over varmeflade"},
-      "heating_valve_percent": {"name": "Ventilåbning"},
       "afterheat_room_setpoint": {"name": "Rum setpoint"},
       "afterheat_extract_setpoint": {"name": "Udsugning setpoint"},
       "extract_fan_rpm": {"name": "Udsugningsventilator hastighed"},
@@ -61,12 +60,23 @@
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass aktiv"},
+      "afterheat_active": {"name": "Eftervarme aktiv"},
       "fireplace": {"name": "Pejsefunktion"},
       "standby": {"name": "Standby"},
       "night_mode": {"name": "Natdrift"},
       "hac1_connected": {"name": "HAC1-forbindelse"},
       "bus_traffic": {"name": "RS485-bustrafik"},
-      "filter_alarm": {"name": "Filteralarm"}
+      "filter_alarm": {"name": "Filteralarm"},
+      "extract_fan_fault": {"name": "Alarm: udsugningsventilator kører ikke"},
+      "supply_fan_fault": {"name": "Alarm: indblæsningsventilator kører ikke"},
+      "outdoor_temperature_sensor_fault": {"name": "Alarm: udeluftføler fejl"},
+      "supply_temperature_sensor_fault": {"name": "Alarm: indblæsningsføler fejl"},
+      "extract_temperature_sensor_fault": {"name": "Alarm: udsugningsføler fejl"},
+      "exhaust_temperature_sensor_fault": {"name": "Alarm: afkastføler fejl"},
+      "room_temperature_sensor_fault": {"name": "Alarm: rumtemperaturføler fejl"},
+      "outdoor_temperature_low": {"name": "Alarm: udetemperatur under -13 °C"},
+      "supply_temperature_low": {"name": "Alarm: indblæsning under 5 °C"},
+      "fire_temperature_alarm": {"name": "Alarm: brandtemperatur over 70 °C"}
       ,"preheater_sensor_connected": {"name": "Temperaturfølere forbundet"}
     },
     "button": {
