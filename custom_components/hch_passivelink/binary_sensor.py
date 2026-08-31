@@ -16,6 +16,16 @@ DESCRIPTIONS = (
     BinarySensorEntityDescription(key="hac1_connected", translation_key="hac1_connected", device_class=BinarySensorDeviceClass.CONNECTIVITY, entity_category=EntityCategory.DIAGNOSTIC),
     BinarySensorEntityDescription(key="bus_traffic", translation_key="bus_traffic", device_class=BinarySensorDeviceClass.CONNECTIVITY, entity_category=EntityCategory.DIAGNOSTIC),
     BinarySensorEntityDescription(key="filter_alarm", translation_key="filter_alarm", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="extract_fan_fault", translation_key="extract_fan_fault", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="supply_fan_fault", translation_key="supply_fan_fault", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="outdoor_temperature_sensor_fault", translation_key="outdoor_temperature_sensor_fault", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="supply_temperature_sensor_fault", translation_key="supply_temperature_sensor_fault", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="extract_temperature_sensor_fault", translation_key="extract_temperature_sensor_fault", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="exhaust_temperature_sensor_fault", translation_key="exhaust_temperature_sensor_fault", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="room_temperature_sensor_fault", translation_key="room_temperature_sensor_fault", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="outdoor_temperature_low", translation_key="outdoor_temperature_low", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="supply_temperature_low", translation_key="supply_temperature_low", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="fire_temperature_alarm", translation_key="fire_temperature_alarm", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
     BinarySensorEntityDescription(key="preheater_sensor_connected", translation_key="preheater_sensor_connected", device_class=BinarySensorDeviceClass.CONNECTIVITY, entity_category=EntityCategory.DIAGNOSTIC),
 )
 

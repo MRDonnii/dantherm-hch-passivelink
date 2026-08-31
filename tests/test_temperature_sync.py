@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "custom_components" / "hch_pa
 sys.path.insert(0, str(Path(__file__).parents[1] / "gateway"))
 
 from parser import DanthermDecoder, RtuStreamParser, TEMPERATURE_KEYS, crc16
+from alarms import derive_alarm_values
 
 
 def frame(body):
@@ -94,7 +95,7 @@ def coordinator_class():
     ns = dict(asyncio=asyncio, logging=logging, time=time, datetime=datetime.datetime,
               timedelta=datetime.timedelta, timezone=datetime.timezone,
               TEMPERATURE_KEYS=TEMPERATURE_KEYS, DataUpdateCoordinator=Base,
-              HomeAssistant=object)
+              HomeAssistant=object, derive_alarm_values=derive_alarm_values)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), "coordinator.py", "exec"), ns)
     return ns["PassiveLinkCoordinator"]
 

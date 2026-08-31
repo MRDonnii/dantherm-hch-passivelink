@@ -12,6 +12,7 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from .alarms import derive_alarm_values
 from .const import DOMAIN
 from .filter import filter_values
 from .parser import TEMPERATURE_KEYS
@@ -197,6 +198,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         supply_rpm = data.get("supply_fan_rpm")
         if isinstance(extract_rpm, (int, float)) and isinstance(supply_rpm, (int, float)):
             data["fan_rpm_delta"] = round(supply_rpm - extract_rpm)
+        data.update(derive_alarm_values(data))
 
     def _update_filter_history_values(self, data: dict[str, object]) -> None:
         if not self._filter_reset_history:

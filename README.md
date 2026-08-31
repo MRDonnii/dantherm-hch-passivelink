@@ -133,6 +133,9 @@ while the supply-air setpoint remains unavailable until observed.
 
 Names and setup text are included in Danish and English and follow the selected Home Assistant language.
 
+See [the Danish entity reference](docs/entities.da.md) for the exact meaning,
+source and limitations of every sensor and derived alarm.
+
 ## Installation with HACS
 
 [![Open your Home Assistant instance and add this repository to HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MRDonnii&repository=dantherm-hch-passivelink&category=integration)
