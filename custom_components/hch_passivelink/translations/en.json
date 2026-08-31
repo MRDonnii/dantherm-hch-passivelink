@@ -22,7 +22,6 @@
       "heating_coil_before_temperature": {"name": "Air before heating coil"},
       "heating_coil_after_temperature": {"name": "Air after heating coil"},
       "heating_coil_air_delta": {"name": "Air delta T across heating coil"},
-      "heating_valve_percent": {"name": "Valve opening"},
       "afterheat_room_setpoint": {"name": "Room setpoint"},
       "afterheat_extract_setpoint": {"name": "Extract air setpoint"},
       "extract_fan_rpm": {"name": "Extract fan speed"},
@@ -61,12 +60,23 @@
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass active"},
+      "afterheat_active": {"name": "Afterheat active"},
       "fireplace": {"name": "Fireplace mode"},
       "standby": {"name": "Standby"},
       "night_mode": {"name": "Night mode"},
       "hac1_connected": {"name": "HAC1 connection"},
       "bus_traffic": {"name": "RS485 bus traffic"},
-      "filter_alarm": {"name": "Filter alarm"}
+      "filter_alarm": {"name": "Filter alarm"},
+      "extract_fan_fault": {"name": "Alarm: extract fan not running"},
+      "supply_fan_fault": {"name": "Alarm: supply fan not running"},
+      "outdoor_temperature_sensor_fault": {"name": "Alarm: outdoor temperature sensor fault"},
+      "supply_temperature_sensor_fault": {"name": "Alarm: supply temperature sensor fault"},
+      "extract_temperature_sensor_fault": {"name": "Alarm: extract temperature sensor fault"},
+      "exhaust_temperature_sensor_fault": {"name": "Alarm: exhaust temperature sensor fault"},
+      "room_temperature_sensor_fault": {"name": "Alarm: room temperature sensor fault"},
+      "outdoor_temperature_low": {"name": "Alarm: outdoor temperature below -13 °C"},
+      "supply_temperature_low": {"name": "Alarm: supply air below 5 °C"},
+      "fire_temperature_alarm": {"name": "Alarm: fire temperature above 70 °C"}
       ,"preheater_sensor_connected": {"name": "Temperature sensors connected"}
     },
     "button": {

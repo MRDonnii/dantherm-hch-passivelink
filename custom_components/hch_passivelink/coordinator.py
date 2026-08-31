@@ -1,5 +1,6 @@
 """Coordinator for HCH PassiveLink."""
 
+import asyncio
 import logging
 import time
 from datetime import datetime, timedelta, timezone
@@ -11,8 +12,12 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
+from .alarms import derive_alarm_values
 from .const import DOMAIN
 from .filter import filter_values
+from .parser import TEMPERATURE_KEYS
+
+SAMPLE_KEYS = (*TEMPERATURE_KEYS, "temperature_sample_monotonic", "temperature_source")
 
 AUXILIARY_KEYS = {
     "preheater_flow_temperature",
@@ -61,6 +66,9 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         self._notification_check_pending = False
         self._auxiliary_client = auxiliary_client
         self._remove_auxiliary_timer = None
+        self._temperature_task = None
+        self._temperature_sample = None
+        self._pending_temperature_sample = None
         self._disconnected_since: float | None = None
         self._hac1_lost_since: float | None = None
         self._efficiency_reference: float | None = None
@@ -100,16 +108,17 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             self.hass, self._async_update_filter_clock, timedelta(hours=1)
         )
         self._schedule_notification_check()
-        if self._auxiliary_client is not None:
-            self._remove_auxiliary_timer = async_track_time_interval(
-                self.hass, self._async_update_auxiliary, timedelta(seconds=10)
-            )
-            self.hass.async_create_task(self._async_update_auxiliary(None))
-
-    async def _async_update_auxiliary(self, _now) -> None:
-        """Update optional temperatures; failures never affect RS485 data."""
+    async def _async_update_auxiliary(self, sample) -> None:
+        """Fetch water temperatures for this sample, then publish all together."""
         values = await self._auxiliary_client.async_fetch()
+        if sample.get("temperature_sample_monotonic") != self._temperature_sample:
+            # Fast legacy air frames must not repeatedly cancel a slow water
+            # fetch. Pair its result with the newest complete air frame instead.
+            sample = getattr(self, "_pending_temperature_sample", None)
+            if sample is None or sample.get("temperature_sample_monotonic") != self._temperature_sample:
+                return
         merged = dict(self.data)
+        merged.update(sample)
         if values is None:
             merged.update(
                 preheater_sensor_connected=False,
@@ -132,8 +141,22 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
                 merged["preheater_activity"] = "normal"
             else:
                 merged["preheater_activity"] = "high"
+        self._update_derived_temperatures(merged)
         self.async_set_updated_data(merged)
     def _update_derived_temperatures(self, data: dict[str, object]) -> None:
+        # TFAH is water/frost temperature, never the air-before operand.
+        data["heating_coil_air_delta"] = None
+        supply = data.get("supply_temperature")
+        afterheat = data.get("heating_coil_after_temperature")
+        if data.get("temperature_source") == "hac1_snapshot_180_209" and all(
+            isinstance(value, (int, float)) for value in (supply, afterheat)
+        ):
+            data["heating_coil_air_delta"] = round(afterheat - supply, 2)
+        data["supply_extract_delta"] = None
+        data["heat_recovery_efficiency"] = None
+        data["heat_recovery_status"] = None
+        data["heat_recovery_drop"] = None
+        data["heat_recovery_trend"] = None
         supply = data.get("supply_temperature")
         extract = data.get("extract_temperature")
         exhaust = data.get("exhaust_temperature")
@@ -175,6 +198,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         supply_rpm = data.get("supply_fan_rpm")
         if isinstance(extract_rpm, (int, float)) and isinstance(supply_rpm, (int, float)):
             data["fan_rpm_delta"] = round(supply_rpm - extract_rpm)
+        data.update(derive_alarm_values(data))
 
     def _update_filter_history_values(self, data: dict[str, object]) -> None:
         if not self._filter_reset_history:
@@ -241,7 +265,24 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             await self._filter_store.async_save(data)
 
     def async_handle_update(self, data: dict[str, object]) -> None:
-        """Merge decoded traffic with persistent filter data."""
+        """Merge traffic; publish temperature samples only as a complete batch."""
+        if self._auxiliary_client is not None:
+            sample_id = data.get("temperature_sample_monotonic")
+            if sample_id is not None and sample_id != self._temperature_sample:
+                self._temperature_sample = sample_id
+                sample = {key: data[key] for key in SAMPLE_KEYS if key in data}
+                self._pending_temperature_sample = sample
+                if self._temperature_task is None or self._temperature_task.done():
+                    self._temperature_task = self.hass.async_create_task(
+                        self._async_update_auxiliary(sample)
+                    )
+            # Unrelated bus updates must not leak a pending temperature sample.
+            data = dict(data)
+            for key in SAMPLE_KEYS:
+                if key in self.data:
+                    data[key] = self.data[key]
+                else:
+                    data.pop(key, None)
         interval = data.get("filter_interval_days")
         night_mode = data.get("night_mode")
         if isinstance(night_mode, bool) and night_mode != self._night_mode:
@@ -361,6 +402,12 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             self._notification_check_pending = False
 
     async def async_shutdown(self) -> None:
+        if self._temperature_task is not None:
+            self._temperature_task.cancel()
+            try:
+                await self._temperature_task
+            except asyncio.CancelledError:
+                pass
         if self._remove_filter_timer is not None:
             self._remove_filter_timer()
             self._remove_filter_timer = None

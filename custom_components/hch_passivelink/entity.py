@@ -15,7 +15,7 @@ AFTERHEAT_KEYS = {
     "heating_coil_before_temperature",
     "heating_coil_after_temperature",
     "heating_coil_air_delta",
-    "heating_valve_percent",
+    "afterheat_active",
     "afterheat_raw",
 }
 INDOOR_CLIMATE_KEYS = {
@@ -40,6 +40,12 @@ PREHEATER_KEYS = {
     "preheater_water_delta",
     "preheater_activity",
     "preheater_sensor_connected",
+}
+ALARM_KEYS = {
+    "extract_fan_fault", "supply_fan_fault", "outdoor_temperature_sensor_fault",
+    "supply_temperature_sensor_fault", "extract_temperature_sensor_fault",
+    "exhaust_temperature_sensor_fault", "room_temperature_sensor_fault",
+    "outdoor_temperature_low", "supply_temperature_low", "fire_temperature_alarm",
 }
 
 
@@ -72,6 +78,14 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
                 name="Filter",
                 manufacturer="Dantherm",
                 model="HCH5 filtertimer",
+                via_device=(DOMAIN, "hch5_mk1_hac1"),
+            )
+        elif key in ALARM_KEYS:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, "hch5_mk1_hac1_alarms")},
+                name="Alarmer",
+                manufacturer="Dantherm",
+                model="HCH5 derived fault monitoring",
                 via_device=(DOMAIN, "hch5_mk1_hac1"),
             )
         else:

@@ -59,6 +59,9 @@ install -d -o root -g passivelink -m 0750 /etc/dantherm-passivelink
 install -o passivelink -g passivelink -m 0755 \
   "${script_dir}/passivelink_gateway.py" \
   /opt/dantherm-passivelink/passivelink_gateway.py
+install -o passivelink -g passivelink -m 0644 \
+  "${script_dir}/temperature_snapshot.py" \
+  /opt/dantherm-passivelink/temperature_snapshot.py
 
 if [[ ! -x /opt/dantherm-passivelink/venv/bin/python ]]; then
   runuser -u passivelink -- python3 -m venv /opt/dantherm-passivelink/venv
