@@ -22,6 +22,7 @@ INDOOR_CLIMATE_KEYS = {
     "co2",
     "room_temperature",
     "relative_humidity",
+    "measured_relative_humidity",
     "air_quality",
     "air_quality_index",
 }

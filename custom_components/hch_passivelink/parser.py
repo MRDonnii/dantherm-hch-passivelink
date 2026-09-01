@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import time
 from collections import deque
 from collections.abc import Callable
@@ -106,6 +107,9 @@ class DanthermDecoder:
         self._filter_command_until = 0.0
         self._pending_auto_until = 0.0
         self._pending_manual3_until = 0.0
+        self._pending_manual_until = 0.0
+        self._pending_mode_start_pair: tuple[int, int] | None = None
+        self._last_explicit_command_value: int | None = None
         self._external_mode: str | None = None
         self._frame_times: deque[float] = deque()
         self._snapshot_mode = False
@@ -120,6 +124,19 @@ class DanthermDecoder:
                 changed = True
         if changed:
             self._on_update(dict(self.data))
+
+    @staticmethod
+    def _room_relative_humidity(
+        measured_rh: float, sensor_temperature: float, room_temperature: float
+    ) -> float:
+        """Compensate sensor RH to the extract/room-air temperature."""
+        def saturation_pressure(temperature: float) -> float:
+            return 6.112 * math.exp(
+                17.62 * temperature / (243.12 + temperature)
+            )
+
+        return measured_rh * saturation_pressure(sensor_temperature) \
+            / saturation_pressure(room_temperature)
 
     def decode(self, frame: bytes) -> None:
         now = time.monotonic()
@@ -231,24 +248,6 @@ class DanthermDecoder:
                     ),
                 )
             return
-        if slave == 1 and function == 3 and len(frame) == 17 and frame[2] == 12:
-            values = [int.from_bytes(frame[i:i + 2], "big") for i in range(3, 15, 2)]
-            if values[0] == 1 and 0 <= values[3] <= 4095:
-                raw_humidity = values[3]
-                room_temperature = self.data.get("room_temperature", 25.0)
-                if not isinstance(room_temperature, (int, float)):
-                    room_temperature = 25.0
-                linear = (
-                    -2.0468
-                    + 0.0367 * raw_humidity
-                    - 1.5955e-6 * raw_humidity**2
-                )
-                compensated = linear + (room_temperature - 25.0) * (
-                    0.01 + 0.00008 * raw_humidity
-                )
-                if 0 <= compensated <= 100:
-                    self._set(relative_humidity=round(compensated, 1))
-            return
         if slave != 1:
             return
         if function == 4:
@@ -264,7 +263,22 @@ class DanthermDecoder:
                 )
             elif len(values) == 5:
                 raw, extract_rpm, supply_rpm, bypass_raw, status_code = values
+                measured_rh = round(raw * 100 / 255, 1) if 0 < raw <= 255 else None
+                extract_temperature = self.data.get("extract_temperature")
+                exhaust_temperature = self.data.get("exhaust_temperature")
+                calculated_rh = None
+                if measured_rh is not None \
+                        and isinstance(extract_temperature, (int, float)) \
+                        and isinstance(exhaust_temperature, (int, float)):
+                    calculated_rh = round(self._room_relative_humidity(
+                        measured_rh, exhaust_temperature, extract_temperature
+                    ), 1)
                 self._set(
+                    # Danfoss keeps the RH measured at the sensor's local
+                    # temperature and displays the room-equivalent RH after
+                    # compensating it to the extract-air temperature.
+                    measured_relative_humidity=measured_rh,
+                    relative_humidity=calculated_rh,
                     heat_recovery_raw=raw, extract_fan_rpm=extract_rpm,
                     supply_fan_rpm=supply_rpm, bypass_raw=bypass_raw,
                     bypass_active=bypass_raw == 255, status_code=status_code,
@@ -291,15 +305,26 @@ class DanthermDecoder:
             self._set(command_raw=value)
             if value in (189, 200, 205):
                 self._last_explicit_command = now
+                self._last_explicit_command_value = value
             elif value == 172 and now - self._last_explicit_command > 10:
                 self._night_transition_until = now + 2
                 self._night_transition_registers.clear()
             if value == 168:
                 self._filter_command_until = now + 2
             if value == 172:
-                self._pending_auto_until, self._pending_manual3_until = now + 5, 0
+                explicit_auto = (
+                    self._last_explicit_command_value in (200, 205)
+                    and now - self._last_explicit_command <= 2
+                )
+                self._pending_auto_until = now + 5 if explicit_auto else 0
+                self._pending_manual_until = 0 if explicit_auto else now + 5
+                self._pending_manual3_until = 0
+                self._pending_mode_start_pair = self._fan_pair()
+                if explicit_auto:
+                    self._external_mode = "auto"
             elif value == 189:
                 self._pending_manual3_until, self._pending_auto_until = now + 5, 0
+                self._pending_mode_start_pair = self._fan_pair()
         elif register == 168 and now <= self._filter_command_until and 3 <= value <= 12:
             self._set(filter_interval_days=value * 30)
         elif register == 146:
@@ -322,11 +347,26 @@ class DanthermDecoder:
             self._night_transition_until = 0
             self._night_transition_registers.clear()
         manual3_distance = (extract - 85) ** 2 + (supply - 73) ** 2
-        if now <= self._pending_manual3_until and manual3_distance <= 100:
+        pair_changed = self._pending_mode_start_pair is not None and (
+            (extract - self._pending_mode_start_pair[0]) ** 2
+            + (supply - self._pending_mode_start_pair[1]) ** 2 > 16
+        )
+        manual_pair_mode = {
+            (25, 13): "manual_1", (55, 43): "manual_2"
+        }.get((extract, supply))
+        if now <= self._pending_manual_until and pair_changed and manual_pair_mode:
+            self._external_mode = manual_pair_mode
+            self._pending_manual_until = 0.0
+            self._pending_mode_start_pair = None
+        if now <= self._pending_manual3_until and pair_changed and manual3_distance <= 100:
             self._external_mode = "manual_3"
+            self._pending_manual3_until = 0.0
+            self._pending_mode_start_pair = None
         if self._external_mode == "manual_3" and now <= self._pending_auto_until \
-                and manual3_distance > 100:
+                and pair_changed and manual3_distance > 100:
             self._external_mode = "auto"
+            self._pending_auto_until = 0.0
+            self._pending_mode_start_pair = None
         fireplace = extract == 0 and supply > 0 and self._special_mode_flag == 1
         standby = extract == 0 and supply == 0 and self._special_mode_flag == 1
         current_level = min(
@@ -340,13 +380,24 @@ class DanthermDecoder:
             mode = "standby"
         elif (extract, supply) == (100, 88):
             mode = "auto_or_boost"
-        elif self._external_mode == "manual_3":
-            mode = "manual_3"
+        elif self._external_mode in ("manual_1", "manual_2", "manual_3"):
+            mode = self._external_mode
+        elif self._external_mode == "auto":
+            mode = "auto_or_scheduled"
         else:
-            mode = {(25, 13): "manual_1", (55, 43): "manual_2", (85, 73): "manual_3"}.get(
+            # 85/73 is also a normal automatic setpoint. Only label it
+            # manual_3 after an observed command followed by a changed pair.
+            mode = {(25, 13): "manual_1", (55, 43): "manual_2"}.get(
                 (extract, supply), "auto_or_scheduled"
             )
         self._set(
             fireplace=fireplace, standby=standby, current_level=current_level,
             operating_mode=mode,
         )
+
+    def _fan_pair(self) -> tuple[int, int] | None:
+        extract = self.data.get("extract_fan_percent")
+        supply = self.data.get("supply_fan_percent")
+        if isinstance(extract, int) and isinstance(supply, int):
+            return extract, supply
+        return None
