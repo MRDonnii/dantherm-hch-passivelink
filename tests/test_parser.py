@@ -32,6 +32,21 @@ def test_fragmented_temperature_response():
     assert decoder.data["exhaust_temperature"] == 14.42
 
 
+def test_humidity_uses_input_register_4_byte_scaling():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("0104080831084909240869")))
+    decoder.decode(frame(bytes.fromhex("01040a008d0a24090c00400002")))
+    assert decoder.data["measured_relative_humidity"] == 55.3
+    assert decoder.data["relative_humidity"] == 49.4
+
+
+def test_disconnected_humidity_sensor_is_unavailable():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("01040a00000a24090c00ff0002")))
+    assert decoder.data.get("relative_humidity") is None
+    assert decoder.data.get("measured_relative_humidity") is None
+
+
 def test_fan_registers_and_mode():
     decoder = DanthermDecoder(lambda _: None)
     decoder.decode(frame(bytes.fromhex("010600420019")))
@@ -39,6 +54,45 @@ def test_fan_registers_and_mode():
     assert decoder.data["extract_fan_percent"] == 25
     assert decoder.data["supply_fan_percent"] == 13
     assert decoder.data["current_level"] == "level_1"
+
+
+def test_repeated_manual_command_does_not_reclassify_unchanged_auto_pair():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("010600420055")))
+    decoder.decode(frame(bytes.fromhex("010600430049")))
+    decoder.decode(frame(bytes.fromhex("0106008f00bd")))
+    decoder.decode(frame(bytes.fromhex("010600420055")))
+    decoder.decode(frame(bytes.fromhex("010600430049")))
+    assert decoder.data["operating_mode"] == "auto_or_scheduled"
+
+
+def test_manual_command_requires_changed_fan_pair():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("010600420037")))
+    decoder.decode(frame(bytes.fromhex("01060043002b")))
+    decoder.decode(frame(bytes.fromhex("0106008f00bd")))
+    decoder.decode(frame(bytes.fromhex("010600420055")))
+    decoder.decode(frame(bytes.fromhex("010600430049")))
+    assert decoder.data["operating_mode"] == "manual_3"
+
+
+def test_auto_sequence_overrides_manual_level_fan_pair():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("010600420037")))
+    decoder.decode(frame(bytes.fromhex("01060043002b")))
+    decoder.decode(frame(bytes.fromhex("0106008f00c8")))
+    decoder.decode(frame(bytes.fromhex("0106008f00ac")))
+    assert decoder.data["operating_mode"] == "auto_or_scheduled"
+
+
+def test_lone_172_followed_by_level_2_pair_selects_manual_2():
+    decoder = DanthermDecoder(lambda _: None)
+    decoder.decode(frame(bytes.fromhex("01060042003c")))
+    decoder.decode(frame(bytes.fromhex("010600430030")))
+    decoder.decode(frame(bytes.fromhex("0106008f00ac")))
+    decoder.decode(frame(bytes.fromhex("010600420037")))
+    decoder.decode(frame(bytes.fromhex("01060043002b")))
+    assert decoder.data["operating_mode"] == "manual_2"
 
 
 def test_hac1_connected_bitfield():

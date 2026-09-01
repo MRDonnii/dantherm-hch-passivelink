@@ -18,6 +18,7 @@
       "co2": {"name": "CO₂"},
       "room_temperature": {"name": "Hustemperatur"},
       "relative_humidity": {"name": "Relativ luftfugtighed"},
+      "measured_relative_humidity": {"name": "Målt relativ luftfugtighed"},
       "afterheat_setpoint": {"name": "Indblæsning setpoint"},
       "heating_coil_before_temperature": {"name": "Luft før varmeflade"},
       "heating_coil_after_temperature": {"name": "Luft efter varmeflade"},
