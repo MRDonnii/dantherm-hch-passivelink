@@ -359,30 +359,29 @@ Efter genstart vises følernes unikke adresser således:
 ls -1 /sys/bus/w1/devices/28-*
 ```
 
-Installér den separate HTTP-tjeneste fra projektmappen:
+Installér den separate HTTP-tjeneste med installeren (kør igen med samme
+`--device`, den er idempotent):
 
 ```bash
-sudo useradd --system --home /opt/dantherm-passivelink --shell /usr/sbin/nologin passivelink 2>/dev/null || true
-sudo install -d -o passivelink -g passivelink /opt/dantherm-passivelink
-sudo install -d -o root -g passivelink -m 0750 /etc/dantherm-passivelink
-sudo install -o passivelink -g passivelink -m 0755 gateway/onewire_temperature_server.py /opt/dantherm-passivelink/
-sudo install -o root -g root -m 0644 gateway/dantherm-passivelink-onewire.service /etc/systemd/system/
-sudo cp gateway/onewire.example.json /etc/dantherm-passivelink/onewire.json
-sudo chown root:passivelink /etc/dantherm-passivelink/onewire.json
-sudo chmod 0640 /etc/dantherm-passivelink/onewire.json
+sudo gateway/install.sh --device /dev/serial/by-id/YOUR_ADAPTER --enable-onewire
 ```
+
+Dette opretter `/etc/dantherm-passivelink/onewire.json` (hvis den ikke findes),
+tilføjer `passivelink`-brugeren til `video`-gruppen (nødvendigt for at læse
+Pi-diagnostik via `vcgencmd`), og starter `dantherm-passivelink-onewire.service`.
+Brug `--onewire-port` hvis port 4197 allerede er i brug. Kør installeren uden
+flaget for kun at opdatere RS485-broen.
 
 Tjenesten finder automatisk to tilsluttede DS18B20-følere. Adresser kan stadig
 låses i `/etc/dantherm-passivelink/onewire.json`, men hvis de gemte adresser
-ikke findes, bruges de to fundne følere automatisk. Start derefter:
+ikke findes, bruges de to fundne følere automatisk. Verificér med:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now dantherm-passivelink-onewire.service
 curl http://127.0.0.1:4197/temperatures
 ```
 
-Et normalt svar indeholder `available: true` og begge temperaturer. I Home
+Et normalt svar indeholder `available: true` og begge temperaturer, samt en
+række `pi_*`-felter med Raspberry Pi-diagnostik (se nedenfor). I Home
 Assistant åbnes **Indstillinger → Enheder og tjenester → Dantherm HCH
 PassiveLink → Konfigurer**. Aktivér de valgfrie vandforvarmefølere, angiv Pi'ens
 IP-adresse og port `4197`. Der oprettes en særskilt enhed med fremtemperatur,
@@ -392,3 +391,19 @@ det kræver ingen ændring på Pi'en.
 
 Delta-T viser, at vandkredsen faktisk overfører varme, men er ikke en måling i
 kW. En rigtig effektberegning kræver desuden en kalibreret måling af vandflowet.
+
+## Raspberry Pi-diagnostik (valgfri)
+
+Så snart de valgfrie vandforvarmefølere er aktiveret i Home Assistant (samme
+indstilling som ovenfor), oprettes der automatisk en separat **Raspberry
+Pi**-enhed - uanset om DS18B20-følerne faktisk er tilsluttet. Den indeholder:
+
+- CPU-temperatur, kernespænding, belastning, hukommelse og diskforbrug
+- Model og kernel-version
+- Underspænding, neddrosling, frekvensbegrænsning og blød temperaturgrænse -
+  både den aktuelle tilstand og om det er sket siden sidste genstart
+
+Disse data kommer fra `vcgencmd` og `/proc`/`/sys` på Pi'en og siger derfor
+intet om selve Dantherm-anlægget. De findes udelukkende for at kunne se, om
+Pi'en selv har et strøm- eller varmeproblem (fx en for svag strømforsyning),
+adskilt fra RS485-forbindelsen.

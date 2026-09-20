@@ -58,6 +58,14 @@
       ,"preheater_return_temperature": {"name": "Returtemperatur"}
       ,"preheater_water_delta": {"name": "Vand delta-T"}
       ,"preheater_activity": {"name": "Varmeoverførsel", "state": {"inactive": "Ingen", "low": "Lav", "normal": "Normal", "high": "Høj"}}
+      ,"pi_cpu_temperature": {"name": "CPU-temperatur"}
+      ,"pi_uptime_seconds": {"name": "Oppetid"}
+      ,"pi_load_average_1m": {"name": "Belastning (1 min)"}
+      ,"pi_memory_used_percent": {"name": "Hukommelse brugt"}
+      ,"pi_disk_used_percent": {"name": "Disk brugt"}
+      ,"pi_core_voltage": {"name": "Kernespænding"}
+      ,"pi_model": {"name": "Model"}
+      ,"pi_kernel_version": {"name": "Kernel-version"}
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass aktiv"},
@@ -79,6 +87,14 @@
       "supply_temperature_low": {"name": "Alarm: indblæsning under 5 °C"},
       "fire_temperature_alarm": {"name": "Alarm: brandtemperatur over 70 °C"}
       ,"preheater_sensor_connected": {"name": "Temperaturfølere forbundet"}
+      ,"pi_undervoltage_now": {"name": "Underspænding"}
+      ,"pi_undervoltage_occurred": {"name": "Underspænding siden opstart"}
+      ,"pi_throttled_now": {"name": "Neddroslet"}
+      ,"pi_throttled_occurred": {"name": "Neddroslet siden opstart"}
+      ,"pi_frequency_capped_now": {"name": "Frekvensbegrænset"}
+      ,"pi_frequency_capped_occurred": {"name": "Frekvensbegrænset siden opstart"}
+      ,"pi_soft_temp_limit_now": {"name": "Blød temperaturgrænse"}
+      ,"pi_soft_temp_limit_occurred": {"name": "Blød temperaturgrænse siden opstart"}
     },
     "button": {
       "filter_reset": {"name": "Nulstil filterinterval"}

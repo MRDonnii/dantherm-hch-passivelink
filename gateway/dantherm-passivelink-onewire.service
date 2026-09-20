@@ -7,6 +7,7 @@ Wants=network-online.target
 Type=simple
 User=passivelink
 Group=passivelink
+SupplementaryGroups=video
 WorkingDirectory=/opt/dantherm-passivelink
 ExecStart=/usr/bin/python3 /opt/dantherm-passivelink/onewire_temperature_server.py --config /etc/dantherm-passivelink/onewire.json --bind 0.0.0.0 --port 4197
 Restart=always

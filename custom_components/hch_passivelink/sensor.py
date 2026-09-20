@@ -6,6 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
+    UnitOfElectricPotential,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -15,7 +16,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .coordinator import PassiveLinkCoordinator
-from .entity import PREHEATER_KEYS, PassiveLinkEntity
+from .entity import PI_KEYS, PREHEATER_KEYS, PassiveLinkEntity
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -71,6 +72,14 @@ DESCRIPTIONS = (
     Description(key="status_code", translation_key="status_code", entity_category=EntityCategory.DIAGNOSTIC, entity_registry_enabled_default=False),
     Description(key="afterheat_raw", translation_key="afterheat_raw", entity_category=EntityCategory.DIAGNOSTIC, entity_registry_enabled_default=False),
     Description(key="command_raw", translation_key="command_raw", entity_category=EntityCategory.DIAGNOSTIC, entity_registry_enabled_default=False),
+    Description(key="pi_cpu_temperature", translation_key="pi_cpu_temperature", native_unit_of_measurement=UnitOfTemperature.CELSIUS, device_class=SensorDeviceClass.TEMPERATURE, state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC),
+    Description(key="pi_uptime_seconds", translation_key="pi_uptime_seconds", native_unit_of_measurement=UnitOfTime.SECONDS, device_class=SensorDeviceClass.DURATION, entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:timer-outline"),
+    Description(key="pi_load_average_1m", translation_key="pi_load_average_1m", state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:speedometer"),
+    Description(key="pi_memory_used_percent", translation_key="pi_memory_used_percent", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:memory"),
+    Description(key="pi_disk_used_percent", translation_key="pi_disk_used_percent", native_unit_of_measurement=PERCENTAGE, state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC, icon="mdi:harddisk"),
+    Description(key="pi_core_voltage", translation_key="pi_core_voltage", native_unit_of_measurement=UnitOfElectricPotential.VOLT, device_class=SensorDeviceClass.VOLTAGE, state_class=SensorStateClass.MEASUREMENT, entity_category=EntityCategory.DIAGNOSTIC),
+    Description(key="pi_model", translation_key="pi_model", entity_category=EntityCategory.DIAGNOSTIC, entity_registry_enabled_default=False, icon="mdi:raspberry-pi"),
+    Description(key="pi_kernel_version", translation_key="pi_kernel_version", entity_category=EntityCategory.DIAGNOSTIC, entity_registry_enabled_default=False, icon="mdi:linux"),
 )
 
 
@@ -116,6 +125,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     async_add_entities(
         PassiveLinkSensor(coordinator, description)
         for description in DESCRIPTIONS
-        if description.key not in PREHEATER_KEYS
+        if description.key not in PREHEATER_KEYS | PI_KEYS
         or coordinator._auxiliary_client is not None
     )

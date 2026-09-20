@@ -58,6 +58,14 @@
       ,"preheater_return_temperature": {"name": "Return temperature"}
       ,"preheater_water_delta": {"name": "Water delta T"}
       ,"preheater_activity": {"name": "Heat transfer", "state": {"inactive": "None", "low": "Low", "normal": "Normal", "high": "High"}}
+      ,"pi_cpu_temperature": {"name": "CPU temperature"}
+      ,"pi_uptime_seconds": {"name": "Uptime"}
+      ,"pi_load_average_1m": {"name": "Load average (1 min)"}
+      ,"pi_memory_used_percent": {"name": "Memory used"}
+      ,"pi_disk_used_percent": {"name": "Disk used"}
+      ,"pi_core_voltage": {"name": "Core voltage"}
+      ,"pi_model": {"name": "Model"}
+      ,"pi_kernel_version": {"name": "Kernel version"}
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass active"},
@@ -79,6 +87,14 @@
       "supply_temperature_low": {"name": "Alarm: supply air below 5 °C"},
       "fire_temperature_alarm": {"name": "Alarm: fire temperature above 70 °C"}
       ,"preheater_sensor_connected": {"name": "Temperature sensors connected"}
+      ,"pi_undervoltage_now": {"name": "Undervoltage"}
+      ,"pi_undervoltage_occurred": {"name": "Undervoltage since boot"}
+      ,"pi_throttled_now": {"name": "Throttled"}
+      ,"pi_throttled_occurred": {"name": "Throttled since boot"}
+      ,"pi_frequency_capped_now": {"name": "Frequency capped"}
+      ,"pi_frequency_capped_occurred": {"name": "Frequency capped since boot"}
+      ,"pi_soft_temp_limit_now": {"name": "Soft temperature limit"}
+      ,"pi_soft_temp_limit_occurred": {"name": "Soft temperature limit since boot"}
     },
     "button": {
       "filter_reset": {"name": "Reset filter interval"}
