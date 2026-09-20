@@ -101,6 +101,8 @@ Two derived temperature sensors: extraction-side heat-recovery efficiency and th
 
 An optional water-preheater extension can read two DS18B20 probes connected to a Raspberry Pi. It exposes flow, return, water delta-T, heat-transfer state and sensor connectivity as a separate Home Assistant device. The extension is disabled by default and deliberately isolated from the RS485 connection: missing probes, a stopped temperature service or an unreachable Pi only make these optional entities unavailable. The main Dantherm integration continues normally.
 
+Enabling that same extension also creates a separate **Raspberry Pi** device — even without DS18B20 probes attached — reporting the gateway host's own health: CPU temperature, core voltage, load average, memory/disk use, model/kernel version, and undervoltage/throttling/frequency-capping flags (both "right now" and "since the last boot"). This is diagnostic information about the Pi itself, not the Dantherm unit.
+
 Valid heat-recovery measurements are classified as good (85% or higher), acceptable (70–84.9%) or low. PassiveLink learns a slowly changing local reference and reports the drop as normal, watch (7.5 percentage points) or degraded (12.5 percentage points). Bypass and invalid temperature spans are excluded. Fan-control and RPM deltas are change indicators, not calibrated airflow measurements.
 
 A "Reset filter interval" button lets you mark the filter as changed from Home Assistant — it only resets the locally tracked cycle and never writes to the bus. If the gateway connection or the HAC1 module stays unreachable for more than 15 minutes, PassiveLink raises a Home Assistant Repairs issue and clears it automatically once the link recovers.

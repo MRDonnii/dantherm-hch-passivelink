@@ -128,11 +128,22 @@ Place one 4.7 kΩ pull-up resistor between Data/GPIO4 and 3.3 V. Never apply
 ls -1 /sys/bus/w1/devices/28-*
 ```
 
-Follow the optional section in the
-[complete Danish guide](raspberry-pi-gateway.da.md) to install the temperature
-service. In the Home Assistant integration options, enable the water-preheater
-extension and enter port `4197`. Flow and return can be swapped in the same
-options screen without rewiring.
+Install the temperature service with the installer (safe to re-run with the
+same `--device`):
+
+```bash
+sudo gateway/install.sh --device /dev/serial/by-id/YOUR_ADAPTER --enable-onewire
+```
+
+This also adds `passivelink` to the `video` group, needed to read Pi
+diagnostics via `vcgencmd`. Use `--onewire-port` if 4197 is already taken. See
+the [complete Danish guide](raspberry-pi-gateway.da.md) for the full manual
+steps and the Raspberry Pi diagnostics device (CPU temperature, voltage,
+undervoltage/throttling flags, memory and disk use). In the Home Assistant
+integration options, enable the water-preheater extension and enter port
+`4197`. Flow and return can be swapped in the same options screen without
+rewiring; the Raspberry Pi diagnostics device is created automatically once
+this option is enabled, even without DS18B20 probes attached.
 
 ## Troubleshooting
 

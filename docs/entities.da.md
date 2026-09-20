@@ -46,6 +46,19 @@ temperaturer fra forskellige måletidspunkter.
 | Fremløb, retur, vand delta-T, varmeoverførsel og temperaturfølere forbundet | Valgfri DS18B20-forvarmeudvidelse. Fejl her påvirker ikke RS485-delen. |
 | Filterinterval, dage, restlevetid, status, alarm, seneste og antal skift | Lokal filtercyklus synkroniseret med observeret HCP4-data. Nulstilling skriver aldrig til bussen. |
 
+## Raspberry Pi
+
+Kun til stede når de valgfrie vandforvarmefølere er aktiveret i integrationens
+indstillinger (uanset om DS18B20-følerne faktisk er tilsluttet). Ligger på en
+separat enhed **Raspberry Pi** og siger noget om Pi'ens egen sundhed, ikke om
+Dantherm-anlægget.
+
+| Entitet | Betydning og kilde |
+| --- | --- |
+| CPU-temperatur, kernespænding, belastning (1 min), hukommelse og disk brugt | Læst direkte fra `/sys`, `/proc` og `vcgencmd` på Pi'en. |
+| Model, kernel-version | Statisk hardware-/OS-identifikation, deaktiveret som standard. |
+| Underspænding, neddroslet, frekvensbegrænset, blød temperaturgrænse (nu / siden opstart) | `vcgencmd get_throttled`-bitmasken. "Nu" er den aktuelle tilstand; "siden opstart" forbliver sand indtil næste genstart, selv efter tilstanden er normaliseret igen. |
+
 ## Drift og rådiagnostik
 
 HAC1-forbindelse, RS485-bustrafik og telegrammer pr. minut er

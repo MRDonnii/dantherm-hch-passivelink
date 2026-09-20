@@ -18,3 +18,25 @@ CONF_PREHEATER_SENSOR_PORT = "preheater_sensor_port"
 CONF_PREHEATER_SWAP_SENSORS = "preheater_swap_sensors"
 DEFAULT_PREHEATER_SENSOR_PORT = 4197
 DEFAULT_FILTER_NOTIFY_DAYS = 30
+
+# Raspberry Pi host diagnostics - reported by the same optional endpoint
+# (gateway/onewire_temperature_server.py) independently of whether DS18B20
+# preheater sensors are configured.
+PI_DIAGNOSTIC_KEYS = (
+    "pi_model",
+    "pi_kernel_version",
+    "pi_cpu_temperature",
+    "pi_uptime_seconds",
+    "pi_load_average_1m",
+    "pi_memory_used_percent",
+    "pi_disk_used_percent",
+    "pi_core_voltage",
+    "pi_undervoltage_now",
+    "pi_undervoltage_occurred",
+    "pi_frequency_capped_now",
+    "pi_frequency_capped_occurred",
+    "pi_throttled_now",
+    "pi_throttled_occurred",
+    "pi_soft_temp_limit_now",
+    "pi_soft_temp_limit_occurred",
+)

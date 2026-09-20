@@ -6,9 +6,15 @@ import asyncio
 
 from aiohttp import ClientError, ClientSession
 
+from .const import PI_DIAGNOSTIC_KEYS
+
 
 class AuxiliaryTemperatureClient:
-    """Fetch optional DS18B20 values without affecting the RS485 client."""
+    """Fetch optional DS18B20 and Raspberry Pi diagnostic values.
+
+    The two are independent: a Pi without DS18B20 sensors attached can still
+    report host diagnostics, and vice versa. Neither affects the RS485 client.
+    """
 
     def __init__(
         self, session: ClientSession, host: str, port: int, *, swap_sensors: bool
@@ -25,18 +31,23 @@ class AuxiliaryTemperatureClient:
                 payload = await response.json()
         except (TimeoutError, ClientError, ValueError):
             return None
-        if not isinstance(payload, dict) or not payload.get("available"):
+        if not isinstance(payload, dict):
             return None
+        result: dict[str, object] = {}
         flow = payload.get("flow_temperature")
         return_temp = payload.get("return_temperature")
-        if not isinstance(flow, (int, float)) or not isinstance(
-            return_temp, (int, float)
+        if (
+            payload.get("available")
+            and isinstance(flow, (int, float))
+            and isinstance(return_temp, (int, float))
         ):
-            return None
-        if self._swap_sensors:
-            flow, return_temp = return_temp, flow
-        return {
-            "preheater_flow_temperature": round(float(flow), 2),
-            "preheater_return_temperature": round(float(return_temp), 2),
-            "preheater_sensor_connected": True,
-        }
+            if self._swap_sensors:
+                flow, return_temp = return_temp, flow
+            result.update(
+                preheater_flow_temperature=round(float(flow), 2),
+                preheater_return_temperature=round(float(return_temp), 2),
+                preheater_sensor_connected=True,
+            )
+        if payload.get("pi_diagnostics_available"):
+            result.update((key, payload.get(key)) for key in PI_DIAGNOSTIC_KEYS)
+        return result or None

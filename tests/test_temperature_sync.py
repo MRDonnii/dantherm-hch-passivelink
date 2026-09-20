@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "gateway"))
 
 from parser import DanthermDecoder, RtuStreamParser, TEMPERATURE_KEYS, crc16
 from alarms import derive_alarm_values
+from const import PI_DIAGNOSTIC_KEYS
 
 
 def frame(body):
@@ -103,7 +104,8 @@ def coordinator_class():
     ns = dict(asyncio=asyncio, logging=logging, time=time, datetime=datetime.datetime,
               timedelta=datetime.timedelta, timezone=datetime.timezone,
               TEMPERATURE_KEYS=TEMPERATURE_KEYS, DataUpdateCoordinator=Base,
-              HomeAssistant=object, derive_alarm_values=derive_alarm_values)
+              HomeAssistant=object, derive_alarm_values=derive_alarm_values,
+              PI_DIAGNOSTIC_KEYS=PI_DIAGNOSTIC_KEYS)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), "coordinator.py", "exec"), ns)
     return ns["PassiveLinkCoordinator"]
 
@@ -164,6 +166,26 @@ class CoordinatorTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(c.data["preheater_flow_temperature"])
         self.assertFalse(c.data["preheater_sensor_connected"])
         self.assertEqual(c.data["heating_coil_air_delta"], 0.)
+
+    async def test_pi_diagnostics_publish_without_preheater_sensors(self):
+        cls = coordinator_class()
+        c = object.__new__(cls)
+        c.data = {"preheater_flow_temperature": 30., "preheater_return_temperature": 29.}
+        c.updates = []
+        c._temperature_sample = 2.
+        c._efficiency_reference = None
+        async def fetch():
+            return {"pi_cpu_temperature": 41.2, "pi_undervoltage_occurred": True}
+        c._auxiliary_client = SimpleNamespace(async_fetch=fetch)
+        sample = dict(zip(TEMPERATURE_KEYS, [20.] * 7), temperature_sample_monotonic=2.,
+                      temperature_source="hac1_snapshot_180_209")
+        await c._async_update_auxiliary(sample)
+        self.assertEqual(c.data["pi_cpu_temperature"], 41.2)
+        self.assertTrue(c.data["pi_undervoltage_occurred"])
+        # A Pi without DS18B20 sensors still clears preheater state, same as
+        # a failed water fetch - the two are independent, not all-or-nothing.
+        self.assertIsNone(c.data["preheater_flow_temperature"])
+        self.assertFalse(c.data["preheater_sensor_connected"])
 
     async def test_obsolete_sample_cannot_commit(self):
         cls = coordinator_class()

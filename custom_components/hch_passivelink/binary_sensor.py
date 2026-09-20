@@ -6,7 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .entity import PREHEATER_KEYS, PassiveLinkEntity
+from .entity import PI_KEYS, PREHEATER_KEYS, PassiveLinkEntity
 
 DESCRIPTIONS = (
     BinarySensorEntityDescription(key="bypass_active", translation_key="bypass_active", device_class=BinarySensorDeviceClass.OPENING),
@@ -28,6 +28,14 @@ DESCRIPTIONS = (
     BinarySensorEntityDescription(key="supply_temperature_low", translation_key="supply_temperature_low", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
     BinarySensorEntityDescription(key="fire_temperature_alarm", translation_key="fire_temperature_alarm", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
     BinarySensorEntityDescription(key="preheater_sensor_connected", translation_key="preheater_sensor_connected", device_class=BinarySensorDeviceClass.CONNECTIVITY, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="pi_undervoltage_now", translation_key="pi_undervoltage_now", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="pi_undervoltage_occurred", translation_key="pi_undervoltage_occurred", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="pi_throttled_now", translation_key="pi_throttled_now", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="pi_throttled_occurred", translation_key="pi_throttled_occurred", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="pi_frequency_capped_now", translation_key="pi_frequency_capped_now", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="pi_frequency_capped_occurred", translation_key="pi_frequency_capped_occurred", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="pi_soft_temp_limit_now", translation_key="pi_soft_temp_limit_now", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
+    BinarySensorEntityDescription(key="pi_soft_temp_limit_occurred", translation_key="pi_soft_temp_limit_occurred", device_class=BinarySensorDeviceClass.PROBLEM, entity_category=EntityCategory.DIAGNOSTIC),
 )
 
 
@@ -46,6 +54,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     async_add_entities(
         PassiveLinkBinarySensor(coordinator, description)
         for description in DESCRIPTIONS
-        if description.key not in PREHEATER_KEYS
+        if description.key not in PREHEATER_KEYS | PI_KEYS
         or coordinator._auxiliary_client is not None
     )

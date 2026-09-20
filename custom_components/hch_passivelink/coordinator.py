@@ -13,7 +13,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .alarms import derive_alarm_values
-from .const import DOMAIN
+from .const import DOMAIN, PI_DIAGNOSTIC_KEYS
 from .filter import filter_values
 from .parser import TEMPERATURE_KEYS
 
@@ -25,6 +25,7 @@ AUXILIARY_KEYS = {
     "preheater_water_delta",
     "preheater_activity",
     "preheater_sensor_connected",
+    *PI_DIAGNOSTIC_KEYS,
 }
 
 STORE_VERSION = 1
@@ -109,8 +110,12 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         )
         self._schedule_notification_check()
     async def _async_update_auxiliary(self, sample) -> None:
-        """Fetch water temperatures for this sample, then publish all together."""
-        values = await self._auxiliary_client.async_fetch()
+        """Fetch water temperatures and Pi diagnostics, then publish together.
+
+        The two are independent: a Pi without DS18B20 sensors attached can
+        still report host diagnostics, and vice versa.
+        """
+        values = await self._auxiliary_client.async_fetch() or {}
         if sample.get("temperature_sample_monotonic") != self._temperature_sample:
             # Fast legacy air frames must not repeatedly cancel a slow water
             # fetch. Pair its result with the newest complete air frame instead.
@@ -119,16 +124,8 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
                 return
         merged = dict(self.data)
         merged.update(sample)
-        if values is None:
-            merged.update(
-                preheater_sensor_connected=False,
-                preheater_flow_temperature=None,
-                preheater_return_temperature=None,
-                preheater_water_delta=None,
-                preheater_activity=None,
-            )
-        else:
-            merged.update(values)
+        merged.update(values)
+        if "preheater_flow_temperature" in values:
             flow = values["preheater_flow_temperature"]
             return_temp = values["preheater_return_temperature"]
             delta = round(abs(flow - return_temp), 2)
@@ -141,6 +138,14 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
                 merged["preheater_activity"] = "normal"
             else:
                 merged["preheater_activity"] = "high"
+        else:
+            merged.update(
+                preheater_sensor_connected=False,
+                preheater_flow_temperature=None,
+                preheater_return_temperature=None,
+                preheater_water_delta=None,
+                preheater_activity=None,
+            )
         self._update_derived_temperatures(merged)
         self.async_set_updated_data(merged)
     def _update_derived_temperatures(self, data: dict[str, object]) -> None:

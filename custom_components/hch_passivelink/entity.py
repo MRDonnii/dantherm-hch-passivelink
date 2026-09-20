@@ -3,7 +3,7 @@
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, PI_DIAGNOSTIC_KEYS
 from .coordinator import PassiveLinkCoordinator
 
 AFTERHEAT_KEYS = {
@@ -42,6 +42,7 @@ PREHEATER_KEYS = {
     "preheater_activity",
     "preheater_sensor_connected",
 }
+PI_KEYS = set(PI_DIAGNOSTIC_KEYS)
 ALARM_KEYS = {
     "extract_fan_fault", "supply_fan_fault", "outdoor_temperature_sensor_fault",
     "supply_temperature_sensor_fault", "extract_temperature_sensor_fault",
@@ -71,6 +72,14 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
                 name="Eftervarme",
                 manufacturer="Dantherm",
                 model="HAC1 eftervarme",
+                via_device=(DOMAIN, "hch5_mk1_hac1"),
+            )
+        elif key in PI_KEYS:
+            self._attr_device_info = DeviceInfo(
+                identifiers={(DOMAIN, "hch5_mk1_hac1_pi")},
+                name="Raspberry Pi",
+                manufacturer="Raspberry Pi Foundation",
+                model="PassiveLink gateway host",
                 via_device=(DOMAIN, "hch5_mk1_hac1"),
             )
         elif key in FILTER_KEYS:
