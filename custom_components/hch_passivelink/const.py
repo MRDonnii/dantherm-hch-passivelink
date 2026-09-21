@@ -19,6 +19,35 @@ CONF_PREHEATER_SWAP_SENSORS = "preheater_swap_sensors"
 DEFAULT_PREHEATER_SENSOR_PORT = 4197
 DEFAULT_FILTER_NOTIFY_DAYS = 30
 
+# Raspberry Pi controller API. This is separate from the receive-only RTU/TCP
+# stream: HA sends intent to the Pi controller, never Modbus writes.
+CONF_CONTROLLER_API_ENABLED = "controller_api_enabled"
+CONF_CONTROLLER_HOST = "controller_host"
+CONF_CONTROLLER_PORT = "controller_port"
+CONF_CONTROLLER_TOKEN = "controller_token"
+DEFAULT_CONTROLLER_PORT = 8080
+CONF_SMART_ROOMS_ENABLED = "smart_rooms_enabled"
+CONF_SMART_INPUT_VALID_FOR = "smart_input_valid_for"
+DEFAULT_SMART_INPUT_VALID_FOR = 180
+ROOM_SLOT_COUNT = 8
+
+
+def room_name_key(slot: int) -> str:
+    return f"smart_room_{slot}_name"
+
+
+def room_temperature_key(slot: int) -> str:
+    return f"smart_room_{slot}_temperature"
+
+
+def room_humidity_key(slot: int) -> str:
+    return f"smart_room_{slot}_humidity"
+
+
+def room_co2_key(slot: int) -> str:
+    return f"smart_room_{slot}_co2"
+
+
 # Raspberry Pi host diagnostics - reported by the same optional endpoint
 # (gateway/onewire_temperature_server.py) independently of whether DS18B20
 # preheater sensors are configured.
