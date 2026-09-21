@@ -38,6 +38,23 @@ class ControllerLevelSelect(ControllerEntity, SelectEntity):
         await self.async_command({"mode": "manual", "manual_level": int(option)})
 
 
+class FireplaceDurationSelect(ControllerEntity, SelectEntity):
+    _attr_options = ["Slukket", "15 min", "30 min"]
+    _attr_icon = "mdi:fireplace"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "fireplace_duration_minutes", "Pejsetid")
+
+    @property
+    def current_option(self) -> str | None:
+        minutes = int(self.coordinator.controller_state.get("fireplace_duration_minutes") or 0)
+        return {0: "Slukket", 15: "15 min", 30: "30 min"}.get(minutes, "Slukket")
+
+    async def async_select_option(self, option: str) -> None:
+        minutes = {"Slukket": 0, "15 min": 15, "30 min": 30}[option]
+        await self.async_command({"fireplace_minutes": minutes})
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -58,4 +75,5 @@ async def async_setup_entry(
             "Bypass",
             ["auto", "open", "closed"],
         ),
+        FireplaceDurationSelect(coordinator),
     ])
