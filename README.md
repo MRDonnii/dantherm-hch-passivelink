@@ -79,6 +79,8 @@ A detailed Danish explanation of the findings is available in [docs/findings.da.
 
 ### Raspberry Pi gateway project
 
+For a complete Raspberry Pi OS / Debian / Ubuntu installation with the receive-only gateway, responsive WebUI, first-user login, history, diagnostics and system administration, use the companion [Dantherm HCH PassiveLink WebUI repository](https://github.com/MRDonnii/dantherm-hch-passivelink-webui). Its installer provides the raw TCP endpoint consumed by this Home Assistant integration.
+
 The [`gateway/`](gateway/) folder is a self-contained, low-cost Raspberry Pi
 project with the receive-only bridge, systemd services, a reusable
 configuration file and an installer. It is suitable for a Raspberry Pi 2B or
