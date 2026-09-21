@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfTemperature, UnitOfTime
+from homeassistant.const import PERCENTAGE, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -24,7 +24,6 @@ class NumberSpec:
 
 
 SPECS = (
-    NumberSpec("afterheat_setpoint", "Eftervarme setpunkt", 18, 30, 1, UnitOfTemperature.CELSIUS, "mdi:radiator"),
     NumberSpec("rh_setpoint", "RH setpunkt", 25, 80, 1, PERCENTAGE, "mdi:water-percent"),
     NumberSpec("rh_hysteresis", "RH hysterese", 1, 10, 1, PERCENTAGE, "mdi:arrow-expand-vertical"),
     NumberSpec("co2_setpoint", "CO₂ setpunkt", 500, 2000, 50, "ppm", "mdi:molecule-co2"),
