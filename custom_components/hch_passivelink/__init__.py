@@ -1,4 +1,4 @@
-"""HCH PassiveLink integration."""
+"""HCH5 Control integration."""
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -56,6 +56,7 @@ PLATFORMS = [
     Platform.FAN,
     Platform.SELECT,
     Platform.NUMBER,
+    Platform.SWITCH,
 ]
 PassiveLinkConfigEntry = ConfigEntry[SmartPassiveLinkCoordinator]
 
@@ -91,7 +92,6 @@ def _room_sources(config: dict) -> list[dict[str, object]]:
                 result.append(source)
         return result
 
-    # Backwards compatibility for beta installs using smart_room_1..8 fields.
     result = []
     for slot in range(1, ROOM_SLOT_COUNT + 1):
         name = str(config.get(room_name_key(slot), "")).strip()
@@ -117,7 +117,6 @@ def _room_sources(config: dict) -> list[dict[str, object]]:
 
 
 async def _async_reload_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) -> None:
-    """Reload after connection/controller options change."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
@@ -126,19 +125,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
     connection_type = config.get(CONF_CONNECTION_TYPE, CONNECTION_TCP)
     if connection_type == CONNECTION_SERIAL:
         client = PassiveSerialClient(config[CONF_SERIAL_PORT], lambda _: None)
-        task_name = "Dantherm HCH PassiveLink USB-RS485"
+        task_name = "HCH5 Control USB-RS485"
     else:
         client = PassiveLinkClient(config[CONF_HOST], config[CONF_PORT], lambda _: None)
-        task_name = "Dantherm HCH PassiveLink TCP"
+        task_name = "HCH5 Control TCP"
 
     session = async_get_clientsession(hass)
     controller_client = None
     if config.get(CONF_CONTROLLER_API_ENABLED, False):
-        controller_host = str(
-            config.get(CONF_CONTROLLER_HOST)
-            or config.get(CONF_HOST)
-            or "127.0.0.1"
-        ).strip()
+        controller_host = str(config.get(CONF_CONTROLLER_HOST) or config.get(CONF_HOST) or "127.0.0.1").strip()
         controller_token = str(config.get(CONF_CONTROLLER_TOKEN, "")).strip()
         if controller_host and controller_token:
             controller_client = ControllerApiClient(
@@ -159,8 +154,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
         auxiliary_client=(
             AuxiliaryTemperatureClient(
                 session,
-                config.get(CONF_PREHEATER_SENSOR_HOST)
-                or config.get(CONF_HOST, "127.0.0.1"),
+                config.get(CONF_PREHEATER_SENSOR_HOST) or config.get(CONF_HOST, "127.0.0.1"),
                 config.get(CONF_PREHEATER_SENSOR_PORT, DEFAULT_PREHEATER_SENSOR_PORT),
                 swap_sensors=config.get(CONF_PREHEATER_SWAP_SENSORS, False),
             )
@@ -169,9 +163,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
         ),
         controller_client=controller_client,
         room_sources=_room_sources(config),
-        smart_input_valid_for=config.get(
-            CONF_SMART_INPUT_VALID_FOR, DEFAULT_SMART_INPUT_VALID_FOR
-        ),
+        smart_input_valid_for=config.get(CONF_SMART_INPUT_VALID_FOR, DEFAULT_SMART_INPUT_VALID_FOR),
     )
     await coordinator.async_load_filter_state()
     client.set_update_callback(coordinator.async_handle_update)
@@ -186,11 +178,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
 async def async_remove_config_entry_device(
     hass: HomeAssistant, entry: PassiveLinkConfigEntry, device_entry: dr.DeviceEntry
 ) -> bool:
-    """Allow removing a device that no longer has any entities."""
     registry = er.async_get(hass)
-    return not er.async_entries_for_device(
-        registry, device_entry.id, include_disabled_entities=True
-    )
+    return not er.async_entries_for_device(registry, device_entry.id, include_disabled_entities=True)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) -> bool:
