@@ -40,13 +40,25 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             raise ConnectionError("Controller API is not configured")
         return await self.controller_client.async_command(patch)
 
-    def _room_payload(self) -> dict[str, dict[str, float]]:
-        rooms: dict[str, dict[str, float]] = {}
+    def _room_payload(self) -> dict[str, dict[str, object]]:
+        """Build leased room observations plus controller metadata.
+
+        HA remains only a sensor catalogue/frontend. Priority and control flags
+        are hints to the Pi; all demand calculation stays on the controller.
+        """
+        rooms: dict[str, dict[str, object]] = {}
         for source in self.room_sources:
+            if not bool(source.get("enabled", True)):
+                continue
             name = str(source.get("name") or "").strip()
             if not name:
                 continue
-            values: dict[str, float] = {}
+            values: dict[str, object] = {
+                "source": "home_assistant",
+                "control": bool(source.get("control", True)),
+                "priority": str(source.get("priority") or "auto"),
+            }
+            measurement_count = 0
             for kind in ("temperature", "humidity", "co2"):
                 entity_id = source.get(kind)
                 if not entity_id:
@@ -65,7 +77,8 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
                 if kind == "temperature" and not -30 <= value <= 60:
                     continue
                 values[kind] = value
-            if values:
+                measurement_count += 1
+            if measurement_count:
                 rooms[name] = values
         return rooms
 
@@ -98,8 +111,9 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             self.controller_client.run(), "Dantherm HCH Pi controller API"
         )
         entity_ids = sorted({
-            entity_id
+            str(entity_id)
             for source in self.room_sources
+            if bool(source.get("enabled", True))
             for entity_id in (
                 source.get("temperature"), source.get("humidity"), source.get("co2")
             )
