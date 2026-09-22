@@ -45,27 +45,27 @@
       "command_raw": {"name": "Control command raw value"},
       "outdoor_temperature_source": {"name": "Outdoor temperature source", "state": {"unit_sensor": "Unit sensor"}},
       "air_quality_index": {"name": "Air quality", "state": {"good": "Good", "moderate": "Moderate", "poor": "Poor"}},
-      "bus_frame_rate": {"name": "RS485 frames per minute"}
-      ,"heat_recovery_status": {"name": "Heat recovery status", "state": {"good": "Good", "acceptable": "Acceptable", "low": "Low"}}
-      ,"heat_recovery_trend": {"name": "Heat recovery trend", "state": {"normal": "Normal", "watch": "Watch", "degraded": "Performance declining"}}
-      ,"heat_recovery_reference": {"name": "Heat recovery reference"}
-      ,"heat_recovery_drop": {"name": "Drop from reference"}
-      ,"fan_control_delta": {"name": "Fan control balance"}
-      ,"fan_rpm_delta": {"name": "Fan speed balance"}
-      ,"filter_last_change": {"name": "Last filter change"}
-      ,"filter_change_count": {"name": "Recorded filter changes"}
-      ,"preheater_flow_temperature": {"name": "Flow temperature"}
-      ,"preheater_return_temperature": {"name": "Return temperature"}
-      ,"preheater_water_delta": {"name": "Water delta T"}
-      ,"preheater_activity": {"name": "Heat transfer", "state": {"inactive": "None", "low": "Low", "normal": "Normal", "high": "High"}}
-      ,"pi_cpu_temperature": {"name": "CPU temperature"}
-      ,"pi_uptime_seconds": {"name": "Uptime"}
-      ,"pi_load_average_1m": {"name": "Load average (1 min)"}
-      ,"pi_memory_used_percent": {"name": "Memory used"}
-      ,"pi_disk_used_percent": {"name": "Disk used"}
-      ,"pi_core_voltage": {"name": "Core voltage"}
-      ,"pi_model": {"name": "Model"}
-      ,"pi_kernel_version": {"name": "Kernel version"}
+      "bus_frame_rate": {"name": "RS485 frames per minute"},
+      "heat_recovery_status": {"name": "Heat recovery status", "state": {"good": "Good", "acceptable": "Acceptable", "low": "Low"}},
+      "heat_recovery_trend": {"name": "Heat recovery trend", "state": {"normal": "Normal", "watch": "Watch", "degraded": "Performance declining"}},
+      "heat_recovery_reference": {"name": "Heat recovery reference"},
+      "heat_recovery_drop": {"name": "Drop from reference"},
+      "fan_control_delta": {"name": "Fan control balance"},
+      "fan_rpm_delta": {"name": "Fan speed balance"},
+      "filter_last_change": {"name": "Last filter change"},
+      "filter_change_count": {"name": "Recorded filter changes"},
+      "preheater_flow_temperature": {"name": "Flow temperature"},
+      "preheater_return_temperature": {"name": "Return temperature"},
+      "preheater_water_delta": {"name": "Water delta T"},
+      "preheater_activity": {"name": "Heat transfer", "state": {"inactive": "None", "low": "Low", "normal": "Normal", "high": "High"}},
+      "pi_cpu_temperature": {"name": "CPU temperature"},
+      "pi_uptime_seconds": {"name": "Uptime"},
+      "pi_load_average_1m": {"name": "Load average (1 min)"},
+      "pi_memory_used_percent": {"name": "Memory used"},
+      "pi_disk_used_percent": {"name": "Disk used"},
+      "pi_core_voltage": {"name": "Core voltage"},
+      "pi_model": {"name": "Model"},
+      "pi_kernel_version": {"name": "Kernel version"}
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass active"},
@@ -85,26 +85,24 @@
       "room_temperature_sensor_fault": {"name": "Alarm: room temperature sensor fault"},
       "outdoor_temperature_low": {"name": "Alarm: outdoor temperature below -13 °C"},
       "supply_temperature_low": {"name": "Alarm: supply air below 5 °C"},
-      "fire_temperature_alarm": {"name": "Alarm: fire temperature above 70 °C"}
-      ,"preheater_sensor_connected": {"name": "Temperature sensors connected"}
-      ,"pi_undervoltage_now": {"name": "Undervoltage"}
-      ,"pi_undervoltage_occurred": {"name": "Undervoltage since boot"}
-      ,"pi_throttled_now": {"name": "Throttled"}
-      ,"pi_throttled_occurred": {"name": "Throttled since boot"}
-      ,"pi_frequency_capped_now": {"name": "Frequency capped"}
-      ,"pi_frequency_capped_occurred": {"name": "Frequency capped since boot"}
-      ,"pi_soft_temp_limit_now": {"name": "Soft temperature limit"}
-      ,"pi_soft_temp_limit_occurred": {"name": "Soft temperature limit since boot"}
+      "fire_temperature_alarm": {"name": "Alarm: fire temperature above 70 °C"},
+      "preheater_sensor_connected": {"name": "Temperature sensors connected"},
+      "pi_undervoltage_now": {"name": "Undervoltage"},
+      "pi_undervoltage_occurred": {"name": "Undervoltage since boot"},
+      "pi_throttled_now": {"name": "Throttled"},
+      "pi_throttled_occurred": {"name": "Throttled since boot"},
+      "pi_frequency_capped_now": {"name": "Frequency capped"},
+      "pi_frequency_capped_occurred": {"name": "Frequency capped since boot"},
+      "pi_soft_temp_limit_now": {"name": "Soft temperature limit"},
+      "pi_soft_temp_limit_occurred": {"name": "Soft temperature limit since boot"}
     },
-    "button": {
-      "filter_reset": {"name": "Reset filter interval"}
-    }
+    "button": {"filter_reset": {"name": "Reset filter interval"}}
   },
   "options": {
     "step": {
       "init": {
         "title": "Dantherm HCH PassiveLink settings",
-        "description": "Change the connection and edit its address directly here. IP and TCP port are used for RS485 over TCP; the USB path is only used for local USB-RS485. The integration reloads automatically after saving.",
+        "description": "Change the connection, controller and integration settings. The classic PassiveLink data path remains read-only.",
         "data": {
           "connection_type": "Connection type",
           "filter_notify_enabled": "Enable filter replacement notification",
@@ -116,38 +114,58 @@
           "preheater_sensors_enabled": "Enable optional water preheater sensors",
           "preheater_sensor_host": "Water preheater sensor IP address",
           "preheater_sensor_port": "Water preheater sensor HTTP port",
-          "preheater_swap_sensors": "Swap flow and return sensors"
+          "preheater_swap_sensors": "Swap flow and return sensors",
+          "controller_api_enabled": "Enable Raspberry Pi controller"
         }
       },
-      "tcp": {
-        "title": "RS485 over TCP",
-        "description": "Enter the IP address and TCP port of the Raspberry Pi gateway or RS485-to-Ethernet adapter.",
+      "controller": {
+        "title": "Raspberry Pi controller and Smart Auto",
+        "description": "Connect Home Assistant to the Pi controller's local API. Home Assistant only sends commands and sensor observations; the Pi makes all ventilation decisions.",
         "data": {
-          "host": "IP address or host name",
-          "port": "TCP port"
+          "controller_host": "Controller IP address or host name",
+          "controller_port": "Controller API port",
+          "controller_token": "Controller API token",
+          "smart_rooms_enabled": "Use Home Assistant sensors in Smart Auto",
+          "smart_input_valid_for": "Sensor input valid for (seconds)"
         }
       },
-      "serial": {
-        "title": "Local USB-RS485 adapter",
-        "description": "Enter the stable device path of the USB adapter, preferably /dev/serial/by-id/....",
-        "data": {
-          "serial_port": "Serial device path"
+      "rooms_menu": {
+        "title": "Smart Auto sensors and rooms",
+        "description": "Add any rooms and sensors you want. A room can control ventilation or be monitor-only. Priority changes how early/strongly a room affects ventilation; seriously poor readings are never ignored.",
+        "menu_options": {
+          "add_room": "Add room",
+          "edit_room": "Edit room",
+          "remove_room": "Remove room",
+          "finish_rooms": "Save and finish"
         }
-      }
+      },
+      "add_room": {
+        "title": "Add Smart Auto room",
+        "description": "Select at least one temperature, humidity or CO₂ sensor.",
+        "data": {"name": "Room name", "enabled": "Enabled", "control": "Use for control", "priority": "Priority", "temperature": "Temperature sensor (optional)", "humidity": "Humidity sensor (optional)", "co2": "CO₂ sensor (optional)"}
+      },
+      "edit_room": {"title": "Choose room to edit", "data": {"room": "Room"}},
+      "room_detail": {
+        "title": "Edit Smart Auto room",
+        "description": "Temporarily disable a room, make it monitor-only, or change priority without changing controller code.",
+        "data": {"name": "Room name", "enabled": "Enabled", "control": "Use for control", "priority": "Priority", "temperature": "Temperature sensor (optional)", "humidity": "Humidity sensor (optional)", "co2": "CO₂ sensor (optional)"}
+      },
+      "remove_room": {"title": "Remove Smart Auto room", "description": "Only removes the room from Dantherm Smart Auto. The selected Home Assistant sensor is not deleted.", "data": {"room": "Room"}},
+      "finish_rooms": {"title": "Save Smart Auto rooms"},
+      "tcp": {"title": "RS485 over TCP", "description": "Enter the IP address and TCP port of the Raspberry Pi gateway or RS485-to-Ethernet adapter.", "data": {"host": "IP address or host name", "port": "TCP port"}},
+      "serial": {"title": "Local USB-RS485 adapter", "description": "Enter the stable device path of the USB adapter, preferably /dev/serial/by-id/....", "data": {"serial_port": "Serial device path"}}
     },
     "error": {
       "cannot_connect": "The connection could not be validated, or no valid Dantherm traffic was received.",
-      "required": "This field is required for the selected connection type."
+      "controller_cannot_connect": "The controller API could not be reached or the token could not be authenticated.",
+      "required": "This field is required for the selected connection type.",
+      "room_name_duplicate": "A Smart Auto room with this name already exists.",
+      "room_requires_sensor": "Select at least one sensor for the room.",
+      "invalid_priority": "Select a valid priority."
     }
   },
   "issues": {
-    "connection_lost": {
-      "title": "No connection to the RS485 gateway",
-      "description": "Dantherm HCH PassiveLink has been unable to connect to the configured RS485 gateway for more than 15 minutes. Check the gateway's power, network connection, and that the transparent TCP stream is still active. Open the integration's options if the address has changed."
-    },
-    "hac1_disconnected": {
-      "title": "HAC1 indoor-climate module not responding",
-      "description": "RS485 traffic from the Dantherm unit is still present, but the HAC1 module (CO2/indoor climate) has not reported itself as connected for more than 15 minutes. Check the HAC1 module's wiring and power."
-    }
+    "connection_lost": {"title": "No connection to the RS485 gateway", "description": "Dantherm HCH PassiveLink has been unable to connect to the configured RS485 gateway for more than 15 minutes. Check the gateway's power, network connection, and that the transparent TCP stream is still active. Open the integration's options if the address has changed."},
+    "hac1_disconnected": {"title": "HAC1 indoor-climate module not responding", "description": "RS485 traffic from the Dantherm unit is still present, but the HAC1 module (CO2/indoor climate) has not reported itself as connected for more than 15 minutes. Check the HAC1 module's wiring and power."}
   }
 }
