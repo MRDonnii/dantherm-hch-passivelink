@@ -45,27 +45,27 @@
       "command_raw": {"name": "Betjeningskommando råværdi"},
       "outdoor_temperature_source": {"name": "Kilde til udetemperatur", "state": {"unit_sensor": "Anlæggets egen føler"}},
       "air_quality_index": {"name": "Luftkvalitet", "state": {"good": "God", "moderate": "Moderat", "poor": "Dårlig"}},
-      "bus_frame_rate": {"name": "RS485-telegrammer pr. minut"}
-      ,"heat_recovery_status": {"name": "Status for varmegenvinding", "state": {"good": "God", "acceptable": "Acceptabel", "low": "Lav"}}
-      ,"heat_recovery_trend": {"name": "Udvikling i varmegenvinding", "state": {"normal": "Normal", "watch": "Hold øje", "degraded": "Faldende ydelse"}}
-      ,"heat_recovery_reference": {"name": "Reference for varmegenvinding"}
-      ,"heat_recovery_drop": {"name": "Fald fra reference"}
-      ,"fan_control_delta": {"name": "Ventilatorbalance styring"}
-      ,"fan_rpm_delta": {"name": "Ventilatorbalance omdrejninger"}
-      ,"filter_last_change": {"name": "Seneste filterskift"}
-      ,"filter_change_count": {"name": "Registrerede filterskift"}
-      ,"preheater_flow_temperature": {"name": "Fremløbstemperatur"}
-      ,"preheater_return_temperature": {"name": "Returtemperatur"}
-      ,"preheater_water_delta": {"name": "Vand delta-T"}
-      ,"preheater_activity": {"name": "Varmeoverførsel", "state": {"inactive": "Ingen", "low": "Lav", "normal": "Normal", "high": "Høj"}}
-      ,"pi_cpu_temperature": {"name": "CPU-temperatur"}
-      ,"pi_uptime_seconds": {"name": "Oppetid"}
-      ,"pi_load_average_1m": {"name": "Belastning (1 min)"}
-      ,"pi_memory_used_percent": {"name": "Hukommelse brugt"}
-      ,"pi_disk_used_percent": {"name": "Disk brugt"}
-      ,"pi_core_voltage": {"name": "Kernespænding"}
-      ,"pi_model": {"name": "Model"}
-      ,"pi_kernel_version": {"name": "Kernel-version"}
+      "bus_frame_rate": {"name": "RS485-telegrammer pr. minut"},
+      "heat_recovery_status": {"name": "Status for varmegenvinding", "state": {"good": "God", "acceptable": "Acceptabel", "low": "Lav"}},
+      "heat_recovery_trend": {"name": "Udvikling i varmegenvinding", "state": {"normal": "Normal", "watch": "Hold øje", "degraded": "Faldende ydelse"}},
+      "heat_recovery_reference": {"name": "Reference for varmegenvinding"},
+      "heat_recovery_drop": {"name": "Fald fra reference"},
+      "fan_control_delta": {"name": "Ventilatorbalance styring"},
+      "fan_rpm_delta": {"name": "Ventilatorbalance omdrejninger"},
+      "filter_last_change": {"name": "Seneste filterskift"},
+      "filter_change_count": {"name": "Registrerede filterskift"},
+      "preheater_flow_temperature": {"name": "Fremløbstemperatur"},
+      "preheater_return_temperature": {"name": "Returtemperatur"},
+      "preheater_water_delta": {"name": "Vand delta-T"},
+      "preheater_activity": {"name": "Varmeoverførsel", "state": {"inactive": "Ingen", "low": "Lav", "normal": "Normal", "high": "Høj"}},
+      "pi_cpu_temperature": {"name": "CPU-temperatur"},
+      "pi_uptime_seconds": {"name": "Oppetid"},
+      "pi_load_average_1m": {"name": "Belastning (1 min)"},
+      "pi_memory_used_percent": {"name": "Hukommelse brugt"},
+      "pi_disk_used_percent": {"name": "Disk brugt"},
+      "pi_core_voltage": {"name": "Kernespænding"},
+      "pi_model": {"name": "Model"},
+      "pi_kernel_version": {"name": "Kernel-version"}
     },
     "binary_sensor": {
       "bypass_active": {"name": "Bypass aktiv"},
@@ -85,26 +85,24 @@
       "room_temperature_sensor_fault": {"name": "Alarm: rumtemperaturføler fejl"},
       "outdoor_temperature_low": {"name": "Alarm: udetemperatur under -13 °C"},
       "supply_temperature_low": {"name": "Alarm: indblæsning under 5 °C"},
-      "fire_temperature_alarm": {"name": "Alarm: brandtemperatur over 70 °C"}
-      ,"preheater_sensor_connected": {"name": "Temperaturfølere forbundet"}
-      ,"pi_undervoltage_now": {"name": "Underspænding"}
-      ,"pi_undervoltage_occurred": {"name": "Underspænding siden opstart"}
-      ,"pi_throttled_now": {"name": "Neddroslet"}
-      ,"pi_throttled_occurred": {"name": "Neddroslet siden opstart"}
-      ,"pi_frequency_capped_now": {"name": "Frekvensbegrænset"}
-      ,"pi_frequency_capped_occurred": {"name": "Frekvensbegrænset siden opstart"}
-      ,"pi_soft_temp_limit_now": {"name": "Blød temperaturgrænse"}
-      ,"pi_soft_temp_limit_occurred": {"name": "Blød temperaturgrænse siden opstart"}
+      "fire_temperature_alarm": {"name": "Alarm: brandtemperatur over 70 °C"},
+      "preheater_sensor_connected": {"name": "Temperaturfølere forbundet"},
+      "pi_undervoltage_now": {"name": "Underspænding"},
+      "pi_undervoltage_occurred": {"name": "Underspænding siden opstart"},
+      "pi_throttled_now": {"name": "Neddroslet"},
+      "pi_throttled_occurred": {"name": "Neddroslet siden opstart"},
+      "pi_frequency_capped_now": {"name": "Frekvensbegrænset"},
+      "pi_frequency_capped_occurred": {"name": "Frekvensbegrænset siden opstart"},
+      "pi_soft_temp_limit_now": {"name": "Blød temperaturgrænse"},
+      "pi_soft_temp_limit_occurred": {"name": "Blød temperaturgrænse siden opstart"}
     },
-    "button": {
-      "filter_reset": {"name": "Nulstil filterinterval"}
-    }
+    "button": {"filter_reset": {"name": "Nulstil filterinterval"}}
   },
   "options": {
     "step": {
       "init": {
         "title": "Indstillinger for Dantherm HCH PassiveLink",
-        "description": "Skift forbindelse og redigér adressen direkte her. IP og TCP-port bruges ved RS485 over TCP; USB-stien bruges kun ved lokal USB-RS485. Integrationen genindlæses automatisk efter lagring.",
+        "description": "Skift forbindelse, controller og øvrige integrationsindstillinger. Den klassiske PassiveLink-datapath forbliver read-only.",
         "data": {
           "connection_type": "Forbindelsestype",
           "filter_notify_enabled": "Aktivér besked om filterskift",
@@ -116,38 +114,93 @@
           "preheater_sensors_enabled": "Aktivér valgfri vandforvarmefølere",
           "preheater_sensor_host": "Vandforvarmefølernes IP-adresse",
           "preheater_sensor_port": "Vandforvarmefølernes HTTP-port",
-          "preheater_swap_sensors": "Byt frem- og returføler"
+          "preheater_swap_sensors": "Byt frem- og returføler",
+          "controller_api_enabled": "Forbind til Raspberry Pi-controllerens API"
         }
       },
-      "tcp": {
-        "title": "RS485 over TCP",
-        "description": "Indtast IP-adressen og TCP-porten på Raspberry Pi-gatewayen eller RS485-til-Ethernet-adapteren.",
+      "controller": {
+        "title": "Raspberry Pi-controller og Smart Auto",
+        "description": "Forbind Home Assistant til Pi-controllerens lokale API. Home Assistant sender kun kommandoer og sensorobservationer; Pi'en træffer alle ventilationsbeslutninger.",
         "data": {
-          "host": "IP-adresse eller værtsnavn",
-          "port": "TCP-port"
+          "controller_host": "Controller IP-adresse eller værtsnavn",
+          "controller_port": "Controller API-port",
+          "controller_token": "Controller API-token",
+          "smart_rooms_enabled": "Brug Home Assistant-sensorer i Smart Auto",
+          "smart_input_valid_for": "Sensorinput gyldigt i (sekunder)"
         }
       },
-      "serial": {
-        "title": "Lokal USB-RS485-adapter",
-        "description": "Angiv USB-adapterens stabile enhedssti, helst /dev/serial/by-id/....",
-        "data": {
-          "serial_port": "Seriel enhedssti"
+      "controller_menu": {
+        "title": "Controlleropsætning",
+        "description": "Værdierne læses direkte fra Pi-controlleren. Ændringer gemmes på Pi'en, som fortsat er source of truth.",
+        "menu_options": {
+          "controller_settings": "Drift, Smart Auto og eftervarme",
+          "fan_profiles": "Ventilationsprofiler 1-6",
+          "rooms_menu": "Smart Auto-rum",
+          "finish_controller": "Gem integrationsindstillinger"
         }
-      }
+      },
+      "controller_settings": {
+        "title": "Controllerparametre",
+        "description": "Disse værdier gemmes direkte på Raspberry Pi-controlleren.",
+        "data": {
+          "mode": "Driftstilstand", "manual_level": "Manuelt niveau",
+          "local_normal_level": "Local Auto normalniveau", "local_min_level": "Local Auto minimum", "local_max_level": "Local Auto maksimum",
+          "rh_setpoint": "RH setpunkt", "rh_hysteresis": "RH hysterese", "co2_setpoint": "CO2 setpunkt", "co2_hysteresis": "CO2 hysterese",
+          "auto_step_rh": "RH pr. ventilationstrin", "auto_step_co2": "CO2 pr. ventilationstrin",
+          "downshift_delay_seconds": "Nedreguleringsforsinkelse (sekunder)", "boost_hold_seconds": "Boost holdetid (sekunder)",
+          "ha_timeout_seconds": "HA timeout (sekunder)", "afterheat_setpoint": "Eftervarme setpunkt"
+        }
+      },
+      "fan_profiles": {
+        "title": "Ventilationsprofiler 1-6",
+        "description": "Udsugning skal være højere end indblæsning, og begge værdier skal stige fra niveau 1 til 6.",
+        "data": {
+          "profile_1_name": "Niveau 1 navn", "profile_1_extract": "Niveau 1 udsugning %", "profile_1_supply": "Niveau 1 indblæsning %",
+          "profile_2_name": "Niveau 2 navn", "profile_2_extract": "Niveau 2 udsugning %", "profile_2_supply": "Niveau 2 indblæsning %",
+          "profile_3_name": "Niveau 3 navn", "profile_3_extract": "Niveau 3 udsugning %", "profile_3_supply": "Niveau 3 indblæsning %",
+          "profile_4_name": "Niveau 4 navn", "profile_4_extract": "Niveau 4 udsugning %", "profile_4_supply": "Niveau 4 indblæsning %",
+          "profile_5_name": "Niveau 5 navn", "profile_5_extract": "Niveau 5 udsugning %", "profile_5_supply": "Niveau 5 indblæsning %",
+          "profile_6_name": "Niveau 6 navn", "profile_6_extract": "Niveau 6 udsugning %", "profile_6_supply": "Niveau 6 indblæsning %"
+        }
+      },
+      "rooms_menu": {
+        "title": "Smart Auto-sensorer og rum",
+        "description": "Tilføj de rum og sensorer du vil bruge. Et rum kan styre ventilationen eller kun overvåges. Prioritet justerer hvor tidligt/stærkt rummet påvirker ventilationen; alvorligt dårlige målinger ignoreres aldrig.",
+        "menu_options": {
+          "add_room": "Tilføj rum",
+          "edit_room": "Redigér rum",
+          "remove_room": "Fjern rum",
+          "finish_rooms": "Gem rum og gå tilbage"
+        }
+      },
+      "add_room": {
+        "title": "Tilføj Smart Auto-rum",
+        "description": "Vælg mindst én temperatur-, luftfugtigheds- eller CO₂-sensor.",
+        "data": {"name": "Rumnavn", "enabled": "Aktiv", "control": "Brug til styring", "priority": "Prioritet", "temperature": "Temperatursensor (valgfri)", "humidity": "Luftfugtighedssensor (valgfri)", "co2": "CO₂-sensor (valgfri)"}
+      },
+      "edit_room": {"title": "Vælg rum der skal redigeres", "data": {"room": "Rum"}},
+      "room_detail": {
+        "title": "Redigér Smart Auto-rum",
+        "description": "Deaktiver et rum midlertidigt, brug det kun til overvågning, eller justér prioriteten uden at ændre controllerkoden.",
+        "data": {"name": "Rumnavn", "enabled": "Aktiv", "control": "Brug til styring", "priority": "Prioritet", "temperature": "Temperatursensor (valgfri)", "humidity": "Luftfugtighedssensor (valgfri)", "co2": "CO₂-sensor (valgfri)"}
+      },
+      "remove_room": {"title": "Fjern Smart Auto-rum", "description": "Fjerner kun rummet fra Dantherm Smart Auto. Den valgte Home Assistant-sensor slettes ikke.", "data": {"room": "Rum"}},
+      "finish_rooms": {"title": "Gem Smart Auto-rum"},
+      "tcp": {"title": "RS485 over TCP", "description": "Indtast IP-adressen og TCP-porten på Raspberry Pi-gatewayen eller RS485-til-Ethernet-adapteren.", "data": {"host": "IP-adresse eller værtsnavn", "port": "TCP-port"}},
+      "serial": {"title": "Lokal USB-RS485-adapter", "description": "Angiv USB-adapterens stabile enhedssti, helst /dev/serial/by-id/....", "data": {"serial_port": "Seriel enhedssti"}}
     },
     "error": {
       "cannot_connect": "Forbindelsen kunne ikke valideres, eller der blev ikke modtaget gyldig Dantherm-trafik.",
-      "required": "Feltet skal udfyldes for den valgte forbindelsestype."
+      "controller_cannot_connect": "Controller API kunne ikke kontaktes eller godkende tokenet.",
+      "controller_update_failed": "Controlleren afviste ændringen, eller forbindelsen blev afbrudt.",
+      "required": "Feltet skal udfyldes for den valgte forbindelsestype.",
+      "room_name_duplicate": "Der findes allerede et Smart Auto-rum med dette navn.",
+      "room_requires_sensor": "Vælg mindst én sensor til rummet.",
+      "invalid_priority": "Vælg en gyldig prioritet."
     }
   },
   "issues": {
-    "connection_lost": {
-      "title": "Ingen forbindelse til RS485-gatewayen",
-      "description": "Dantherm HCH PassiveLink har ikke kunnet forbinde til den konfigurerede RS485-gateway i mere end 15 minutter. Kontrollér gatewayens strøm, netværk og at den transparente TCP-strøm stadig er aktiv. Åbn integrationens indstillinger, hvis adressen har ændret sig."
-    },
-    "hac1_disconnected": {
-      "title": "HAC1-indeklimamodulet svarer ikke",
-      "description": "Der er stadig RS485-trafik fra Dantherm-anlægget, men HAC1-modulet (CO₂/indeklima) har ikke rapporteret sig som forbundet i mere end 15 minutter. Kontrollér HAC1-modulets kabling og strøm."
-    }
+    "connection_lost": {"title": "Ingen forbindelse til RS485-gatewayen", "description": "Dantherm HCH PassiveLink har ikke kunnet forbinde til den konfigurerede RS485-gateway i mere end 15 minutter. Kontrollér gatewayens strøm, netværk og at den transparente TCP-strøm stadig er aktiv. Åbn integrationens indstillinger, hvis adressen har ændret sig."},
+    "hac1_disconnected": {"title": "HAC1-indeklimamodulet svarer ikke", "description": "Der er stadig RS485-trafik fra Dantherm-anlægget, men HAC1-modulet (CO₂/indeklima) har ikke rapporteret sig som forbundet i mere end 15 minutter. Kontrollér HAC1-modulets kabling og strøm."}
   }
 }
