@@ -28,10 +28,13 @@ from .const import (
     CONF_CONTROLLER_TOKEN,
     CONF_SMART_ROOMS_ENABLED,
     CONF_SMART_INPUT_VALID_FOR,
+    CONF_SMART_ROOMS,
     DEFAULT_CONTROLLER_PORT,
     DEFAULT_FILTER_NOTIFY_DAYS,
     DEFAULT_PREHEATER_SENSOR_PORT,
     DEFAULT_SMART_INPUT_VALID_FOR,
+    MAX_SMART_ROOMS,
+    SMART_ROOM_PRIORITIES,
     ROOM_SLOT_COUNT,
     room_name_key,
     room_temperature_key,
@@ -58,15 +61,49 @@ PLATFORMS = [
 PassiveLinkConfigEntry = ConfigEntry[SmartPassiveLinkCoordinator]
 
 
-def _room_sources(config: dict) -> list[dict[str, str]]:
+def _room_sources(config: dict) -> list[dict[str, object]]:
+    """Return dynamic room sources, with fallback for old fixed-slot options."""
     if not config.get(CONF_SMART_ROOMS_ENABLED, False):
         return []
-    result: list[dict[str, str]] = []
+
+    raw_rooms = config.get(CONF_SMART_ROOMS)
+    if isinstance(raw_rooms, list):
+        result: list[dict[str, object]] = []
+        for raw in raw_rooms[:MAX_SMART_ROOMS]:
+            if not isinstance(raw, dict):
+                continue
+            name = str(raw.get("name", "")).strip()
+            if not name:
+                continue
+            priority = str(raw.get("priority", "auto"))
+            if priority not in SMART_ROOM_PRIORITIES:
+                priority = "auto"
+            source: dict[str, object] = {
+                "name": name[:64],
+                "enabled": bool(raw.get("enabled", True)),
+                "control": bool(raw.get("control", True)),
+                "priority": priority,
+            }
+            for kind in ("temperature", "humidity", "co2"):
+                entity_id = str(raw.get(kind, "")).strip()
+                if entity_id:
+                    source[kind] = entity_id
+            if any(source.get(kind) for kind in ("temperature", "humidity", "co2")):
+                result.append(source)
+        return result
+
+    # Backwards compatibility for beta installs using smart_room_1..8 fields.
+    result = []
     for slot in range(1, ROOM_SLOT_COUNT + 1):
         name = str(config.get(room_name_key(slot), "")).strip()
         if not name:
             continue
-        source = {"name": name}
+        source: dict[str, object] = {
+            "name": name,
+            "enabled": True,
+            "control": True,
+            "priority": "auto",
+        }
         for kind, key_func in (
             ("temperature", room_temperature_key),
             ("humidity", room_humidity_key),
@@ -75,7 +112,7 @@ def _room_sources(config: dict) -> list[dict[str, str]]:
             entity_id = str(config.get(key_func(slot), "")).strip()
             if entity_id:
                 source[kind] = entity_id
-        if len(source) > 1:
+        if any(source.get(kind) for kind in ("temperature", "humidity", "co2")):
             result.append(source)
     return result
 
