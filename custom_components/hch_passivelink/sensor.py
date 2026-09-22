@@ -15,6 +15,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from .controller_entity import ControllerEntity
 from .coordinator import PassiveLinkCoordinator
 from .entity import PI_KEYS, PREHEATER_KEYS, PassiveLinkEntity
 
@@ -83,6 +84,24 @@ DESCRIPTIONS = (
 )
 
 
+CONTROLLER_SENSOR_SPECS = (
+    ("active_master", "Aktiv master", None, "mdi:server-network"),
+    ("effective_source", "Effektiv kilde", None, "mdi:source-branch"),
+    ("effective_level", "Effektivt ventilationsniveau", None, "mdi:fan-speed-3"),
+    ("effective_reason", "Effektiv årsag", None, "mdi:text-box-search-outline"),
+    ("smart_demand", "Smart Auto behov", None, "mdi:brain"),
+    ("smart_requested_level", "Smart Auto ønsket niveau", None, "mdi:fan-chevron-up"),
+    ("smart_target_level", "Smart Auto aktivt målniveau", None, "mdi:target"),
+    ("smart_controlling_room", "Smart Auto styrende rum", None, "mdi:home-lightning-bolt-outline"),
+    ("smart_controlling_metric", "Smart Auto styrende måling", None, "mdi:gauge"),
+    ("smart_max_co2", "Smart Auto højeste CO2", CONCENTRATION_PARTS_PER_MILLION, "mdi:molecule-co2"),
+    ("smart_max_co2_room", "Smart Auto højeste CO2 rum", None, "mdi:home-alert-outline"),
+    ("smart_max_rh", "Smart Auto højeste luftfugtighed", PERCENTAGE, "mdi:water-percent"),
+    ("smart_max_rh_room", "Smart Auto højeste RH rum", None, "mdi:home-alert-outline"),
+    ("smart_inputs_age_seconds", "Smart Auto inputalder", UnitOfTime.SECONDS, "mdi:timer-sand"),
+)
+
+
 class PassiveLinkSensor(PassiveLinkEntity, SensorEntity, RestoreEntity):
     def __init__(self, coordinator: PassiveLinkCoordinator, description: Description) -> None:
         super().__init__(coordinator, description.key)
@@ -120,11 +139,28 @@ class PassiveLinkSensor(PassiveLinkEntity, SensorEntity, RestoreEntity):
         return value
 
 
+class ControllerStatusSensor(ControllerEntity, SensorEntity):
+    def __init__(self, coordinator, key: str, name: str, unit, icon: str) -> None:
+        super().__init__(coordinator, key, name)
+        self._attr_native_unit_of_measurement = unit
+        self._attr_icon = icon
+
+    @property
+    def native_value(self):
+        return self.controller_value
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator = entry.runtime_data
-    async_add_entities(
+    entities = [
         PassiveLinkSensor(coordinator, description)
         for description in DESCRIPTIONS
         if description.key not in PREHEATER_KEYS | PI_KEYS
         or coordinator._auxiliary_client is not None
-    )
+    ]
+    if coordinator.controller_client is not None:
+        entities.extend(
+            ControllerStatusSensor(coordinator, key, name, unit, icon)
+            for key, name, unit, icon in CONTROLLER_SENSOR_SPECS
+        )
+    async_add_entities(entities)
