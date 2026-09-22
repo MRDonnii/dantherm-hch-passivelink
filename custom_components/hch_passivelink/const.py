@@ -28,7 +28,12 @@ CONF_CONTROLLER_TOKEN = "controller_token"
 DEFAULT_CONTROLLER_PORT = 8080
 CONF_SMART_ROOMS_ENABLED = "smart_rooms_enabled"
 CONF_SMART_INPUT_VALID_FOR = "smart_input_valid_for"
+CONF_SMART_ROOMS = "smart_rooms"
 DEFAULT_SMART_INPUT_VALID_FOR = 180
+MAX_SMART_ROOMS = 32
+SMART_ROOM_PRIORITIES = ("auto", "low", "normal", "high", "critical")
+
+# Legacy fixed slots are kept only for migration/backwards compatibility.
 ROOM_SLOT_COUNT = 8
 
 
