@@ -115,7 +115,7 @@
           "preheater_sensor_host": "Water preheater sensor IP address",
           "preheater_sensor_port": "Water preheater sensor HTTP port",
           "preheater_swap_sensors": "Swap flow and return sensors",
-          "controller_api_enabled": "Enable Raspberry Pi controller"
+          "controller_api_enabled": "Connect to the Raspberry Pi controller API"
         }
       },
       "controller": {
@@ -129,6 +129,40 @@
           "smart_input_valid_for": "Sensor input valid for (seconds)"
         }
       },
+      "controller_menu": {
+        "title": "Controller setup",
+        "description": "Values are read directly from the Pi controller. Changes are stored on the Pi, which remains the source of truth.",
+        "menu_options": {
+          "controller_settings": "Operation, Smart Auto and afterheat",
+          "fan_profiles": "Ventilation profiles 1-6",
+          "rooms_menu": "Smart Auto rooms",
+          "finish_controller": "Save integration settings"
+        }
+      },
+      "controller_settings": {
+        "title": "Controller parameters",
+        "description": "These values are stored directly on the Raspberry Pi controller.",
+        "data": {
+          "mode": "Operating mode", "manual_level": "Manual level",
+          "local_normal_level": "Local Auto normal level", "local_min_level": "Local Auto minimum", "local_max_level": "Local Auto maximum",
+          "rh_setpoint": "RH setpoint", "rh_hysteresis": "RH hysteresis", "co2_setpoint": "CO2 setpoint", "co2_hysteresis": "CO2 hysteresis",
+          "auto_step_rh": "RH per ventilation level", "auto_step_co2": "CO2 per ventilation level",
+          "downshift_delay_seconds": "Downshift delay (seconds)", "boost_hold_seconds": "Boost hold (seconds)",
+          "ha_timeout_seconds": "HA timeout (seconds)", "afterheat_setpoint": "Afterheat setpoint"
+        }
+      },
+      "fan_profiles": {
+        "title": "Ventilation profiles 1-6",
+        "description": "Extract must be higher than supply, and both values must increase from level 1 through 6.",
+        "data": {
+          "profile_1_name": "Level 1 name", "profile_1_extract": "Level 1 extract %", "profile_1_supply": "Level 1 supply %",
+          "profile_2_name": "Level 2 name", "profile_2_extract": "Level 2 extract %", "profile_2_supply": "Level 2 supply %",
+          "profile_3_name": "Level 3 name", "profile_3_extract": "Level 3 extract %", "profile_3_supply": "Level 3 supply %",
+          "profile_4_name": "Level 4 name", "profile_4_extract": "Level 4 extract %", "profile_4_supply": "Level 4 supply %",
+          "profile_5_name": "Level 5 name", "profile_5_extract": "Level 5 extract %", "profile_5_supply": "Level 5 supply %",
+          "profile_6_name": "Level 6 name", "profile_6_extract": "Level 6 extract %", "profile_6_supply": "Level 6 supply %"
+        }
+      },
       "rooms_menu": {
         "title": "Smart Auto sensors and rooms",
         "description": "Add any rooms and sensors you want. A room can control ventilation or be monitor-only. Priority changes how early/strongly a room affects ventilation; seriously poor readings are never ignored.",
@@ -136,7 +170,7 @@
           "add_room": "Add room",
           "edit_room": "Edit room",
           "remove_room": "Remove room",
-          "finish_rooms": "Save and finish"
+          "finish_rooms": "Save rooms and go back"
         }
       },
       "add_room": {
@@ -158,6 +192,7 @@
     "error": {
       "cannot_connect": "The connection could not be validated, or no valid Dantherm traffic was received.",
       "controller_cannot_connect": "The controller API could not be reached or the token could not be authenticated.",
+      "controller_update_failed": "The controller rejected the change or the connection was interrupted.",
       "required": "This field is required for the selected connection type.",
       "room_name_duplicate": "A Smart Auto room with this name already exists.",
       "room_requires_sensor": "Select at least one sensor for the room.",

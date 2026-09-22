@@ -48,13 +48,12 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
         """
         rooms: dict[str, dict[str, object]] = {}
         for source in self.room_sources:
-            if not bool(source.get("enabled", True)):
-                continue
             name = str(source.get("name") or "").strip()
             if not name:
                 continue
             values: dict[str, object] = {
                 "source": "home_assistant",
+                "enabled": bool(source.get("enabled", True)),
                 "control": bool(source.get("control", True)),
                 "priority": str(source.get("priority") or "auto"),
             }

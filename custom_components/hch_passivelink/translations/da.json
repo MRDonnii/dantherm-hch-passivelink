@@ -115,7 +115,7 @@
           "preheater_sensor_host": "Vandforvarmefølernes IP-adresse",
           "preheater_sensor_port": "Vandforvarmefølernes HTTP-port",
           "preheater_swap_sensors": "Byt frem- og returføler",
-          "controller_api_enabled": "Aktivér Raspberry Pi-controller"
+          "controller_api_enabled": "Forbind til Raspberry Pi-controllerens API"
         }
       },
       "controller": {
@@ -129,6 +129,40 @@
           "smart_input_valid_for": "Sensorinput gyldigt i (sekunder)"
         }
       },
+      "controller_menu": {
+        "title": "Controlleropsætning",
+        "description": "Værdierne læses direkte fra Pi-controlleren. Ændringer gemmes på Pi'en, som fortsat er source of truth.",
+        "menu_options": {
+          "controller_settings": "Drift, Smart Auto og eftervarme",
+          "fan_profiles": "Ventilationsprofiler 1-6",
+          "rooms_menu": "Smart Auto-rum",
+          "finish_controller": "Gem integrationsindstillinger"
+        }
+      },
+      "controller_settings": {
+        "title": "Controllerparametre",
+        "description": "Disse værdier gemmes direkte på Raspberry Pi-controlleren.",
+        "data": {
+          "mode": "Driftstilstand", "manual_level": "Manuelt niveau",
+          "local_normal_level": "Local Auto normalniveau", "local_min_level": "Local Auto minimum", "local_max_level": "Local Auto maksimum",
+          "rh_setpoint": "RH setpunkt", "rh_hysteresis": "RH hysterese", "co2_setpoint": "CO2 setpunkt", "co2_hysteresis": "CO2 hysterese",
+          "auto_step_rh": "RH pr. ventilationstrin", "auto_step_co2": "CO2 pr. ventilationstrin",
+          "downshift_delay_seconds": "Nedreguleringsforsinkelse (sekunder)", "boost_hold_seconds": "Boost holdetid (sekunder)",
+          "ha_timeout_seconds": "HA timeout (sekunder)", "afterheat_setpoint": "Eftervarme setpunkt"
+        }
+      },
+      "fan_profiles": {
+        "title": "Ventilationsprofiler 1-6",
+        "description": "Udsugning skal være højere end indblæsning, og begge værdier skal stige fra niveau 1 til 6.",
+        "data": {
+          "profile_1_name": "Niveau 1 navn", "profile_1_extract": "Niveau 1 udsugning %", "profile_1_supply": "Niveau 1 indblæsning %",
+          "profile_2_name": "Niveau 2 navn", "profile_2_extract": "Niveau 2 udsugning %", "profile_2_supply": "Niveau 2 indblæsning %",
+          "profile_3_name": "Niveau 3 navn", "profile_3_extract": "Niveau 3 udsugning %", "profile_3_supply": "Niveau 3 indblæsning %",
+          "profile_4_name": "Niveau 4 navn", "profile_4_extract": "Niveau 4 udsugning %", "profile_4_supply": "Niveau 4 indblæsning %",
+          "profile_5_name": "Niveau 5 navn", "profile_5_extract": "Niveau 5 udsugning %", "profile_5_supply": "Niveau 5 indblæsning %",
+          "profile_6_name": "Niveau 6 navn", "profile_6_extract": "Niveau 6 udsugning %", "profile_6_supply": "Niveau 6 indblæsning %"
+        }
+      },
       "rooms_menu": {
         "title": "Smart Auto-sensorer og rum",
         "description": "Tilføj de rum og sensorer du vil bruge. Et rum kan styre ventilationen eller kun overvåges. Prioritet justerer hvor tidligt/stærkt rummet påvirker ventilationen; alvorligt dårlige målinger ignoreres aldrig.",
@@ -136,7 +170,7 @@
           "add_room": "Tilføj rum",
           "edit_room": "Redigér rum",
           "remove_room": "Fjern rum",
-          "finish_rooms": "Gem og afslut"
+          "finish_rooms": "Gem rum og gå tilbage"
         }
       },
       "add_room": {
@@ -158,6 +192,7 @@
     "error": {
       "cannot_connect": "Forbindelsen kunne ikke valideres, eller der blev ikke modtaget gyldig Dantherm-trafik.",
       "controller_cannot_connect": "Controller API kunne ikke kontaktes eller godkende tokenet.",
+      "controller_update_failed": "Controlleren afviste ændringen, eller forbindelsen blev afbrudt.",
       "required": "Feltet skal udfyldes for den valgte forbindelsestype.",
       "room_name_duplicate": "Der findes allerede et Smart Auto-rum med dette navn.",
       "room_requires_sensor": "Vælg mindst én sensor til rummet.",

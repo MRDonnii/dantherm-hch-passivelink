@@ -99,6 +99,18 @@ CONTROLLER_SENSOR_SPECS = (
     ("smart_max_rh", "Smart Auto højeste luftfugtighed", PERCENTAGE, "mdi:water-percent"),
     ("smart_max_rh_room", "Smart Auto højeste RH rum", None, "mdi:home-alert-outline"),
     ("smart_inputs_age_seconds", "Smart Auto inputalder", UnitOfTime.SECONDS, "mdi:timer-sand"),
+    ("hardware_control_state", "Hardwarekontrolstatus", None, "mdi:shield-lock-outline"),
+    ("hcp4_last_foreign_write_age", "Seneste HCP4-write", UnitOfTime.SECONDS, "mdi:timer-outline"),
+    ("actual_fan_extract_percent", "Faktisk udsugning", PERCENTAGE, "mdi:fan"),
+    ("actual_fan_supply_percent", "Faktisk indblæsning", PERCENTAGE, "mdi:fan"),
+    ("actual_fan_extract_rpm", "Faktisk udsugning RPM", "rpm", "mdi:fan-speed-2"),
+    ("actual_fan_supply_rpm", "Faktisk indblæsning RPM", "rpm", "mdi:fan-speed-2"),
+    ("actual_afterheat_setpoint", "Faktisk eftervarme setpunkt", UnitOfTemperature.CELSIUS, "mdi:thermostat"),
+    ("actual_supply_before_heater_temperature", "Luft før varmeflade", UnitOfTemperature.CELSIUS, "mdi:thermometer-low"),
+    ("actual_supply_air_temperature", "Faktisk indblæsningstemperatur", UnitOfTemperature.CELSIUS, "mdi:thermometer-high"),
+    ("actual_afterheat_frost_temperature", "Eftervarme frostføler", UnitOfTemperature.CELSIUS, "mdi:snowflake-thermometer"),
+    ("actual_afterheat_valve_percent", "Eftervarme ventil", PERCENTAGE, "mdi:valve"),
+    ("fireplace_remaining_seconds", "Pejsetid tilbage", UnitOfTime.SECONDS, "mdi:timer-outline"),
 )
 
 
@@ -144,6 +156,7 @@ class ControllerStatusSensor(ControllerEntity, SensorEntity):
         super().__init__(coordinator, key, name)
         self._attr_native_unit_of_measurement = unit
         self._attr_icon = icon
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def native_value(self):

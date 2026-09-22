@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/MRDonnii/dantherm-hch-passivelink/main/assets/logo.png" alt="Dantherm HCH PassiveLink logo" width="140">
 
-An unofficial, read-only Home Assistant integration for a Dantherm HCH5 MK1 with HAC1. The integration decodes internal Modbus RTU traffic without transmitting. The companion gateway is passive by default, with an [opt-in synchronized temperature read mode](gateway/README.md#synchronized-temperature-snapshots-opt-in) for verified installations.
+An unofficial Home Assistant integration for a Dantherm HCH5 MK1 with HAC1. Its classic PassiveLink data path remains read-only and decodes internal Modbus RTU traffic without transmitting. The optional controller beta sends only high-level intent and room observations to the separate Raspberry Pi controller HTTP API; Home Assistant never writes Modbus/RS485 directly.
 
 > **Unofficial community project:** This software was not developed, supplied, commissioned, approved, certified or supported by Dantherm Group. Dantherm Group is not affiliated with this project. “Dantherm” is used only to identify compatible equipment; all trademarks belong to their respective owners. For product service and safety questions, contact Dantherm or an authorised installer.
 
@@ -13,6 +13,18 @@ The integration supports a raw TCP stream or a USB-RS485 adapter connected direc
 For direct USB use, select **USB-RS485** during setup and enter a stable path such as `/dev/serial/by-id/...`. Home Assistant must have permission to access that device, and no other process may open the same serial port.
 
 Do not use an M-Bus gateway. M-Bus is electrically incompatible with RS485.
+
+### Optional Raspberry Pi controller beta
+
+Version `0.8.0-beta.1` can connect to the controller API supplied by `dantherm-hch-passivelink-webui` `1.1.0-beta.1`. The architecture is strictly:
+
+```text
+Home Assistant -> authenticated controller HTTP API -> Raspberry Pi arbitration -> verified RS485 writes -> HCH5/HAC1
+```
+
+The Pi is source of truth. HCP4 always has priority, `UNKNOWN` or unhealthy bus state blocks all controller writes, and any verified foreign FC06/FC16 write makes Pi yield immediately. The HA Options UI manages the API host/port/token, lease TTL, dynamic add/edit/delete rooms, priorities, controller parameters, afterheat setpoint and all six fan profiles. WebUI changes appear in HA on the next controller poll.
+
+Smart Auto supports up to 32 rooms, combines HCH5/HAC1's own CO2/RH with HA sensors, uses the worst relevant measurement rather than an average, supports levels 1–6 and falls back to Local Auto when HA input is stale. `control: false` rooms remain visible for diagnostics but do not steer ventilation. Bypass remains read-only because no verified write sequence is documented.
 
 ## Why it is read-only
 
@@ -79,7 +91,7 @@ A detailed Danish explanation of the findings is available in [docs/findings.da.
 
 ### Raspberry Pi gateway project
 
-For a complete Raspberry Pi OS / Debian / Ubuntu installation with the receive-only gateway, responsive WebUI, first-user login, history, diagnostics and system administration, use the companion [Dantherm HCH PassiveLink WebUI repository](https://github.com/MRDonnii/dantherm-hch-passivelink-webui). Its installer provides the raw TCP endpoint consumed by this Home Assistant integration.
+For a complete Raspberry Pi OS / Debian / Ubuntu installation with the controller-aware gateway, responsive WebUI, first-user login, history, diagnostics and system administration, use the companion [Dantherm HCH PassiveLink WebUI repository](https://github.com/MRDonnii/dantherm-hch-passivelink-webui). Its installer also provides the read-only raw TCP endpoint consumed by this Home Assistant integration.
 
 The [`gateway/`](gateway/) folder is a self-contained, low-cost Raspberry Pi
 project with the receive-only bridge, systemd services, a reusable
@@ -151,6 +163,8 @@ source and limitations of every sensor and derived alarm.
 5. Enter the IP address and raw TCP listening port configured on the RS485-to-Ethernet adapter.
 
 If the adapter address changes later, reconfigure the integration with its new host and port.
+
+For this controller beta, open the repository menu in HACS, choose **Redownload**, enable beta/prerelease versions and select exact version `v0.8.0-beta.1`. After restarting Home Assistant, open the integration's **Configure** flow and enter the Pi controller API details. Do not use the HACS stable/default download when testing this beta.
 
 ## Compatibility
 
