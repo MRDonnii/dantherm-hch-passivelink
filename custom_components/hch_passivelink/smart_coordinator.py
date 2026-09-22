@@ -88,7 +88,13 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             await self.controller_client.async_send_rooms(
                 self._room_payload(), self.smart_input_valid_for
             )
-        except (OSError, ConnectionError, asyncio.TimeoutError) as error:
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:  # noqa: BLE001 - fire-and-forget push, never fatal
+            # Covers OSError/ConnectionError/TimeoutError plus aiohttp's own
+            # exception hierarchy (e.g. ServerDisconnectedError), which does
+            # not subclass the builtins above and previously escaped this
+            # background task and failed config entry unload/reload.
             _LOGGER.debug("Unable to push room data to Pi controller: %s", error)
 
     @callback
@@ -100,13 +106,15 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             await asyncio.sleep(1)
             await self.async_send_room_inputs()
 
-        self._room_send_task = self.hass.async_create_task(delayed_push())
+        self._room_send_task = self.hass.async_create_background_task(
+            delayed_push(), "Dantherm HCH Smart Auto room push"
+        )
 
     async def async_start_controller(self) -> None:
         if self.controller_client is None:
             return
         self.controller_client._update = self.async_handle_controller_update
-        self.controller_task = self.hass.async_create_task(
+        self.controller_task = self.hass.async_create_background_task(
             self.controller_client.run(), "Dantherm HCH Pi controller API"
         )
         entity_ids = sorted({
@@ -142,6 +150,8 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
                 await self._room_send_task
             except asyncio.CancelledError:
                 pass
+            except Exception as error:  # noqa: BLE001 - never block shutdown
+                _LOGGER.debug("Room push task ended with error during shutdown: %s", error)
             self._room_send_task = None
         if self.controller_client is not None:
             await self.controller_client.stop()
