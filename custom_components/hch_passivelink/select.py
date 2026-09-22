@@ -31,7 +31,7 @@ class ControllerLevelSelect(ControllerEntity, SelectEntity):
 
     @property
     def current_option(self) -> str | None:
-        value = self.coordinator.controller_state.get("effective_level")
+        value = self.coordinator.controller_state.get("manual_level")
         return str(value) if value is not None else None
 
     async def async_select_option(self, option: str) -> None:

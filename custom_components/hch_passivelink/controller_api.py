@@ -83,8 +83,8 @@ class ControllerApiClient:
         self._update(state)
         return state
 
-    async def async_probe(self) -> None:
-        await self.async_get_state()
+    async def async_probe(self) -> dict[str, object]:
+        return await self.async_get_state()
 
     async def run(self) -> None:
         delay = 1.0

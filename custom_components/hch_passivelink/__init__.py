@@ -56,7 +56,6 @@ PLATFORMS = [
     Platform.FAN,
     Platform.SELECT,
     Platform.NUMBER,
-    Platform.SWITCH,
 ]
 PassiveLinkConfigEntry = ConfigEntry[SmartPassiveLinkCoordinator]
 

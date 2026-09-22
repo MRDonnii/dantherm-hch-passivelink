@@ -126,6 +126,8 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
         self._pending: dict = {}
         self._rooms = self._load_rooms({**config_entry.data, **config_entry.options})
         self._selected_room: int | None = None
+        self._controller_client: ControllerApiClient | None = None
+        self._controller_state: dict[str, object] = {}
 
     @property
     def _current(self) -> dict:
@@ -339,15 +341,13 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                     async_get_clientsession(self.hass), host, port, token, lambda _: None
                 )
                 try:
-                    await client.async_probe()
+                    self._controller_state = await client.async_probe()
                 except (OSError, ConnectionError, asyncio.TimeoutError):
                     errors["base"] = "controller_cannot_connect"
             if not errors:
+                self._controller_client = client
                 self._pending.update(user_input)
-                if user_input.get(CONF_SMART_ROOMS_ENABLED, False):
-                    return await self.async_step_rooms_menu()
-                self._pending[CONF_SMART_ROOMS] = self._rooms
-                return self.async_create_entry(title="", data=self._pending)
+                return await self.async_step_controller_menu()
 
         schema = vol.Schema({
             vol.Required(CONF_CONTROLLER_HOST, default=default_host): str,
@@ -373,6 +373,95 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
             )),
         })
         return self.async_show_form(step_id="controller", data_schema=schema, errors=errors)
+
+    async def async_step_controller_menu(self, user_input: dict | None = None) -> FlowResult:
+        del user_input
+        options = ["controller_settings", "fan_profiles"]
+        if self._pending.get(CONF_SMART_ROOMS_ENABLED, False):
+            options.append("rooms_menu")
+        options.append("finish_controller")
+        return self.async_show_menu(step_id="controller_menu", menu_options=options)
+
+    async def async_step_controller_settings(self, user_input: dict | None = None) -> FlowResult:
+        errors = {}
+        state = self._controller_state
+        if user_input is not None:
+            try:
+                if self._controller_client is None:
+                    raise ConnectionError("Controller API is not connected")
+                self._controller_state = await self._controller_client.async_command(dict(user_input))
+            except (OSError, ConnectionError, asyncio.TimeoutError):
+                errors["base"] = "controller_update_failed"
+            else:
+                return await self.async_step_controller_menu()
+
+        number = lambda minimum, maximum, step=1: selector.NumberSelector(
+            selector.NumberSelectorConfig(
+                min=minimum, max=maximum, step=step,
+                mode=selector.NumberSelectorMode.BOX,
+            )
+        )
+        schema = vol.Schema({
+            vol.Required("mode", default=state.get("mode", "local_auto")): vol.In({
+                "local_auto": "Local Auto", "smart_auto": "Smart Auto", "manual": "Manual",
+            }),
+            vol.Required("manual_level", default=state.get("manual_level", 3)): number(1, 6),
+            vol.Required("local_normal_level", default=state.get("local_normal_level", 3)): number(1, 6),
+            vol.Required("local_min_level", default=state.get("local_min_level", 1)): number(1, 6),
+            vol.Required("local_max_level", default=state.get("local_max_level", 6)): number(1, 6),
+            vol.Required("rh_setpoint", default=state.get("rh_setpoint", 50)): number(25, 80),
+            vol.Required("rh_hysteresis", default=state.get("rh_hysteresis", 3)): number(1, 10),
+            vol.Required("co2_setpoint", default=state.get("co2_setpoint", 800)): number(500, 2000, 50),
+            vol.Required("co2_hysteresis", default=state.get("co2_hysteresis", 100)): number(25, 500, 25),
+            vol.Required("auto_step_rh", default=state.get("auto_step_rh", 5)): number(2, 20),
+            vol.Required("auto_step_co2", default=state.get("auto_step_co2", 200)): number(50, 1000, 50),
+            vol.Required("downshift_delay_seconds", default=state.get("downshift_delay_seconds", 300)): number(30, 3600, 30),
+            vol.Required("boost_hold_seconds", default=state.get("boost_hold_seconds", 600)): number(60, 3600, 60),
+            vol.Required("ha_timeout_seconds", default=state.get("ha_timeout_seconds", 300)): number(60, 3600, 30),
+            vol.Required("afterheat_setpoint", default=state.get("afterheat_setpoint", 20)): number(18, 30),
+        })
+        return self.async_show_form(
+            step_id="controller_settings", data_schema=schema, errors=errors
+        )
+
+    async def async_step_fan_profiles(self, user_input: dict | None = None) -> FlowResult:
+        errors = {}
+        profiles = self._controller_state.get("profiles") or {}
+        if user_input is not None:
+            patch = {"profiles": {
+                str(level): {
+                    "name": str(user_input[f"profile_{level}_name"]).strip(),
+                    "extract": int(user_input[f"profile_{level}_extract"]),
+                    "supply": int(user_input[f"profile_{level}_supply"]),
+                }
+                for level in range(1, 7)
+            }}
+            try:
+                if self._controller_client is None:
+                    raise ConnectionError("Controller API is not connected")
+                self._controller_state = await self._controller_client.async_command(patch)
+            except (OSError, ConnectionError, asyncio.TimeoutError):
+                errors["base"] = "controller_update_failed"
+            else:
+                return await self.async_step_controller_menu()
+
+        fields = {}
+        defaults = (("Lav", 25, 13), ("Lav+", 40, 28), ("Normal", 55, 43),
+                    ("Høj", 70, 58), ("Høj+", 85, 73), ("Boost", 100, 88))
+        for level, (name, extract, supply) in enumerate(defaults, 1):
+            current = profiles.get(str(level)) or profiles.get(level) or {}
+            fields[vol.Required(
+                f"profile_{level}_name", default=current.get("name", name)
+            )] = str
+            fields[vol.Required(
+                f"profile_{level}_extract", default=current.get("extract", extract)
+            )] = vol.All(vol.Coerce(int), vol.Range(min=11, max=100))
+            fields[vol.Required(
+                f"profile_{level}_supply", default=current.get("supply", supply)
+            )] = vol.All(vol.Coerce(int), vol.Range(min=10, max=99))
+        return self.async_show_form(
+            step_id="fan_profiles", data_schema=vol.Schema(fields), errors=errors
+        )
 
     async def async_step_rooms_menu(self, user_input: dict | None = None) -> FlowResult:
         del user_input
@@ -441,6 +530,10 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
         )
 
     async def async_step_finish_rooms(self, user_input: dict | None = None) -> FlowResult:
+        del user_input
+        return await self.async_step_controller_menu()
+
+    async def async_step_finish_controller(self, user_input: dict | None = None) -> FlowResult:
         del user_input
         self._pending[CONF_SMART_ROOMS] = self._rooms
         # Do not persist the old fixed-slot representation when options are saved.

@@ -10,7 +10,7 @@ from .controller_entity import ControllerEntity
 
 PRESETS = [
     "Auto",
-    "Auto + Home Assistant",
+    "Smart Auto",
     "Niveau 1",
     "Niveau 2",
     "Niveau 3",
@@ -40,7 +40,7 @@ class HCHControllerFan(ControllerEntity, FanEntity):
         if mode == "local_auto":
             return "Auto"
         if mode == "smart_auto":
-            return "Auto + Home Assistant"
+            return "Smart Auto"
         level = int(state.get("manual_level") or state.get("effective_level") or 0)
         if level == 6:
             return "Boost"
@@ -52,7 +52,7 @@ class HCHControllerFan(ControllerEntity, FanEntity):
         if preset_mode == "Auto":
             await self.async_command({"mode": "local_auto"})
             return
-        if preset_mode == "Auto + Home Assistant":
+        if preset_mode == "Smart Auto":
             await self.async_command({"mode": "smart_auto"})
             return
         if preset_mode == "Boost":

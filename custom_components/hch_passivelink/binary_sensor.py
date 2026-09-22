@@ -42,9 +42,11 @@ DESCRIPTIONS = (
 
 CONTROLLER_BINARY_SPECS = (
     ("hcp4_detected", "HCP4 registreret", BinarySensorDeviceClass.CONNECTIVITY, EntityCategory.DIAGNOSTIC, "mdi:remote"),
+    ("hcp4_active", "HCP4 aktiv", None, EntityCategory.DIAGNOSTIC, "mdi:remote"),
     ("rs485_healthy", "RS485 sund", BinarySensorDeviceClass.CONNECTIVITY, EntityCategory.DIAGNOSTIC, "mdi:serial-port"),
     ("smart_inputs_online", "Smart Auto input online", BinarySensorDeviceClass.CONNECTIVITY, None, "mdi:home-assistant"),
     ("hardware_writes_allowed", "Pi hardware-writes tilladt", None, EntityCategory.DIAGNOSTIC, "mdi:shield-check-outline"),
+    ("actual_afterheat", "Eftervarme faktisk aktiv", BinarySensorDeviceClass.HEAT, EntityCategory.DIAGNOSTIC, "mdi:radiator"),
 )
 
 
