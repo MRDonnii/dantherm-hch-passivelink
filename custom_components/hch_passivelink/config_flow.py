@@ -31,12 +31,15 @@ from .const import (
     CONF_CONTROLLER_TOKEN,
     CONF_SMART_ROOMS_ENABLED,
     CONF_SMART_INPUT_VALID_FOR,
+    CONF_SMART_ROOMS,
     DEFAULT_CONTROLLER_PORT,
     DEFAULT_FILTER_NOTIFY_DAYS,
     DEFAULT_NAME,
     DEFAULT_PORT,
     DEFAULT_PREHEATER_SENSOR_PORT,
     DEFAULT_SMART_INPUT_VALID_FOR,
+    MAX_SMART_ROOMS,
+    SMART_ROOM_PRIORITIES,
     ROOM_SLOT_COUNT,
     room_name_key,
     room_temperature_key,
@@ -116,15 +119,126 @@ class PassiveLinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
-    """Configure transport, Pi controller API and optional HA room sources."""
+    """Configure transport, Pi controller API and dynamic HA room sources."""
 
     def __init__(self, config_entry) -> None:
         self._config_entry = config_entry
         self._pending: dict = {}
+        self._rooms = self._load_rooms({**config_entry.data, **config_entry.options})
+        self._selected_room: int | None = None
 
     @property
     def _current(self) -> dict:
         return {**self._config_entry.data, **self._config_entry.options}
+
+    @staticmethod
+    def _load_rooms(config: dict) -> list[dict[str, object]]:
+        """Load new dynamic rooms, falling back to legacy fixed slots."""
+        rooms: list[dict[str, object]] = []
+        raw_rooms = config.get(CONF_SMART_ROOMS)
+        if isinstance(raw_rooms, list):
+            for raw in raw_rooms[:MAX_SMART_ROOMS]:
+                if not isinstance(raw, dict):
+                    continue
+                name = str(raw.get("name", "")).strip()
+                if not name:
+                    continue
+                priority = str(raw.get("priority", "auto"))
+                if priority not in SMART_ROOM_PRIORITIES:
+                    priority = "auto"
+                room = {
+                    "name": name[:64],
+                    "enabled": bool(raw.get("enabled", True)),
+                    "control": bool(raw.get("control", True)),
+                    "priority": priority,
+                }
+                for key in ("temperature", "humidity", "co2"):
+                    value = str(raw.get(key, "")).strip()
+                    if value:
+                        room[key] = value
+                rooms.append(room)
+            return rooms
+
+        # Transparent migration from the original 8 fixed room slots.
+        for slot in range(1, ROOM_SLOT_COUNT + 1):
+            name = str(config.get(room_name_key(slot), "")).strip()
+            if not name:
+                continue
+            room: dict[str, object] = {
+                "name": name[:64],
+                "enabled": True,
+                "control": True,
+                "priority": "auto",
+            }
+            for kind, key_func in (
+                ("temperature", room_temperature_key),
+                ("humidity", room_humidity_key),
+                ("co2", room_co2_key),
+            ):
+                value = str(config.get(key_func(slot), "")).strip()
+                if value:
+                    room[kind] = value
+            if len(room) > 4:
+                rooms.append(room)
+        return rooms
+
+    @staticmethod
+    def _entity_selector():
+        return selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="sensor", multiple=False)
+        )
+
+    def _room_schema(self, room: dict[str, object] | None = None) -> vol.Schema:
+        room = room or {}
+        entity_selector = self._entity_selector()
+        items: dict = {
+            vol.Required("name", default=str(room.get("name", ""))): str,
+            vol.Required("enabled", default=bool(room.get("enabled", True))): bool,
+            vol.Required("control", default=bool(room.get("control", True))): bool,
+            vol.Required("priority", default=str(room.get("priority", "auto"))): vol.In({
+                "auto": "Auto",
+                "low": "Lav",
+                "normal": "Normal",
+                "high": "Høj",
+                "critical": "Kritisk",
+            }),
+        }
+        for key in ("temperature", "humidity", "co2"):
+            existing = room.get(key)
+            marker = vol.Optional(key, default=existing) if existing else vol.Optional(key)
+            items[marker] = entity_selector
+        return vol.Schema(items)
+
+    def _validate_room(self, user_input: dict, *, exclude_index: int | None = None) -> tuple[dict, dict]:
+        errors: dict = {}
+        name = str(user_input.get("name", "")).strip()
+        if not name:
+            errors["name"] = "required"
+        elif any(
+            index != exclude_index and str(room.get("name", "")).casefold() == name.casefold()
+            for index, room in enumerate(self._rooms)
+        ):
+            errors["name"] = "room_name_duplicate"
+
+        sensors = {
+            key: str(user_input.get(key, "") or "").strip()
+            for key in ("temperature", "humidity", "co2")
+        }
+        if not any(sensors.values()):
+            errors["base"] = "room_requires_sensor"
+
+        priority = str(user_input.get("priority", "auto"))
+        if priority not in SMART_ROOM_PRIORITIES:
+            errors["priority"] = "invalid_priority"
+
+        room: dict[str, object] = {
+            "name": name[:64],
+            "enabled": bool(user_input.get("enabled", True)),
+            "control": bool(user_input.get("control", True)),
+            "priority": priority,
+        }
+        room.update({key: value for key, value in sensors.items() if value})
+        return room, errors
 
     async def async_step_init(self, user_input: dict | None = None) -> FlowResult:
         current = self._current
@@ -158,6 +272,7 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 self._pending = options
                 if user_input.get(CONF_CONTROLLER_API_ENABLED, False):
                     return await self.async_step_controller()
+                self._pending[CONF_SMART_ROOMS] = self._rooms
                 return self.async_create_entry(title="", data=self._pending)
 
         schema = vol.Schema({
@@ -230,7 +345,8 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
             if not errors:
                 self._pending.update(user_input)
                 if user_input.get(CONF_SMART_ROOMS_ENABLED, False):
-                    return await self.async_step_rooms()
+                    return await self.async_step_rooms_menu()
+                self._pending[CONF_SMART_ROOMS] = self._rooms
                 return self.async_create_entry(title="", data=self._pending)
 
         schema = vol.Schema({
@@ -258,31 +374,77 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
         })
         return self.async_show_form(step_id="controller", data_schema=schema, errors=errors)
 
-    async def async_step_rooms(self, user_input: dict | None = None) -> FlowResult:
-        current = self._current
-        if user_input is not None:
-            cleaned = {}
-            for key, value in user_input.items():
-                if value is not None:
-                    cleaned[key] = str(value).strip() if isinstance(value, str) else value
-            self._pending.update(cleaned)
-            return self.async_create_entry(title="", data=self._pending)
+    async def async_step_rooms_menu(self, user_input: dict | None = None) -> FlowResult:
+        del user_input
+        options = []
+        if len(self._rooms) < MAX_SMART_ROOMS:
+            options.append("add_room")
+        if self._rooms:
+            options.extend(("edit_room", "remove_room"))
+        options.append("finish_rooms")
+        return self.async_show_menu(step_id="rooms_menu", menu_options=options)
 
-        schema_items: dict = {}
-        entity_selector = selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="sensor", multiple=False)
-        )
-        for slot in range(1, ROOM_SLOT_COUNT + 1):
-            name_key = room_name_key(slot)
-            temp_key = room_temperature_key(slot)
-            rh_key = room_humidity_key(slot)
-            co2_key = room_co2_key(slot)
-            schema_items[vol.Optional(name_key, default=current.get(name_key, ""))] = str
-            for key in (temp_key, rh_key, co2_key):
-                existing = current.get(key)
-                marker = vol.Optional(key, default=existing) if existing else vol.Optional(key)
-                schema_items[marker] = entity_selector
+    async def async_step_add_room(self, user_input: dict | None = None) -> FlowResult:
+        errors = {}
+        if user_input is not None:
+            room, errors = self._validate_room(user_input)
+            if not errors:
+                self._rooms.append(room)
+                return await self.async_step_rooms_menu()
         return self.async_show_form(
-            step_id="rooms",
-            data_schema=vol.Schema(schema_items),
+            step_id="add_room",
+            data_schema=self._room_schema(),
+            errors=errors,
         )
+
+    async def async_step_edit_room(self, user_input: dict | None = None) -> FlowResult:
+        if not self._rooms:
+            return await self.async_step_rooms_menu()
+        choices = {str(index): str(room["name"]) for index, room in enumerate(self._rooms)}
+        if user_input is not None:
+            self._selected_room = int(user_input["room"])
+            return await self.async_step_room_detail()
+        return self.async_show_form(
+            step_id="edit_room",
+            data_schema=vol.Schema({vol.Required("room"): vol.In(choices)}),
+        )
+
+    async def async_step_room_detail(self, user_input: dict | None = None) -> FlowResult:
+        if self._selected_room is None or self._selected_room >= len(self._rooms):
+            return await self.async_step_rooms_menu()
+        current = self._rooms[self._selected_room]
+        errors = {}
+        if user_input is not None:
+            room, errors = self._validate_room(user_input, exclude_index=self._selected_room)
+            if not errors:
+                self._rooms[self._selected_room] = room
+                self._selected_room = None
+                return await self.async_step_rooms_menu()
+        return self.async_show_form(
+            step_id="room_detail",
+            data_schema=self._room_schema(current),
+            errors=errors,
+        )
+
+    async def async_step_remove_room(self, user_input: dict | None = None) -> FlowResult:
+        if not self._rooms:
+            return await self.async_step_rooms_menu()
+        choices = {str(index): str(room["name"]) for index, room in enumerate(self._rooms)}
+        if user_input is not None:
+            index = int(user_input["room"])
+            if 0 <= index < len(self._rooms):
+                self._rooms.pop(index)
+            return await self.async_step_rooms_menu()
+        return self.async_show_form(
+            step_id="remove_room",
+            data_schema=vol.Schema({vol.Required("room"): vol.In(choices)}),
+        )
+
+    async def async_step_finish_rooms(self, user_input: dict | None = None) -> FlowResult:
+        del user_input
+        self._pending[CONF_SMART_ROOMS] = self._rooms
+        # Do not persist the old fixed-slot representation when options are saved.
+        for slot in range(1, ROOM_SLOT_COUNT + 1):
+            for key_func in (room_name_key, room_temperature_key, room_humidity_key, room_co2_key):
+                self._pending.pop(key_func(slot), None)
+        return self.async_create_entry(title="", data=self._pending)
