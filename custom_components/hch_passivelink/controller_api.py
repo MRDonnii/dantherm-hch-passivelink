@@ -72,7 +72,7 @@ class ControllerApiClient:
         self._update(state)
         return state
 
-    async def async_send_rooms(self, rooms: dict[str, dict[str, float]], valid_for_s: int = 180) -> dict[str, object]:
+    async def async_send_rooms(self, rooms: dict[str, dict[str, object]], valid_for_s: int = 180) -> dict[str, object]:
         state = await self._json(
             "POST",
             "/api/controller/inputs",
