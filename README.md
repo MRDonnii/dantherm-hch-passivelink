@@ -1,6 +1,6 @@
 # Dantherm HCH PassiveLink
 
-<img src="https://raw.githubusercontent.com/MRDonnii/dantherm-hch-passivelink/main/assets/logo.png" alt="Dantherm HCH PassiveLink logo" width="140">
+<img src="https://raw.githubusercontent.com/MRDonnii/dantherm-hch-passivelink/main/assets/logo.png" alt="HCH PassiveLink logo" width="320">
 
 An unofficial, read-only Home Assistant integration for a Dantherm HCH5 MK1 with HAC1. The integration decodes internal Modbus RTU traffic without transmitting. The companion gateway is passive by default, with an [opt-in synchronized temperature read mode](gateway/README.md#synchronized-temperature-snapshots-opt-in) for verified installations.
 
