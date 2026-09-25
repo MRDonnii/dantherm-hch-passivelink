@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 
 import serial
-from temperature_snapshot import read_temperature_snapshot
+from temperature_snapshot import read_probe_178_179, read_temperature_snapshot
 
 LOGGER = logging.getLogger("passivelink-gateway")
 
@@ -75,17 +75,28 @@ class Gateway:
                 connection.dtr = False
                 LOGGER.info("Listening read-only on %s at 19200 8E1", self.device)
                 last_snapshot = float("-inf")
+                last_probe = float("-inf")
                 while not self.stopping:
                     data = await asyncio.to_thread(connection.read, 4096)
                     if data:
                         await self.broadcast(data)
-                    if self.temperature_snapshots and time.monotonic() - last_snapshot >= 10:
+                    now = time.monotonic()
+                    if self.temperature_snapshots and now - last_snapshot >= 10:
                         snapshot = await asyncio.to_thread(read_temperature_snapshot, connection)
                         last_snapshot = time.monotonic()
                         if snapshot is not None:
                             await self.broadcast(snapshot)
                         else:
                             LOGGER.debug("Temperature snapshot skipped: busy bus or no valid reply")
+
+                    # Experimental probe is deliberately independent of the HA
+                    # snapshot and lower frequency. A timeout/non-response is
+                    # ignored and cannot affect the normal 180..209 data path.
+                    if self.temperature_snapshots and now - last_probe >= 60:
+                        probe = await asyncio.to_thread(read_probe_178_179, connection)
+                        last_probe = time.monotonic()
+                        if probe is None:
+                            LOGGER.debug("HAC1 178/179 probe skipped: busy bus or no valid reply")
             except (FileNotFoundError, OSError, serial.SerialException) as error:
                 LOGGER.warning("RS485 unavailable (%s); retrying in 3 seconds", error)
                 await asyncio.sleep(3)
