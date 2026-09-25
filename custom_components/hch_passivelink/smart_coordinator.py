@@ -11,6 +11,7 @@ from homeassistant.helpers.event import async_track_state_change_event, async_tr
 from .coordinator import PassiveLinkCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+SIGNAL_VALID_FOR = 300
 
 
 class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
@@ -27,6 +28,11 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
         self._remove_room_listener = None
         self._remove_room_timer = None
         self._room_send_task: asyncio.Task | None = None
+        # Automatic fireplace signal. The Pi leases it for SIGNAL_VALID_FOR
+        # seconds and HA renews it every minute while it is on, so a stopped
+        # HA lets it expire on the Pi instead of holding fireplace mode.
+        self.fireplace_signal = False
+        self._remove_signal_timer = None
 
     @callback
     def async_handle_controller_update(self, state: dict[str, object]) -> None:
@@ -97,6 +103,27 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             # background task and failed config entry unload/reload.
             _LOGGER.debug("Unable to push room data to Pi controller: %s", error)
 
+    async def async_set_fireplace_signal(self, value: bool) -> None:
+        if self.controller_client is None:
+            raise ConnectionError("Controller API is not configured")
+        self.fireplace_signal = bool(value)
+        await self.controller_client.async_send_signals(
+            {"fireplace": self.fireplace_signal}, SIGNAL_VALID_FOR
+        )
+        self.async_update_listeners()
+
+    async def _async_renew_signals(self) -> None:
+        if self.controller_client is None or not self.fireplace_signal:
+            return
+        try:
+            await self.controller_client.async_send_signals(
+                {"fireplace": True}, SIGNAL_VALID_FOR
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:  # noqa: BLE001 - renewal retries next minute
+            _LOGGER.debug("Unable to renew fireplace signal: %s", error)
+
     @callback
     def _schedule_room_push(self, _event: Event | None = None) -> None:
         if self._room_send_task is not None and not self._room_send_task.done():
@@ -116,6 +143,13 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
         self.controller_client._update = self.async_handle_controller_update
         self.controller_task = self.hass.async_create_background_task(
             self.controller_client.run(), "Dantherm HCH Pi controller API"
+        )
+        self._remove_signal_timer = async_track_time_interval(
+            self.hass,
+            callback(lambda _now: self.hass.async_create_background_task(
+                self._async_renew_signals(), "Dantherm HCH fireplace signal renewal"
+            )),
+            timedelta(seconds=60),
         )
         entity_ids = sorted({
             str(entity_id)
@@ -138,6 +172,9 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             self._schedule_room_push()
 
     async def async_shutdown(self) -> None:
+        if self._remove_signal_timer is not None:
+            self._remove_signal_timer()
+            self._remove_signal_timer = None
         if self._remove_room_listener is not None:
             self._remove_room_listener()
             self._remove_room_listener = None
