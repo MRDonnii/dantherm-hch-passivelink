@@ -22,11 +22,10 @@ class AfterheatClimate(ControllerEntity, ClimateEntity):
     """Supply-air afterheat thermostat backed by the Pi controller API."""
 
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
-    _attr_hvac_modes = [HVACMode.HEAT]
-    _attr_hvac_mode = HVACMode.HEAT
+    _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
-    _attr_min_temp = 18
-    _attr_max_temp = 30
+    _attr_min_temp = 10
+    _attr_max_temp = 35
     _attr_target_temperature_step = 1
     _attr_icon = "mdi:radiator"
 
@@ -44,6 +43,10 @@ class AfterheatClimate(ControllerEntity, ClimateEntity):
     def target_temperature(self) -> float | None:
         value = self.coordinator.controller_state.get("afterheat_setpoint")
         return float(value) if isinstance(value, (int, float)) else None
+
+    @property
+    def hvac_mode(self) -> HVACMode:
+        return HVACMode.HEAT if self.coordinator.controller_state.get("afterheat_enabled") is not False else HVACMode.OFF
 
     @property
     def current_temperature(self) -> float | None:
@@ -68,8 +71,9 @@ class AfterheatClimate(ControllerEntity, ClimateEntity):
         await self.async_command({"afterheat_setpoint": int(round(float(value)))})
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
-        if hvac_mode != HVACMode.HEAT:
-            raise ValueError("Afterheat cannot be switched off from Home Assistant")
+        if hvac_mode not in (HVACMode.HEAT, HVACMode.OFF):
+            raise ValueError("Unsupported afterheat mode")
+        await self.async_command({"afterheat_enabled": hvac_mode == HVACMode.HEAT})
 
 
 async def async_setup_entry(

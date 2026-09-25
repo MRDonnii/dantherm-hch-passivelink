@@ -132,7 +132,7 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             )
             self._remove_room_timer = async_track_time_interval(
                 self.hass,
-                lambda _now: self._schedule_room_push(),
+                callback(lambda _now: self._schedule_room_push()),
                 timedelta(seconds=60),
             )
             self._schedule_room_push()

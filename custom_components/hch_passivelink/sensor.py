@@ -106,11 +106,20 @@ CONTROLLER_SENSOR_SPECS = (
     ("actual_fan_extract_rpm", "Faktisk udsugning RPM", "rpm", "mdi:fan-speed-2"),
     ("actual_fan_supply_rpm", "Faktisk indblæsning RPM", "rpm", "mdi:fan-speed-2"),
     ("actual_afterheat_setpoint", "Faktisk eftervarme setpunkt", UnitOfTemperature.CELSIUS, "mdi:thermostat"),
+    ("actual_afterheat_selection", "Faktisk eftervarmevalg", None, "mdi:radiator"),
     ("actual_supply_before_heater_temperature", "Luft før varmeflade", UnitOfTemperature.CELSIUS, "mdi:thermometer-low"),
     ("actual_supply_air_temperature", "Faktisk indblæsningstemperatur", UnitOfTemperature.CELSIUS, "mdi:thermometer-high"),
     ("actual_afterheat_frost_temperature", "Eftervarme frostføler", UnitOfTemperature.CELSIUS, "mdi:snowflake-thermometer"),
     ("actual_afterheat_valve_percent", "Eftervarme ventil", PERCENTAGE, "mdi:valve"),
     ("fireplace_remaining_seconds", "Pejsetid tilbage", UnitOfTime.SECONDS, "mdi:timer-outline"),
+    ("actual_bypass_raw", "Bypass statuskode", None, "mdi:valve"),
+    ("actual_bypass_travel_direction", "Bypass rejseretning", None, "mdi:swap-horizontal"),
+    ("actual_bypass_travel_seconds", "Bypass rejsetid", UnitOfTime.SECONDS, "mdi:timer-sand"),
+    ("bypass_travel_expected_seconds", "Bypass forventet rejsetid", UnitOfTime.SECONDS, "mdi:timer-outline"),
+    ("actual_bypass_request", "Bypass aktuelt ønske", None, "mdi:valve"),
+    ("actual_afterheat_outdoor_lockout", "Eftervarme sommerstop", None, "mdi:weather-sunny-alert"),
+    ("cooling_state", "Frikølingstilstand", None, "mdi:snowflake"),
+    ("quick_boost_remaining_seconds", "Hurtig boost tilbage", UnitOfTime.SECONDS, "mdi:fan-clock"),
 )
 
 

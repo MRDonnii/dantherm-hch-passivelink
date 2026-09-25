@@ -69,5 +69,6 @@ async def async_setup_entry(
             ["local_auto", "smart_auto", "manual"],
         ),
         ControllerLevelSelect(coordinator),
+        ControllerSelect(coordinator, "bypass", "Bypassstyring", ["off", "on"]),
         FireplaceDurationSelect(coordinator),
     ])
