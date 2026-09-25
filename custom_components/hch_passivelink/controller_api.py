@@ -83,6 +83,18 @@ class ControllerApiClient:
         self._update(state)
         return state
 
+    async def async_send_signals(self, signals: dict[str, object], valid_for_s: int = 300) -> dict[str, object]:
+        """Leased external switches, e.g. the automatic fireplace signal."""
+        state = await self._json(
+            "POST",
+            "/api/controller/signals",
+            {**signals, "valid_for_s": int(valid_for_s)},
+        )
+        self.connected = True
+        self.last_error = None
+        self._update(state)
+        return state
+
     async def async_probe(self) -> dict[str, object]:
         return await self.async_get_state()
 
