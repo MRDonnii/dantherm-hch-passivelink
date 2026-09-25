@@ -26,9 +26,28 @@ class FireplaceSwitch(ControllerEntity, SwitchEntity):
         await self.async_command({"fireplace": False})
 
 
+class CoolingSwitch(ControllerEntity, SwitchEntity):
+    _attr_icon = "mdi:snowflake"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "cooling_enabled", "Frikøling")
+
+    @property
+    def is_on(self) -> bool:
+        return self.controller_value is True
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.async_command({"cooling_enabled": True})
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.async_command({"cooling_enabled": False})
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator = entry.runtime_data
     if coordinator.controller_client is not None:
-        async_add_entities([FireplaceSwitch(coordinator)])
+        # The fireplace switch is retired: the Pejsetid select (Fra/15/30 min) is
+        # the canonical control, so only the cooling switch is set up here.
+        async_add_entities([CoolingSwitch(coordinator)])
