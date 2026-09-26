@@ -28,6 +28,7 @@ from .const import (
     CONF_CONTROLLER_TOKEN,
     CONF_SMART_ROOMS_ENABLED,
     CONF_SMART_INPUT_VALID_FOR,
+    CONF_UNIT_POWER_ENTITY,
     CONF_SMART_ROOMS,
     DEFAULT_CONTROLLER_PORT,
     DEFAULT_FILTER_NOTIFY_DAYS,
@@ -173,6 +174,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
         smart_input_valid_for=config.get(
             CONF_SMART_INPUT_VALID_FOR, DEFAULT_SMART_INPUT_VALID_FOR
         ),
+        unit_power_entity=config.get(CONF_UNIT_POWER_ENTITY) or None,
     )
     await coordinator.async_load_filter_state()
     client.set_update_callback(coordinator.async_handle_update)

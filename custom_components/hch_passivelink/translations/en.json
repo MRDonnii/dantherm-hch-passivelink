@@ -126,7 +126,8 @@
           "controller_port": "Controller API port",
           "controller_token": "Controller API token",
           "smart_rooms_enabled": "Use Home Assistant sensors in Smart Auto",
-          "smart_input_valid_for": "Sensor input valid for (seconds)"
+          "smart_input_valid_for": "Sensor input valid for (seconds)",
+          "unit_power_entity": "Power meter on the unit (optional, shown in the Pi WebUI)"
         }
       },
       "controller_menu": {

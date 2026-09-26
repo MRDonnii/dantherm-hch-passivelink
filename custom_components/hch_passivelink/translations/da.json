@@ -126,7 +126,8 @@
           "controller_port": "Controller API-port",
           "controller_token": "Controller API-token",
           "smart_rooms_enabled": "Brug Home Assistant-sensorer i Smart Auto",
-          "smart_input_valid_for": "Sensorinput gyldigt i (sekunder)"
+          "smart_input_valid_for": "Sensorinput gyldigt i (sekunder)",
+          "unit_power_entity": "Effektmåler på anlægget (valgfri, vises i Pi'ens WebUI)"
         }
       },
       "controller_menu": {

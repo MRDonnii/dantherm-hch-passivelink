@@ -31,6 +31,7 @@ from .const import (
     CONF_CONTROLLER_TOKEN,
     CONF_SMART_ROOMS_ENABLED,
     CONF_SMART_INPUT_VALID_FOR,
+    CONF_UNIT_POWER_ENTITY,
     CONF_SMART_ROOMS,
     DEFAULT_CONTROLLER_PORT,
     DEFAULT_FILTER_NOTIFY_DAYS,
@@ -370,6 +371,12 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 default=current.get(CONF_SMART_INPUT_VALID_FOR, DEFAULT_SMART_INPUT_VALID_FOR),
             ): selector.NumberSelector(selector.NumberSelectorConfig(
                 min=30, max=900, step=30, mode=selector.NumberSelectorMode.BOX
+            )),
+            vol.Optional(
+                CONF_UNIT_POWER_ENTITY,
+                description={"suggested_value": current.get(CONF_UNIT_POWER_ENTITY)},
+            ): selector.EntitySelector(selector.EntitySelectorConfig(
+                domain="sensor", device_class="power", multiple=False
             )),
         })
         return self.async_show_form(step_id="controller", data_schema=schema, errors=errors)

@@ -18,7 +18,8 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
     """Keep PassiveLink receive-only while adding a separate Pi controller API."""
 
     def __init__(self, *args, controller_client=None, room_sources=None,
-                 smart_input_valid_for: int = 180, **kwargs) -> None:
+                 smart_input_valid_for: int = 180, unit_power_entity: str | None = None,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.controller_client = controller_client
         self.controller_state: dict[str, object] = {}
@@ -33,6 +34,10 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
         # HA lets it expire on the Pi instead of holding fireplace mode.
         self.fireplace_signal = False
         self._remove_signal_timer = None
+        # Optional power meter on the unit, leased to the Pi like the fireplace signal.
+        self.unit_power_entity = unit_power_entity
+        self._remove_power_listener = None
+        self._power_sent_at = 0.0
 
     @callback
     def async_handle_controller_update(self, state: dict[str, object]) -> None:
@@ -112,7 +117,43 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
         )
         self.async_update_listeners()
 
+    def _unit_power(self) -> float | None:
+        state = self.hass.states.get(self.unit_power_entity) if self.unit_power_entity else None
+        if state is None:
+            return None
+        try:
+            value = float(state.state)
+        except (TypeError, ValueError):
+            return None
+        if str(state.attributes.get("unit_of_measurement", "W")).lower() == "kw":
+            value *= 1000
+        return value if 0 <= value <= 5000 else None
+
+    async def _async_send_unit_power(self) -> None:
+        power = self._unit_power()
+        if self.controller_client is None or power is None:
+            return
+        self._power_sent_at = self.hass.loop.time()
+        try:
+            await self.controller_client.async_send_signals(
+                {"unit_power_w": round(power, 1)}, SIGNAL_VALID_FOR
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:  # noqa: BLE001 - retried on the next change or minute
+            _LOGGER.debug("Unable to send unit power to Pi controller: %s", error)
+
+    @callback
+    def _schedule_unit_power(self, _event: Event | None = None) -> None:
+        # A Shelly reports every few seconds; ten seconds is plenty for a display.
+        if _event is not None and self.hass.loop.time() - self._power_sent_at < 10:
+            return
+        self.hass.async_create_background_task(
+            self._async_send_unit_power(), "Dantherm HCH unit power push"
+        )
+
     async def _async_renew_signals(self) -> None:
+        await self._async_send_unit_power()
         if self.controller_client is None or not self.fireplace_signal:
             return
         try:
@@ -151,6 +192,11 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             )),
             timedelta(seconds=60),
         )
+        if self.unit_power_entity:
+            self._remove_power_listener = async_track_state_change_event(
+                self.hass, [self.unit_power_entity], self._schedule_unit_power
+            )
+            self._schedule_unit_power()
         entity_ids = sorted({
             str(entity_id)
             for source in self.room_sources
@@ -172,6 +218,9 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             self._schedule_room_push()
 
     async def async_shutdown(self) -> None:
+        if self._remove_power_listener is not None:
+            self._remove_power_listener()
+            self._remove_power_listener = None
         if self._remove_signal_timer is not None:
             self._remove_signal_timer()
             self._remove_signal_timer = None
