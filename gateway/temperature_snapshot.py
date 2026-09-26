@@ -1,9 +1,16 @@
-"""Opt-in, fixed FC03 temperature snapshot for HCH5 MK1/HAC1.
+"""Opt-in, fixed FC03 reads for HCH5 MK1/HAC1 diagnostics.
 
-This sends a read request on RS485, never a register-write command. Enable only
-on a verified installation; the default gateway remains completely passive.
+The established temperature snapshot remains registers 180..209. An optional,
+independent probe can read registers 178/179 without affecting the HA snapshot.
+Both operations are read-only FC03 requests and retain the existing busy-bus
+and CRC guards.
 """
+from __future__ import annotations
+
+import logging
 import time
+
+LOGGER = logging.getLogger("passivelink-gateway")
 
 
 def crc16(data: bytes) -> int:
@@ -19,16 +26,17 @@ def frame(body: bytes) -> bytes:
     return body + crc16(body).to_bytes(2, "little")
 
 
+# Production snapshot: unchanged from the known-good implementation.
 REQUEST = frame(bytes.fromhex("400300b4001e"))
 
+# Experimental read-only probe: slave 0x40, FC03, registers 178..179 only.
+PROBE_REQUEST = frame(bytes.fromhex("400300b20002"))
 
-def read_temperature_snapshot(connection) -> bytes | None:
-    """Return paired request/CRC-checked response, or skip a busy/failed bus.
+_LAST_PROBE: tuple[int, int] | None = None
 
-    Called by the serial owner only, with a short serial read timeout. Registers
-    180..209 contain T1..T5 at offsets 0..4 and T2AH/TFAH at offsets 25/26.
-    Inter-register gaps are read but are not interpreted or written.
-    """
+
+def _wait_for_quiet_bus(connection) -> bool:
+    """Return True after 15 ms of silence, False if the bus stays busy."""
     deadline = time.monotonic() + 0.3
     quiet_since = time.monotonic()
     while time.monotonic() < deadline:
@@ -37,10 +45,16 @@ def read_temperature_snapshot(connection) -> bytes | None:
             connection.read(waiting)
             quiet_since = time.monotonic()
         elif time.monotonic() - quiet_since >= 0.015:
-            break
+            return True
         time.sleep(0.001)
-    else:
+    return False
+
+
+def read_temperature_snapshot(connection) -> bytes | None:
+    """Return paired 180..209 request/CRC-checked response, or skip safely."""
+    if not _wait_for_quiet_bus(connection):
         return None
+
     connection.write(REQUEST)
     connection.flush()
     received = bytearray()
@@ -49,10 +63,57 @@ def read_temperature_snapshot(connection) -> bytes | None:
         received.extend(connection.read(256))
         for offset in range(max(0, len(received) - 512), len(received) - 64):
             response = bytes(received[offset:offset + 65])
-            if response[:3] == bytes([64, 3, 60]) and (
+            if response[:3] == bytes([0x40, 0x03, 60]) and (
                 crc16(response[:-2]) == int.from_bytes(response[-2:], "little")
             ):
                 return REQUEST + response
         if len(received) > 1024:
             del received[:-128]
+    return None
+
+
+def read_probe_178_179(connection) -> tuple[int, int] | None:
+    """Read and log raw HAC1 registers 178/179 without touching HA state.
+
+    A timeout, exception-free non-response, or invalid CRC simply returns None.
+    No synthetic snapshot is produced, so this probe cannot make the existing
+    180..209 temperature path unavailable.
+    """
+    global _LAST_PROBE
+
+    if not _wait_for_quiet_bus(connection):
+        return None
+
+    connection.write(PROBE_REQUEST)
+    connection.flush()
+    received = bytearray()
+    deadline = time.monotonic() + 0.5
+    while time.monotonic() < deadline:
+        received.extend(connection.read(64))
+        for offset in range(max(0, len(received) - 128), len(received) - 8):
+            response = bytes(received[offset:offset + 9])
+            if response[:3] == bytes([0x40, 0x03, 4]) and (
+                crc16(response[:-2]) == int.from_bytes(response[-2:], "little")
+            ):
+                register_178 = int.from_bytes(response[3:5], "big")
+                register_179 = int.from_bytes(response[5:7], "big")
+                probe = (register_178, register_179)
+                if probe != _LAST_PROBE:
+                    LOGGER.info(
+                        "HAC1 probe raw registers 178/179: "
+                        "r178=%d (0x%04X, hi=%d, lo=%d), "
+                        "r179=%d (0x%04X, hi=%d, lo=%d)",
+                        register_178,
+                        register_178,
+                        register_178 >> 8,
+                        register_178 & 0xFF,
+                        register_179,
+                        register_179,
+                        register_179 >> 8,
+                        register_179 & 0xFF,
+                    )
+                    _LAST_PROBE = probe
+                return probe
+        if len(received) > 256:
+            del received[:-32]
     return None
