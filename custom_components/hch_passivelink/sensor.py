@@ -7,6 +7,8 @@ from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -15,6 +17,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from .controller_entity import ControllerEntity
 from .coordinator import PassiveLinkCoordinator
 from .entity import PI_KEYS, PREHEATER_KEYS, PassiveLinkEntity
 
@@ -83,6 +86,61 @@ DESCRIPTIONS = (
 )
 
 
+CONTROLLER_SENSOR_SPECS = (
+    ("active_master", "Aktiv master", None, "mdi:server-network"),
+    ("effective_source", "Effektiv kilde", None, "mdi:source-branch"),
+    ("effective_level", "Effektivt ventilationsniveau", None, "mdi:fan-speed-3"),
+    ("effective_reason", "Effektiv årsag", None, "mdi:text-box-search-outline"),
+    ("smart_demand", "Smart Auto behov", None, "mdi:brain"),
+    ("smart_requested_level", "Smart Auto ønsket niveau", None, "mdi:fan-chevron-up"),
+    ("smart_target_level", "Smart Auto aktivt målniveau", None, "mdi:target"),
+    ("smart_controlling_room", "Smart Auto styrende rum", None, "mdi:home-lightning-bolt-outline"),
+    ("smart_controlling_metric", "Smart Auto styrende måling", None, "mdi:gauge"),
+    ("smart_max_co2", "Smart Auto højeste CO2", CONCENTRATION_PARTS_PER_MILLION, "mdi:molecule-co2"),
+    ("smart_max_co2_room", "Smart Auto højeste CO2 rum", None, "mdi:home-alert-outline"),
+    ("smart_max_rh", "Smart Auto højeste luftfugtighed", PERCENTAGE, "mdi:water-percent"),
+    ("smart_max_rh_room", "Smart Auto højeste RH rum", None, "mdi:home-alert-outline"),
+    ("smart_inputs_age_seconds", "Smart Auto inputalder", UnitOfTime.SECONDS, "mdi:timer-sand"),
+    ("hardware_control_state", "Hardwarekontrolstatus", None, "mdi:shield-lock-outline"),
+    ("hcp4_last_foreign_write_age", "Seneste HCP4-write", UnitOfTime.SECONDS, "mdi:timer-outline"),
+    ("actual_fan_extract_percent", "Faktisk udsugning", PERCENTAGE, "mdi:fan"),
+    ("actual_fan_supply_percent", "Faktisk indblæsning", PERCENTAGE, "mdi:fan"),
+    ("actual_fan_extract_rpm", "Faktisk udsugning RPM", "rpm", "mdi:fan-speed-2"),
+    ("actual_fan_supply_rpm", "Faktisk indblæsning RPM", "rpm", "mdi:fan-speed-2"),
+    ("actual_afterheat_setpoint", "Faktisk eftervarme setpunkt", UnitOfTemperature.CELSIUS, "mdi:thermostat"),
+    ("actual_afterheat_selection", "Faktisk eftervarmevalg", None, "mdi:radiator"),
+    ("actual_supply_before_heater_temperature", "Luft før varmeflade", UnitOfTemperature.CELSIUS, "mdi:thermometer-low"),
+    ("attic_temperature", "Loftrum temperatur", UnitOfTemperature.CELSIUS, "mdi:home-roof"),
+    ("supply_recovery_percent", "Genvinding indblæsningsside", PERCENTAGE, "mdi:heat-wave"),
+    ("recovered_heat_w", "Genvundet varme", UnitOfPower.WATT, "mdi:heat-wave"),
+    ("afterheat_lift", "Eftervarme temperaturløft", UnitOfTemperature.CELSIUS, "mdi:delta"),
+    ("afterheat_power_w", "Eftervarme effekt til luft", UnitOfPower.WATT, "mdi:radiator"),
+    ("supply_airflow_estimate_m3h", "Indblæsning luftmængde anslået", "m³/h", "mdi:weather-windy"),
+    ("diagnostics_status", "Diagnose status", None, "mdi:stethoscope"),
+    ("diagnostics_alarm_text", "Diagnose advarsler", None, "mdi:alert-outline"),
+    ("frost_state", "Frost i veksler", None, "mdi:snowflake-alert"),
+    ("extract_recovery_percent", "Genvinding udsugningsside", PERCENTAGE, "mdi:heat-wave"),
+    ("specific_fan_power", "Specifik ventilatoreffekt (SFP)", "W/(m³/s)", "mdi:fan-alert"),
+    ("filter_power_ratio", "Filter strøm i forhold til rent filter", None, "mdi:air-filter"),
+    ("recovery_factor", "Genvundet varme pr. kWh strøm i dag", None, "mdi:multiplication"),
+    ("recovered_energy_today_kwh", "Genvundet varme i dag", UnitOfEnergy.KILO_WATT_HOUR, "mdi:heat-wave"),
+    ("afterheat_energy_today_kwh", "Eftervarme til luft i dag", UnitOfEnergy.KILO_WATT_HOUR, "mdi:radiator"),
+    ("unit_energy_today_kwh", "Anlæggets elforbrug i dag", UnitOfEnergy.KILO_WATT_HOUR, "mdi:lightning-bolt"),
+    ("actual_supply_air_temperature", "Faktisk indblæsningstemperatur", UnitOfTemperature.CELSIUS, "mdi:thermometer-high"),
+    ("actual_afterheat_frost_temperature", "Eftervarme frostføler", UnitOfTemperature.CELSIUS, "mdi:snowflake-thermometer"),
+    ("actual_afterheat_valve_percent", "Eftervarme ventil", PERCENTAGE, "mdi:valve"),
+    ("fireplace_remaining_seconds", "Pejsetid tilbage", UnitOfTime.SECONDS, "mdi:timer-outline"),
+    ("actual_bypass_raw", "Bypass statuskode", None, "mdi:valve"),
+    ("actual_bypass_travel_direction", "Bypass rejseretning", None, "mdi:swap-horizontal"),
+    ("actual_bypass_travel_seconds", "Bypass rejsetid", UnitOfTime.SECONDS, "mdi:timer-sand"),
+    ("bypass_travel_expected_seconds", "Bypass forventet rejsetid", UnitOfTime.SECONDS, "mdi:timer-outline"),
+    ("actual_bypass_request", "Bypass aktuelt ønske", None, "mdi:valve"),
+    ("actual_afterheat_outdoor_lockout", "Eftervarme sommerstop", None, "mdi:weather-sunny-alert"),
+    ("cooling_state", "Frikølingstilstand", None, "mdi:snowflake"),
+    ("quick_boost_remaining_seconds", "Hurtig boost tilbage", UnitOfTime.SECONDS, "mdi:fan-clock"),
+)
+
+
 class PassiveLinkSensor(PassiveLinkEntity, SensorEntity, RestoreEntity):
     def __init__(self, coordinator: PassiveLinkCoordinator, description: Description) -> None:
         super().__init__(coordinator, description.key)
@@ -120,11 +178,56 @@ class PassiveLinkSensor(PassiveLinkEntity, SensorEntity, RestoreEntity):
         return value
 
 
+ENERGY_SENSOR_SPECS = (
+    ("recovered_energy_kwh", "Genvundet varme energi", "mdi:heat-wave"),
+    ("afterheat_energy_kwh", "Eftervarme energi til luft", "mdi:radiator"),
+    ("unit_energy_kwh", "Anlæggets elforbrug (fra Pi)", "mdi:lightning-bolt"),
+)
+
+
+class ControllerEnergySensor(ControllerEntity, SensorEntity):
+    """Cumulative kWh from the Pi; usable in the HA energy dashboard and utility meters."""
+
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+
+    def __init__(self, coordinator, key: str, name: str, icon: str) -> None:
+        super().__init__(coordinator, key, name)
+        self._attr_icon = icon
+
+    @property
+    def native_value(self):
+        return self.controller_value
+
+
+class ControllerStatusSensor(ControllerEntity, SensorEntity):
+    def __init__(self, coordinator, key: str, name: str, unit, icon: str) -> None:
+        super().__init__(coordinator, key, name)
+        self._attr_native_unit_of_measurement = unit
+        self._attr_icon = icon
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def native_value(self):
+        return self.controller_value
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator = entry.runtime_data
-    async_add_entities(
+    entities = [
         PassiveLinkSensor(coordinator, description)
         for description in DESCRIPTIONS
         if description.key not in PREHEATER_KEYS | PI_KEYS
         or coordinator._auxiliary_client is not None
-    )
+    ]
+    if coordinator.controller_client is not None:
+        entities.extend(
+            ControllerStatusSensor(coordinator, key, name, unit, icon)
+            for key, name, unit, icon in CONTROLLER_SENSOR_SPECS
+        )
+        entities.extend(
+            ControllerEnergySensor(coordinator, key, name, icon)
+            for key, name, icon in ENERGY_SENSOR_SPECS
+        )
+    async_add_entities(entities)

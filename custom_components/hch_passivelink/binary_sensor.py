@@ -6,6 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .controller_entity import ControllerEntity
 from .entity import PI_KEYS, PREHEATER_KEYS, PassiveLinkEntity
 
 DESCRIPTIONS = (
@@ -39,6 +40,16 @@ DESCRIPTIONS = (
 )
 
 
+CONTROLLER_BINARY_SPECS = (
+    ("hcp4_detected", "HCP4 registreret", BinarySensorDeviceClass.CONNECTIVITY, EntityCategory.DIAGNOSTIC, "mdi:remote"),
+    ("hcp4_active", "HCP4 aktiv", None, EntityCategory.DIAGNOSTIC, "mdi:remote"),
+    ("rs485_healthy", "RS485 sund", BinarySensorDeviceClass.CONNECTIVITY, EntityCategory.DIAGNOSTIC, "mdi:serial-port"),
+    ("smart_inputs_online", "Smart Auto input online", BinarySensorDeviceClass.CONNECTIVITY, None, "mdi:home-assistant"),
+    ("hardware_writes_allowed", "Pi hardware-writes tilladt", None, EntityCategory.DIAGNOSTIC, "mdi:shield-check-outline"),
+    ("actual_afterheat", "Eftervarme faktisk aktiv", BinarySensorDeviceClass.HEAT, EntityCategory.DIAGNOSTIC, "mdi:radiator"),
+)
+
+
 class PassiveLinkBinarySensor(PassiveLinkEntity, BinarySensorEntity):
     def __init__(self, coordinator, description) -> None:
         super().__init__(coordinator, description.key)
@@ -49,11 +60,30 @@ class PassiveLinkBinarySensor(PassiveLinkEntity, BinarySensorEntity):
         return bool(self.coordinator.data.get(self.key))
 
 
+class ControllerStatusBinarySensor(ControllerEntity, BinarySensorEntity):
+    def __init__(self, coordinator, key: str, name: str, device_class, category, icon: str) -> None:
+        super().__init__(coordinator, key, name)
+        self._attr_device_class = device_class
+        self._attr_entity_category = category
+        self._attr_icon = icon
+
+    @property
+    def is_on(self):
+        value = self.controller_value
+        return bool(value) if value is not None else None
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     coordinator = entry.runtime_data
-    async_add_entities(
+    entities = [
         PassiveLinkBinarySensor(coordinator, description)
         for description in DESCRIPTIONS
         if description.key not in PREHEATER_KEYS | PI_KEYS
         or coordinator._auxiliary_client is not None
-    )
+    ]
+    if coordinator.controller_client is not None:
+        entities.extend(
+            ControllerStatusBinarySensor(coordinator, key, name, device_class, category, icon)
+            for key, name, device_class, category, icon in CONTROLLER_BINARY_SPECS
+        )
+    async_add_entities(entities)

@@ -9,6 +9,8 @@ import logging
 import platform
 import shutil
 import subprocess
+import time
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -33,8 +35,18 @@ THROTTLED_BITS = {
 }
 
 
+# The HCH5 Control WebUI on the same Pi, when installed, lets the owner choose
+# which sensor is flow and which is return. Its choice wins; without it this
+# service works exactly as before.
+CONTROLLER_URL = "http://127.0.0.1:8080/api/onewire/water"
+CONTROLLER_CACHE_SECONDS = 30.0
+
+
 class SensorReader:
-    def __init__(self, config_path: str) -> None:
+    def __init__(self, config_path: str, controller_url: str | None = CONTROLLER_URL) -> None:
+        self.controller_url = controller_url
+        self._controller_choice: tuple[str | None, str | None] = (None, None)
+        self._controller_checked = 0.0
         try:
             config = json.loads(Path(config_path).read_text(encoding="utf-8"))
         except (FileNotFoundError, OSError, ValueError):
@@ -83,12 +95,36 @@ class SensorReader:
             return None
         return str(value).lower().removeprefix("0x")
 
+    def _controller_ids(self) -> tuple[str | None, str | None]:
+        if not self.controller_url:
+            return None, None
+        now = time.monotonic()
+        if self._controller_checked and now - self._controller_checked < CONTROLLER_CACHE_SECONDS:
+            return self._controller_choice
+        self._controller_checked = now
+        try:
+            with urllib.request.urlopen(self.controller_url, timeout=1) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            self._controller_choice = (
+                self._normalise(payload.get("flow_sensor")),
+                self._normalise(payload.get("return_sensor")),
+            )
+        except (OSError, ValueError, AttributeError):
+            self._controller_choice = (None, None)
+        return self._controller_choice
+
     def _sensor_ids(self) -> tuple[str | None, str | None]:
         discovered = sorted(
             path.name
             for path in Path("/sys/bus/w1/devices").glob("28-*")
             if (path / "w1_slave").exists()
         )
+        # 0) The choice made in the HCH5 Control WebUI wins, and is saved so it
+        #    also holds while the WebUI is down.
+        chosen = self._controller_ids()
+        if all(sensor_id and sensor_id in discovered for sensor_id in chosen) and chosen[0] != chosen[1]:
+            self._save_state(chosen[0], chosen[1])
+            return chosen[0], chosen[1]
         # 1) Manuel opsaetning i /etc vinder altid, hvis begge foelere findes.
         configured = [self.flow_id, self.return_id]
         if all(sensor_id and sensor_id in discovered for sensor_id in configured):
@@ -285,9 +321,11 @@ def main() -> None:
     parser.add_argument("--config", default="/etc/dantherm-passivelink/onewire.json")
     parser.add_argument("--bind", default="0.0.0.0")
     parser.add_argument("--port", type=int, default=4197)
+    parser.add_argument("--controller-url", default=CONTROLLER_URL,
+                        help="HCH5 Control flow/return choice; empty to ignore")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    reader = SensorReader(args.config)
+    reader = SensorReader(args.config, args.controller_url or None)
     server = ThreadingHTTPServer((args.bind, args.port), handler_factory(reader))
     LOGGER.info("Optional DS18B20 service listening on %s:%d", args.bind, args.port)
     server.serve_forever()
