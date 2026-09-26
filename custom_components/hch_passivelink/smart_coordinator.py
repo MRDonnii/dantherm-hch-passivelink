@@ -20,6 +20,7 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
 
     def __init__(self, *args, controller_client=None, room_sources=None,
                  smart_input_valid_for: int = 180, unit_power_entity: str | None = None,
+                 energy_entities: dict[str, str | None] | None = None,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.controller_client = controller_client
@@ -39,6 +40,10 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
         self.unit_power_entity = unit_power_entity
         self._remove_power_listener = None
         self._power_sent_at = 0.0
+        # Optional daily energy meter and prices for the Pi's energy tiles; renewed each minute.
+        self.energy_entities = {
+            field: entity_id for field, entity_id in (energy_entities or {}).items() if entity_id
+        }
 
     @callback
     def async_handle_controller_update(self, state: dict[str, object]) -> None:
@@ -174,8 +179,48 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             self._async_send_unit_power(), "Dantherm HCH unit power push"
         )
 
+    def _energy_signal(self, field: str, entity_id: str) -> float | None:
+        state = self.hass.states.get(entity_id)
+        if state is None:
+            return None
+        try:
+            value = float(state.state)
+        except (TypeError, ValueError):
+            return None
+        unit = str(state.attributes.get("unit_of_measurement") or "").lower()
+        if field == "unit_energy_measured_today_kwh":
+            if unit == "wh":
+                value /= 1000
+            elif unit == "mwh":
+                value *= 1000
+            return value if 0 <= value <= 10000 else None
+        # Prices must reach the Pi in kr/kWh; Danish price sensors often use øre/kWh.
+        if "øre" in unit or "ore/" in unit:
+            value /= 100
+        if unit.endswith("/mwh"):
+            value /= 1000
+        return value if 0 <= value <= 100 else None
+
+    async def _async_send_energy_signals(self) -> None:
+        if self.controller_client is None or not self.energy_entities:
+            return
+        signals = {}
+        for field, entity_id in self.energy_entities.items():
+            value = self._energy_signal(field, entity_id)
+            if value is not None:
+                signals[field] = round(value, 4)
+        if not signals:
+            return
+        try:
+            await self.controller_client.async_send_signals(signals, SIGNAL_VALID_FOR)
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:  # noqa: BLE001 - retried on the next minute
+            _LOGGER.debug("Unable to send energy data to Pi controller: %s", error)
+
     async def _async_renew_signals(self) -> None:
         await self._async_send_unit_power()
+        await self._async_send_energy_signals()
         if self.controller_client is None or not self.fireplace_signal:
             return
         try:
@@ -219,6 +264,10 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
                 self.hass, [self.unit_power_entity], self._schedule_unit_power
             )
             self._schedule_unit_power()
+        if self.energy_entities:
+            self.hass.async_create_background_task(
+                self._async_send_energy_signals(), "Dantherm HCH energy data push"
+            )
         entity_ids = sorted({
             str(entity_id)
             for source in self.room_sources

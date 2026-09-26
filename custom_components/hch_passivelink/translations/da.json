@@ -127,7 +127,10 @@
           "controller_token": "Controller API-token",
           "smart_rooms_enabled": "Brug Home Assistant-sensorer i Smart Auto",
           "smart_input_valid_for": "Sensorinput gyldigt i (sekunder)",
-          "unit_power_entity": "Effektmåler på anlægget (valgfri, vises i Pi'ens WebUI)"
+          "unit_power_entity": "Effektmåler på anlægget (valgfri, vises i Pi'ens WebUI)",
+          "unit_energy_today_entity": "Dantherms elforbrug i dag i kWh (valgfri, fx en daglig forbrugsmåler)",
+          "electricity_price_entity": "Elpris i kr/kWh (valgfri, øre/kWh omregnes)",
+          "heat_price_entity": "Varmepris i kr/kWh (valgfri, øre/kWh omregnes)"
         }
       },
       "controller_menu": {

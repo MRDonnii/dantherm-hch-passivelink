@@ -127,7 +127,10 @@
           "controller_token": "Controller API token",
           "smart_rooms_enabled": "Use Home Assistant sensors in Smart Auto",
           "smart_input_valid_for": "Sensor input valid for (seconds)",
-          "unit_power_entity": "Power meter on the unit (optional, shown in the Pi WebUI)"
+          "unit_power_entity": "Power meter on the unit (optional, shown in the Pi WebUI)",
+          "unit_energy_today_entity": "Unit energy today in kWh (optional, e.g. a daily utility meter)",
+          "electricity_price_entity": "Electricity price in DKK/kWh (optional, øre/kWh is converted)",
+          "heat_price_entity": "Heat price in DKK/kWh (optional, øre/kWh is converted)"
         }
       },
       "controller_menu": {

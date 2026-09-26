@@ -29,6 +29,9 @@ from .const import (
     CONF_SMART_ROOMS_ENABLED,
     CONF_SMART_INPUT_VALID_FOR,
     CONF_UNIT_POWER_ENTITY,
+    CONF_UNIT_ENERGY_TODAY_ENTITY,
+    CONF_ELECTRICITY_PRICE_ENTITY,
+    CONF_HEAT_PRICE_ENTITY,
     CONF_SMART_ROOMS,
     DEFAULT_CONTROLLER_PORT,
     DEFAULT_FILTER_NOTIFY_DAYS,
@@ -175,6 +178,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
             CONF_SMART_INPUT_VALID_FOR, DEFAULT_SMART_INPUT_VALID_FOR
         ),
         unit_power_entity=config.get(CONF_UNIT_POWER_ENTITY) or None,
+        energy_entities={
+            "unit_energy_measured_today_kwh": config.get(CONF_UNIT_ENERGY_TODAY_ENTITY) or None,
+            "electricity_price_dkk_kwh": config.get(CONF_ELECTRICITY_PRICE_ENTITY) or None,
+            "heat_price_dkk_kwh": config.get(CONF_HEAT_PRICE_ENTITY) or None,
+        },
     )
     await coordinator.async_load_filter_state()
     client.set_update_callback(coordinator.async_handle_update)

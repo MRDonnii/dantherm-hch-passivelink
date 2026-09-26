@@ -31,6 +31,16 @@ CONF_SMART_INPUT_VALID_FOR = "smart_input_valid_for"
 CONF_SMART_ROOMS = "smart_rooms"
 # Power meter on the unit (e.g. a Shelly), sent to the Pi for its WebUI.
 CONF_UNIT_POWER_ENTITY = "unit_power_entity"
+# Optional daily energy meter and prices, sent to the Pi for its WebUI energy tiles.
+CONF_UNIT_ENERGY_TODAY_ENTITY = "unit_energy_today_entity"
+CONF_ELECTRICITY_PRICE_ENTITY = "electricity_price_entity"
+CONF_HEAT_PRICE_ENTITY = "heat_price_entity"
+ENERGY_SIGNAL_ENTITIES = (
+    CONF_UNIT_POWER_ENTITY,
+    CONF_UNIT_ENERGY_TODAY_ENTITY,
+    CONF_ELECTRICITY_PRICE_ENTITY,
+    CONF_HEAT_PRICE_ENTITY,
+)
 DEFAULT_SMART_INPUT_VALID_FOR = 180
 MAX_SMART_ROOMS = 32
 SMART_ROOM_PRIORITIES = ("auto", "low", "normal", "high", "critical")

@@ -32,6 +32,10 @@ from .const import (
     CONF_SMART_ROOMS_ENABLED,
     CONF_SMART_INPUT_VALID_FOR,
     CONF_UNIT_POWER_ENTITY,
+    CONF_UNIT_ENERGY_TODAY_ENTITY,
+    CONF_ELECTRICITY_PRICE_ENTITY,
+    CONF_HEAT_PRICE_ENTITY,
+    ENERGY_SIGNAL_ENTITIES,
     CONF_SMART_ROOMS,
     DEFAULT_CONTROLLER_PORT,
     DEFAULT_FILTER_NOTIFY_DAYS,
@@ -347,6 +351,9 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                     errors["base"] = "controller_cannot_connect"
             if not errors:
                 self._controller_client = client
+                # An emptied optional entity selector is absent from user_input.
+                for key in ENERGY_SIGNAL_ENTITIES:
+                    self._pending.pop(key, None)
                 self._pending.update(user_input)
                 return await self.async_step_controller_menu()
 
@@ -377,6 +384,24 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 description={"suggested_value": current.get(CONF_UNIT_POWER_ENTITY)},
             ): selector.EntitySelector(selector.EntitySelectorConfig(
                 domain="sensor", device_class="power", multiple=False
+            )),
+            vol.Optional(
+                CONF_UNIT_ENERGY_TODAY_ENTITY,
+                description={"suggested_value": current.get(CONF_UNIT_ENERGY_TODAY_ENTITY)},
+            ): selector.EntitySelector(selector.EntitySelectorConfig(
+                domain="sensor", device_class="energy", multiple=False
+            )),
+            vol.Optional(
+                CONF_ELECTRICITY_PRICE_ENTITY,
+                description={"suggested_value": current.get(CONF_ELECTRICITY_PRICE_ENTITY)},
+            ): selector.EntitySelector(selector.EntitySelectorConfig(
+                domain="sensor", multiple=False
+            )),
+            vol.Optional(
+                CONF_HEAT_PRICE_ENTITY,
+                description={"suggested_value": current.get(CONF_HEAT_PRICE_ENTITY)},
+            ): selector.EntitySelector(selector.EntitySelectorConfig(
+                domain="sensor", multiple=False
             )),
         })
         return self.async_show_form(step_id="controller", data_schema=schema, errors=errors)

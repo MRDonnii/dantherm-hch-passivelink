@@ -16,13 +16,31 @@ Do not use an M-Bus gateway. M-Bus is electrically incompatible with RS485.
 
 ### Optional Raspberry Pi controller beta
 
-Version `0.8.0-beta.1` can connect to the controller API supplied by `dantherm-hch-passivelink-webui` `1.1.0-beta.1`. The architecture is strictly:
+The `0.8.0` beta line can connect to the controller API supplied by `dantherm-hch-passivelink-webui` `1.1.0-beta.1`. The architecture is strictly:
 
 ```text
 Home Assistant -> authenticated controller HTTP API -> Raspberry Pi arbitration -> verified RS485 writes -> HCH5/HAC1
 ```
 
 The Pi is source of truth. HCP4 always has priority, `UNKNOWN` or unhealthy bus state blocks all controller writes, and any verified foreign FC06/FC16 write makes Pi yield immediately. The HA Options UI manages the API host/port/token, lease TTL, dynamic add/edit/delete rooms, priorities, controller parameters, afterheat setpoint and all six fan profiles. WebUI changes appear in HA on the next controller poll.
+
+#### Optional Home Assistant data for the Pi WebUI
+
+The controller options also accept four optional sensors that the Pi only displays; none of them changes ventilation control:
+
+| Option | Expected sensor | Shown in the Pi WebUI as |
+| --- | --- | --- |
+| Power meter on the unit | Live power in W or kW, e.g. a Shelly on the unit's supply | Current electrical draw, SFP and filter-power check |
+| Unit energy today | Daily kWh, e.g. a **Utility Meter** helper (cycle *Daily*) on the unit's cumulative kWh meter | **Strøm i dag · målt** instead of the Pi's own estimate |
+| Electricity price | Current price in kr/kWh (øre/kWh and DKK/MWh are converted) | Approximate kr for today's electricity |
+| Heat price | Current district-heating/heat price in kr/kWh | Approximate kr for afterheat and theoretical value of recovered heat |
+
+Values are leased to the Pi for five minutes and renewed every minute, so stale data disappears on its own when Home Assistant stops. Afterheat and recovered heat are air-side estimates (airflow × temperature rise), not a water-side heat meter; kr values use the current price for the whole day and are marked approximate. See the WebUI's [energy and Home Assistant guide](https://github.com/MRDonnii/dantherm-hch-passivelink-webui/blob/feature/advanced-control/docs/energy-and-ha.da.md) (Danish) for the full setup.
+
+#### Works together with
+
+- [HCH5 Control WebUI](https://github.com/MRDonnii/dantherm-hch-passivelink-webui) on the Raspberry Pi: controller, raw TCP stream and the page **Opdateringer**, which links back to this integration and the dashboard card in HACS.
+- [HCH5 Live Card](https://github.com/MRDonnii/ha-smart-home-cards/tree/main/src/cards/ha-hch5-live-card) in Smart Home Cards: [![Open Smart Home Cards in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MRDonnii&repository=ha-smart-home-cards&category=plugin)
 
 Smart Auto supports up to 32 rooms, combines HCH5/HAC1's own CO2/RH with HA sensors, uses the worst relevant measurement rather than an average, supports levels 1–6 and falls back to Local Auto when HA input is stale. `control: false` rooms remain visible for diagnostics but do not steer ventilation. Bypass remains read-only because no verified write sequence is documented.
 
@@ -164,7 +182,7 @@ source and limitations of every sensor and derived alarm.
 
 If the adapter address changes later, reconfigure the integration with its new host and port.
 
-For this controller beta, open the repository menu in HACS, choose **Redownload**, enable beta/prerelease versions and select exact version `v0.8.0-beta.1`. After restarting Home Assistant, open the integration's **Configure** flow and enter the Pi controller API details. Do not use the HACS stable/default download when testing this beta.
+For this controller beta, open the repository menu in HACS, choose **Redownload**, enable beta/prerelease versions and select the newest `v0.8.0-beta` version. After restarting Home Assistant, open the integration's **Configure** flow and enter the Pi controller API details. Do not use the HACS stable/default download when testing this beta.
 
 ## Compatibility
 
