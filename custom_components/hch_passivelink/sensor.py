@@ -7,6 +7,7 @@ from homeassistant.const import (
     CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     UnitOfElectricPotential,
+    UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
@@ -115,6 +116,13 @@ CONTROLLER_SENSOR_SPECS = (
     ("afterheat_lift", "Eftervarme temperaturløft", UnitOfTemperature.CELSIUS, "mdi:delta"),
     ("afterheat_power_w", "Eftervarme effekt til luft", UnitOfPower.WATT, "mdi:radiator"),
     ("supply_airflow_estimate_m3h", "Indblæsning luftmængde anslået", "m³/h", "mdi:weather-windy"),
+    ("diagnostics_status", "Diagnose status", None, "mdi:stethoscope"),
+    ("diagnostics_alarm_text", "Diagnose advarsler", None, "mdi:alert-outline"),
+    ("frost_state", "Frost i veksler", None, "mdi:snowflake-alert"),
+    ("extract_recovery_percent", "Genvinding udsugningsside", PERCENTAGE, "mdi:heat-wave"),
+    ("specific_fan_power", "Specifik ventilatoreffekt (SFP)", "W/(m³/s)", "mdi:fan-alert"),
+    ("filter_power_ratio", "Filter strøm i forhold til rent filter", None, "mdi:air-filter"),
+    ("recovery_factor", "Genvundet varme pr. kWh strøm i dag", None, "mdi:multiplication"),
     ("actual_supply_air_temperature", "Faktisk indblæsningstemperatur", UnitOfTemperature.CELSIUS, "mdi:thermometer-high"),
     ("actual_afterheat_frost_temperature", "Eftervarme frostføler", UnitOfTemperature.CELSIUS, "mdi:snowflake-thermometer"),
     ("actual_afterheat_valve_percent", "Eftervarme ventil", PERCENTAGE, "mdi:valve"),
@@ -167,6 +175,29 @@ class PassiveLinkSensor(PassiveLinkEntity, SensorEntity, RestoreEntity):
         return value
 
 
+ENERGY_SENSOR_SPECS = (
+    ("recovered_energy_kwh", "Genvundet varme energi", "mdi:heat-wave"),
+    ("afterheat_energy_kwh", "Eftervarme energi til luft", "mdi:radiator"),
+    ("unit_energy_kwh", "Anlæggets elforbrug (fra Pi)", "mdi:lightning-bolt"),
+)
+
+
+class ControllerEnergySensor(ControllerEntity, SensorEntity):
+    """Cumulative kWh from the Pi; usable in the HA energy dashboard and utility meters."""
+
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+
+    def __init__(self, coordinator, key: str, name: str, icon: str) -> None:
+        super().__init__(coordinator, key, name)
+        self._attr_icon = icon
+
+    @property
+    def native_value(self):
+        return self.controller_value
+
+
 class ControllerStatusSensor(ControllerEntity, SensorEntity):
     def __init__(self, coordinator, key: str, name: str, unit, icon: str) -> None:
         super().__init__(coordinator, key, name)
@@ -191,5 +222,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         entities.extend(
             ControllerStatusSensor(coordinator, key, name, unit, icon)
             for key, name, unit, icon in CONTROLLER_SENSOR_SPECS
+        )
+        entities.extend(
+            ControllerEnergySensor(coordinator, key, name, icon)
+            for key, name, icon in ENERGY_SENSOR_SPECS
         )
     async_add_entities(entities)

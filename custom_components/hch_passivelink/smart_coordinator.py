@@ -5,6 +5,7 @@ import asyncio
 import logging
 from datetime import timedelta
 
+from homeassistant.components import persistent_notification
 from homeassistant.core import Event, callback
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 
@@ -42,9 +43,30 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
     @callback
     def async_handle_controller_update(self, state: dict[str, object]) -> None:
         self.controller_state = dict(state)
+        self._sync_alarm_notifications(state.get("diagnostics_alarms"))
         # Controller entities use the same coordinator listener mechanism as
         # PassiveLink entities, but controller state remains separately namespaced.
         self.async_update_listeners()
+
+    @callback
+    def _sync_alarm_notifications(self, alarms: object) -> None:
+        """One HA notification per active Pi diagnostics alarm, dismissed when it clears."""
+        if not isinstance(alarms, list):
+            return
+        active = {
+            str(alarm["code"]): str(alarm.get("text") or alarm["code"])
+            for alarm in alarms
+            if isinstance(alarm, dict) and alarm.get("code")
+        }
+        known = getattr(self, "_alarm_codes", set())
+        for code in active.keys() - known:
+            persistent_notification.async_create(
+                self.hass, active[code], title="Ventilation (HCH5)",
+                notification_id=f"hch5_diagnostics_{code}",
+            )
+        for code in known - active.keys():
+            persistent_notification.async_dismiss(self.hass, f"hch5_diagnostics_{code}")
+        self._alarm_codes = set(active)
 
     async def async_controller_command(self, patch: dict[str, object]) -> dict[str, object]:
         if self.controller_client is None:
