@@ -108,6 +108,7 @@ CONTROLLER_SENSOR_SPECS = (
     ("actual_afterheat_setpoint", "Faktisk eftervarme setpunkt", UnitOfTemperature.CELSIUS, "mdi:thermostat"),
     ("actual_afterheat_selection", "Faktisk eftervarmevalg", None, "mdi:radiator"),
     ("actual_supply_before_heater_temperature", "Luft før varmeflade", UnitOfTemperature.CELSIUS, "mdi:thermometer-low"),
+    ("attic_temperature", "Loftrum temperatur", UnitOfTemperature.CELSIUS, "mdi:home-roof"),
     ("actual_supply_air_temperature", "Faktisk indblæsningstemperatur", UnitOfTemperature.CELSIUS, "mdi:thermometer-high"),
     ("actual_afterheat_frost_temperature", "Eftervarme frostføler", UnitOfTemperature.CELSIUS, "mdi:snowflake-thermometer"),
     ("actual_afterheat_valve_percent", "Eftervarme ventil", PERCENTAGE, "mdi:valve"),
