@@ -201,16 +201,62 @@ class ControllerEnergySensor(ControllerEntity, SensorEntity):
         return self.controller_value
 
 
+# Units whose values are live measurements; HA then keeps 5-minute statistics and
+# shows the same smooth graph as the other sensors instead of every raw sample.
+MEASUREMENT_UNITS = {
+    UnitOfTemperature.CELSIUS: SensorDeviceClass.TEMPERATURE,
+    UnitOfPower.WATT: SensorDeviceClass.POWER,
+    CONCENTRATION_PARTS_PER_MILLION: SensorDeviceClass.CO2,
+    PERCENTAGE: None,
+    "rpm": None,
+    "m³/h": None,
+    "W/(m³/s)": None,
+}
+# Setpoints change in steps on purpose and are not filtered or averaged.
+SETPOINT_KEYS = {"actual_afterheat_setpoint"}
+# A single sample this far from its neighbours is a bus glitch, not air.
+SPIKE_LIMIT_C = 1.0
+
+
 class ControllerStatusSensor(ControllerEntity, SensorEntity):
     def __init__(self, coordinator, key: str, name: str, unit, icon: str) -> None:
         super().__init__(coordinator, key, name)
         self._attr_native_unit_of_measurement = unit
         self._attr_icon = icon
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._temperature = unit == UnitOfTemperature.CELSIUS and key not in SETPOINT_KEYS
+        if unit in MEASUREMENT_UNITS and key not in SETPOINT_KEYS:
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+            if MEASUREMENT_UNITS[unit] is not None:
+                self._attr_device_class = MEASUREMENT_UNITS[unit]
+        self._accepted: float | None = None
+        self._pending: float | None = None
+        self._seen_state: object = None
+        self._shown: float | None = None
 
     @property
     def native_value(self):
-        return self.controller_value
+        value = self.controller_value
+        if not self._temperature or not isinstance(value, (int, float)):
+            return value
+        # Each controller poll replaces controller_state with a new dict; filter a
+        # sample once, however often HA reads the state in between.
+        state = self.coordinator.controller_state
+        if state is not self._seen_state:
+            self._seen_state = state
+            self._shown = self._filtered(float(value))
+        return self._shown
+
+    def _filtered(self, value: float) -> float:
+        """Round to 0.1 °C and drop a lone sample that jumps and comes straight back."""
+        if self._accepted is None or abs(value - self._accepted) <= SPIKE_LIMIT_C:
+            self._accepted, self._pending = value, None
+        elif self._pending is not None and abs(value - self._pending) <= SPIKE_LIMIT_C / 2:
+            # Two samples agree on the new level: it is a real change.
+            self._accepted, self._pending = value, None
+        elif self._pending != value:
+            self._pending = value
+        return round(self._accepted, 1)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
