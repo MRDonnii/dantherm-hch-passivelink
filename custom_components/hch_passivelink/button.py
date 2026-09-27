@@ -1,4 +1,4 @@
-"""Filter-reset button for HCH PassiveLink."""
+"""Filter-reset button for HCH5 Control."""
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
 from homeassistant.config_entries import ConfigEntry

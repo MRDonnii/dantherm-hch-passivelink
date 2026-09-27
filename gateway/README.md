@@ -1,7 +1,7 @@
 # Raspberry Pi RS485 gateway
 
 This folder is a self-contained companion project for
-[Dantherm HCH PassiveLink](../README.md). It turns a Raspberry Pi with a
+[Dantherm HCH5 Control](../README.md). It turns a Raspberry Pi with a
 USB-RS485 adapter into a receive-only RS485-to-Ethernet bridge.
 
 The bridge mirrors observed `19200 8E1` bytes to raw TCP port `4196`. It does
@@ -57,7 +57,7 @@ Install Raspberry Pi OS Lite (32-bit), enable SSH and connect the Pi by
 Ethernet. Clone this repository on the Pi, then run:
 
 ```bash
-git clone https://github.com/MRDonnii/dantherm-hch-passivelink.git
+git clone https://github.com/MRDonnii/dantherm-hch5-control-ha.git
 cd dantherm-hch-passivelink
 ls -l /dev/serial/by-id/
 sudo gateway/install.sh --device /dev/serial/by-id/YOUR_ADAPTER

@@ -1,4 +1,4 @@
-"""Sensors for HCH PassiveLink."""
+"""Sensors for HCH5 Control."""
 
 from dataclasses import dataclass
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass

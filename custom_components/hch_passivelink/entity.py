@@ -1,4 +1,4 @@
-"""Base entity for HCH PassiveLink."""
+"""Base entity for HCH5 Control."""
 
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -79,7 +79,7 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
                 identifiers={(DOMAIN, "hch5_mk1_hac1_pi")},
                 name="Raspberry Pi",
                 manufacturer="Raspberry Pi Foundation",
-                model="PassiveLink gateway host",
+                model="HCH5 Control gateway host",
                 via_device=(DOMAIN, "hch5_mk1_hac1"),
             )
         elif key in FILTER_KEYS:
@@ -101,7 +101,7 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
         else:
             self._attr_device_info = DeviceInfo(
                 identifiers={(DOMAIN, "hch5_mk1_hac1")},
-                name="Dantherm HCH PassiveLink",
+                name="Dantherm HCH5 Control",
                 manufacturer="Dantherm",
                 model="HCH5 MK1 + HAC1",
             )

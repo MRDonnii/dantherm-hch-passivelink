@@ -1,5 +1,5 @@
 {
-  "title": "Dantherm HCH PassiveLink",
+  "title": "Dantherm HCH5 Control",
   "config": {
     "step": {
       "user": {"title": "Choose the passive RS485 connection", "description": "Choose a transparent RS485-over-TCP adapter or a USB-RS485 adapter connected directly to the Home Assistant host. Both modes are read-only.", "data": {"connection_type": "Connection type"}},
@@ -101,8 +101,8 @@
   "options": {
     "step": {
       "init": {
-        "title": "Dantherm HCH PassiveLink settings",
-        "description": "Change the connection, controller and integration settings. The classic PassiveLink data path remains read-only.",
+        "title": "Dantherm HCH5 Control settings",
+        "description": "Change the connection, controller and integration settings. The classic listening data path remains read-only.",
         "data": {
           "connection_type": "Connection type",
           "filter_notify_enabled": "Enable filter replacement notification",
@@ -204,7 +204,7 @@
     }
   },
   "issues": {
-    "connection_lost": {"title": "No connection to the RS485 gateway", "description": "Dantherm HCH PassiveLink has been unable to connect to the configured RS485 gateway for more than 15 minutes. Check the gateway's power, network connection, and that the transparent TCP stream is still active. Open the integration's options if the address has changed."},
+    "connection_lost": {"title": "No connection to the RS485 gateway", "description": "Dantherm HCH5 Control has been unable to connect to the configured RS485 gateway for more than 15 minutes. Check the gateway's power, network connection, and that the transparent TCP stream is still active. Open the integration's options if the address has changed."},
     "hac1_disconnected": {"title": "HAC1 indoor-climate module not responding", "description": "RS485 traffic from the Dantherm unit is still present, but the HAC1 module (CO2/indoor climate) has not reported itself as connected for more than 15 minutes. Check the HAC1 module's wiring and power."}
   }
 }

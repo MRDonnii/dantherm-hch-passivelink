@@ -1,4 +1,4 @@
-"""Coordinator for HCH PassiveLink."""
+"""Coordinator for HCH5 Control."""
 
 import asyncio
 import logging
@@ -49,7 +49,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         notify_service: str,
         auxiliary_client=None,
     ) -> None:
-        super().__init__(hass, logger=__import__("logging").getLogger(__name__), name="Dantherm HCH PassiveLink")
+        super().__init__(hass, logger=__import__("logging").getLogger(__name__), name="Dantherm HCH5 Control")
         self.data = {}
         self.client = client
         self.task = None

@@ -20,7 +20,7 @@ class ControllerEntity(CoordinatorEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, "hch5_pi_controller")},
             name="Dantherm HCH5 controller",
-            manufacturer="Dantherm / PassiveLink",
+            manufacturer="Dantherm / HCH5 Control",
             model="Raspberry Pi controller",
             via_device=(DOMAIN, "hch5_mk1_hac1"),
         )

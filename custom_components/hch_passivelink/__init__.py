@@ -1,4 +1,4 @@
-"""HCH PassiveLink integration."""
+"""HCH5 Control integration."""
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -131,10 +131,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
     connection_type = config.get(CONF_CONNECTION_TYPE, CONNECTION_TCP)
     if connection_type == CONNECTION_SERIAL:
         client = PassiveSerialClient(config[CONF_SERIAL_PORT], lambda _: None)
-        task_name = "Dantherm HCH PassiveLink USB-RS485"
+        task_name = "Dantherm HCH5 Control USB-RS485"
     else:
         client = PassiveLinkClient(config[CONF_HOST], config[CONF_PORT], lambda _: None)
-        task_name = "Dantherm HCH PassiveLink TCP"
+        task_name = "Dantherm HCH5 Control TCP"
 
     session = async_get_clientsession(hass)
     controller_client = None

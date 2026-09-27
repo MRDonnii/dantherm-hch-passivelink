@@ -1,8 +1,8 @@
-"""Constants for HCH PassiveLink."""
+"""Constants for HCH5 Control."""
 
 DOMAIN = "hch_passivelink"
 DEFAULT_PORT = 4196
-DEFAULT_NAME = "Dantherm HCH PassiveLink"
+DEFAULT_NAME = "Dantherm HCH5 Control"
 CONF_CONNECTION_TYPE = "connection_type"
 CONF_SERIAL_PORT = "serial_port"
 CONNECTION_TCP = "tcp"
