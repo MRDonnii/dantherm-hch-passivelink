@@ -127,6 +127,9 @@ async def _async_reload_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) -> bool:
+    if entry.title == "Dantherm HCH PassiveLink":
+        # The integration was renamed; only the untouched default title moves.
+        hass.config_entries.async_update_entry(entry, title="Dantherm HCH5 Control")
     config = {**entry.data, **entry.options}
     connection_type = config.get(CONF_CONNECTION_TYPE, CONNECTION_TCP)
     if connection_type == CONNECTION_SERIAL:
