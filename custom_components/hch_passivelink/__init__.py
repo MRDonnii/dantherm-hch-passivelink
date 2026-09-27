@@ -46,6 +46,7 @@ from .const import (
     room_co2_key,
     CONNECTION_SERIAL,
     CONNECTION_TCP,
+    DEFAULT_NAME,
     DOMAIN,
 )
 from .auxiliary import AuxiliaryTemperatureClient
@@ -189,6 +190,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
     )
     await coordinator.async_load_filter_state()
     client.set_update_callback(coordinator.async_handle_update)
+    # Register the main device first so sub-devices can link to its id.
+    coordinator.main_device_id = dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, "hch5_mk1_hac1")},
+        name=DEFAULT_NAME,
+        manufacturer="Dantherm",
+        model="HCH5 MK1 + HAC1",
+    ).id
     entry.runtime_data = coordinator
     coordinator.task = entry.async_create_background_task(hass, client.run(), task_name)
     await coordinator.async_start_controller()

@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     UnitOfElectricPotential,
     UnitOfEnergy,
@@ -13,6 +12,12 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
+
+try:  # HA 2026.8+: CONCENTRATION_PARTS_PER_MILLION is deprecated (removed 2027.8).
+    from homeassistant.const import UnitOfRatio
+    CONCENTRATION_PARTS_PER_MILLION = UnitOfRatio.PARTS_PER_MILLION
+except ImportError:
+    from homeassistant.const import CONCENTRATION_PARTS_PER_MILLION
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
