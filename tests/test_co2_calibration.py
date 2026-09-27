@@ -42,3 +42,21 @@ def test_bonfire_select_maps_options_to_minutes():
     assert BonfireDurationSelect.current_option.fget(fake) == "1 time"
     fake.coordinator.controller_state = {"bonfire_active": False, "bonfire_minutes": 0}
     assert BonfireDurationSelect.current_option.fget(fake) == "Slukket"
+
+
+def test_level_select_offers_off_and_shows_it_in_standby():
+    from hch_passivelink.select import LEVEL_OPTIONS, ControllerLevelSelect
+    assert LEVEL_OPTIONS[0] == "OFF" and LEVEL_OPTIONS[-1] == "6"
+    fake = SimpleNamespace(coordinator=SimpleNamespace(controller_state={"standby_active": True, "manual_level": 3}))
+    assert ControllerLevelSelect.current_option.fget(fake) == "OFF"
+    fake.coordinator.controller_state = {"standby_active": False, "manual_level": 3}
+    assert ControllerLevelSelect.current_option.fget(fake) == "3"
+
+
+def test_standby_select_maps_options_to_minutes():
+    from hch_passivelink.select import STANDBY_OPTIONS, StandbyDurationSelect
+    assert STANDBY_OPTIONS["Permanent"] == -1 and STANDBY_OPTIONS["Til i morgen kl. 07"] == -2
+    fake = SimpleNamespace(coordinator=SimpleNamespace(controller_state={"standby_active": True, "standby_minutes": -2}))
+    assert StandbyDurationSelect.current_option.fget(fake) == "Til i morgen kl. 07"
+    fake.coordinator.controller_state = {"standby_active": False, "standby_minutes": 0}
+    assert StandbyDurationSelect.current_option.fget(fake) == "Tændt"

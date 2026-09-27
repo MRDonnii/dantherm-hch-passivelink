@@ -139,6 +139,7 @@ CONTROLLER_SENSOR_SPECS = (
     ("cooling_state", "Frikølingstilstand", None, "mdi:snowflake"),
     ("quick_boost_remaining_seconds", "Hurtig boost tilbage", UnitOfTime.SECONDS, "mdi:fan-clock"),
     ("bonfire_remaining_seconds", "Bål tid tilbage", UnitOfTime.SECONDS, "mdi:campfire"),
+    ("standby_remaining_seconds", "Slukket tid tilbage", UnitOfTime.SECONDS, "mdi:power-sleep"),
 )
 
 
