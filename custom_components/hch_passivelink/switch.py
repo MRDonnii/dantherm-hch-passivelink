@@ -90,6 +90,37 @@ class FireplaceSignalSwitch(ControllerEntity, RestoreEntity, SwitchEntity):
         await self.coordinator.async_set_fireplace_signal(False)
 
 
+class BalanceSwitch(ControllerEntity, SwitchEntity):
+    """Air balance Auto: the Pi solves supply from extract in m3/h (HCH5 Control 1.2.1-beta.11+)."""
+
+    _attr_icon = "mdi:scale-balance"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "balance_enabled", "Luftbalance")
+
+    @property
+    def is_on(self) -> bool:
+        return self.controller_value is True
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        balance = self.coordinator.controller_state.get("balance") or {}
+        levels = balance.get("levels") or {}
+        return {
+            "udsugning_over_indblaesning_pct": balance.get("target_excess_percent"),
+            "kanalforhold": balance.get("duct_ratio"),
+            "kanalforhold_kilde": balance.get("duct_ratio_source"),
+            "trin": {level: f"{values.get('supply')}/{values.get('extract')} %" for level, values in levels.items()},
+            "fejl": balance.get("error"),
+        }
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.async_command({"balance_enabled": True})
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.async_command({"balance_enabled": False})
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -97,4 +128,4 @@ async def async_setup_entry(
     if coordinator.controller_client is not None:
         # The fireplace switch is retired: the Pejsetid select (Fra/15/30 min) is
         # the canonical control, so only the cooling switch is set up here.
-        async_add_entities([CoolingSwitch(coordinator), FireplaceSignalSwitch(coordinator)])
+        async_add_entities([CoolingSwitch(coordinator), FireplaceSignalSwitch(coordinator), BalanceSwitch(coordinator)])

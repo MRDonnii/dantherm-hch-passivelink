@@ -145,7 +145,54 @@ CONTROLLER_SENSOR_SPECS = (
     ("quick_boost_remaining_seconds", "Hurtig boost tilbage", UnitOfTime.SECONDS, "mdi:fan-clock"),
     ("bonfire_remaining_seconds", "Bål tid tilbage", UnitOfTime.SECONDS, "mdi:campfire"),
     ("standby_remaining_seconds", "Slukket tid tilbage", UnitOfTime.SECONDS, "mdi:power-sleep"),
+    ("balance_running_excess_percent", "Luftbalance lige nu", PERCENTAGE, "mdi:scale-balance"),
 )
+
+
+class BalanceStatusSensor(ControllerEntity, SensorEntity):
+    """Air balance details from the Pi: duct ratio in use and the heat-balance learning."""
+
+    def __init__(self, coordinator, key: str, name: str, icon: str) -> None:
+        super().__init__(coordinator, key, name)
+        self._attr_icon = icon
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def available(self) -> bool:
+        client = getattr(self.coordinator, "controller_client", None)
+        return bool(client and client.connected and isinstance(self.coordinator.controller_state.get("balance"), dict))
+
+    @property
+    def native_value(self):
+        state = self.coordinator.controller_state
+        if self.key == "balance_duct_ratio_in_use":
+            return (state.get("balance") or {}).get("duct_ratio")
+        return (state.get("balance_live") or {}).get("reason")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        state = self.coordinator.controller_state
+        balance = state.get("balance") or {}
+        learned = balance.get("learned") or {}
+        live = state.get("balance_live") or {}
+        if self.key == "balance_duct_ratio_in_use":
+            return {
+                "kilde": balance.get("duct_ratio_source"),
+                "laert_kanalforhold": learned.get("ratio"),
+                "laert_i_brug": learned.get("ratio_in_use"),
+                "maalinger": learned.get("count"),
+                "naetter": learned.get("nights"),
+                "spredning": learned.get("spread"),
+                "sikkerhed": learned.get("confidence"),
+                "seneste": (learned.get("last") or {}).get("reason"),
+            }
+        return {
+            "tilstand": live.get("state"),
+            "temperaturforskel_k": live.get("delta_t_now"),
+            "udsugning_over_indblaesning_nu_pct": live.get("excess_now_percent"),
+            "kanalforhold_nu": live.get("duct_ratio_now"),
+            "fremdrift_pct": live.get("progress_percent"),
+        }
 
 
 class PassiveLinkSensor(PassiveLinkEntity, SensorEntity, RestoreEntity):
@@ -283,4 +330,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             ControllerEnergySensor(coordinator, key, name, icon)
             for key, name, icon in ENERGY_SENSOR_SPECS
         )
+        entities.extend([
+            BalanceStatusSensor(coordinator, "balance_duct_ratio_in_use", "Luftbalance kanalforhold i brug", "mdi:pipe"),
+            BalanceStatusSensor(coordinator, "balance_heat_balance", "Luftbalance varmebalance", "mdi:heat-wave"),
+        ])
     async_add_entities(entities)

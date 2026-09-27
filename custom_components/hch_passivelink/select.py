@@ -148,4 +148,5 @@ async def async_setup_entry(
         FireplaceDurationSelect(coordinator),
         BonfireDurationSelect(coordinator),
         StandbyDurationSelect(coordinator),
+        ControllerSelect(coordinator, "balance_ratio_mode", "Luftbalance kanalforhold", ["auto", "fixed"]),
     ])
