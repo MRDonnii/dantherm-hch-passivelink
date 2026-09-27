@@ -33,3 +33,12 @@ def test_no_controller_or_offset_leaves_co2_unchanged():
 
 def test_calibrated_co2_never_goes_negative():
     assert _apply({"co2_offset": -1000}, 400)["co2"] == 0
+
+
+def test_bonfire_select_maps_options_to_minutes():
+    from hch_passivelink.select import BONFIRE_OPTIONS, BonfireDurationSelect
+    assert BONFIRE_OPTIONS["2 timer"] == 120 and BONFIRE_OPTIONS["Slukket"] == 0
+    fake = SimpleNamespace(coordinator=SimpleNamespace(controller_state={"bonfire_active": True, "bonfire_minutes": 60}))
+    assert BonfireDurationSelect.current_option.fget(fake) == "1 time"
+    fake.coordinator.controller_state = {"bonfire_active": False, "bonfire_minutes": 0}
+    assert BonfireDurationSelect.current_option.fget(fake) == "Slukket"

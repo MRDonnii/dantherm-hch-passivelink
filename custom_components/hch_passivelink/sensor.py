@@ -138,6 +138,7 @@ CONTROLLER_SENSOR_SPECS = (
     ("actual_afterheat_outdoor_lockout", "Eftervarme sommerstop", None, "mdi:weather-sunny-alert"),
     ("cooling_state", "Frikølingstilstand", None, "mdi:snowflake"),
     ("quick_boost_remaining_seconds", "Hurtig boost tilbage", UnitOfTime.SECONDS, "mdi:fan-clock"),
+    ("bonfire_remaining_seconds", "Bål tid tilbage", UnitOfTime.SECONDS, "mdi:campfire"),
 )
 
 

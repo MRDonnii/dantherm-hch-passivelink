@@ -55,6 +55,35 @@ class FireplaceDurationSelect(ControllerEntity, SelectEntity):
         await self.async_command({"fireplace_minutes": minutes})
 
 
+BONFIRE_OPTIONS = {"Slukket": 0, "30 min": 30, "1 time": 60, "2 timer": 120, "3 timer": 180, "4 timer": 240}
+
+
+class BonfireDurationSelect(ControllerEntity, SelectEntity):
+    """Bonfire in the garden: fans at minimum for the chosen time, then back to normal."""
+
+    _attr_options = list(BONFIRE_OPTIONS)
+    _attr_icon = "mdi:campfire"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "bonfire_minutes", "Bål i haven")
+
+    @property
+    def available(self) -> bool:
+        client = getattr(self.coordinator, "controller_client", None)
+        return bool(client and client.connected and "bonfire_active" in self.coordinator.controller_state)
+
+    @property
+    def current_option(self) -> str | None:
+        state = self.coordinator.controller_state
+        if not state.get("bonfire_active"):
+            return "Slukket"
+        minutes = int(state.get("bonfire_minutes") or 0)
+        return next((name for name, value in BONFIRE_OPTIONS.items() if value == minutes), None)
+
+    async def async_select_option(self, option: str) -> None:
+        await self.async_command({"bonfire_minutes": BONFIRE_OPTIONS[option]})
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -71,4 +100,5 @@ async def async_setup_entry(
         ControllerLevelSelect(coordinator),
         ControllerSelect(coordinator, "bypass", "Bypassstyring", ["off", "on"]),
         FireplaceDurationSelect(coordinator),
+        BonfireDurationSelect(coordinator),
     ])
