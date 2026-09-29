@@ -62,8 +62,8 @@ ls -l /dev/serial/by-id/
 Clone and install the companion project:
 
 ```bash
-git clone https://github.com/MRDonnii/dantherm-hch-passivelink.git
-cd dantherm-hch-passivelink
+git clone https://github.com/MRDonnii/dantherm-hch5-control-ha.git
+cd dantherm-hch5-control-ha
 sudo gateway/install.sh --device /dev/serial/by-id/YOUR_ADAPTER
 ```
 
@@ -76,7 +76,7 @@ journalctl -u dantherm-passivelink.service -n 50 --no-pager
 ss -lntp | grep 4196
 ```
 
-Add Dantherm HCH PassiveLink in Home Assistant, choose **RS485 over TCP**, and
+Add Dantherm HCH5 Control in Home Assistant, choose **RS485 over TCP**, and
 enter the Pi address and port `4196`. The address and port can later be changed
 with the integration's **Configure** action without recreating entities.
 

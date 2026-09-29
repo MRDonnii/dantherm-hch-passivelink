@@ -1,4 +1,4 @@
-"""Coordinator for HCH PassiveLink."""
+"""Coordinator for HCH5 Control."""
 
 import asyncio
 import logging
@@ -49,7 +49,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         notify_service: str,
         auxiliary_client=None,
     ) -> None:
-        super().__init__(hass, logger=__import__("logging").getLogger(__name__), name="Dantherm HCH PassiveLink")
+        super().__init__(hass, logger=__import__("logging").getLogger(__name__), name="Dantherm HCH5 Control")
         self.data = {}
         self.client = client
         self.task = None
@@ -213,6 +213,18 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         ).isoformat()
         data["filter_change_count"] = len(self._filter_reset_history)
 
+    def co2_offset(self) -> int:
+        """CO2 calibration offset in ppm; the controller coordinator supplies it."""
+        return 0
+
+    def _apply_co2_calibration(self, data: dict[str, object]) -> None:
+        # The raw RS485 stream carries the sensor's own reading. Show the value
+        # corrected by the calibration set in HCH5 Control, as the Pi does.
+        co2 = data.get("co2")
+        offset = self.co2_offset()
+        if offset and isinstance(co2, (int, float)) and not isinstance(co2, bool):
+            data["co2"] = max(0, co2 + offset)
+
     def _update_air_quality(self, data: dict[str, object]) -> None:
         co2 = data.get("co2")
         if not isinstance(co2, (int, float)):
@@ -306,6 +318,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             merged.setdefault("night_mode", self._night_mode)
         if self._filter_reset_epoch is not None and self._filter_interval_days is not None:
             merged.update(filter_values(self._filter_reset_epoch, self._filter_interval_days))
+        self._apply_co2_calibration(merged)
         self._update_derived_temperatures(merged)
         self._update_filter_history_values(merged)
         self._update_air_quality(merged)

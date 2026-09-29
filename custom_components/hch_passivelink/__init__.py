@@ -1,4 +1,4 @@
-"""HCH PassiveLink integration."""
+"""HCH5 Control integration."""
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -39,6 +39,8 @@ from .const import (
     DEFAULT_SMART_INPUT_VALID_FOR,
     MAX_SMART_ROOMS,
     SMART_ROOM_PRIORITIES,
+    SMART_ROOM_TYPES,
+    ROOM_SENSOR_KEYS,
     ROOM_SLOT_COUNT,
     room_name_key,
     room_temperature_key,
@@ -46,6 +48,7 @@ from .const import (
     room_co2_key,
     CONNECTION_SERIAL,
     CONNECTION_TCP,
+    DEFAULT_NAME,
     DOMAIN,
 )
 from .auxiliary import AuxiliaryTemperatureClient
@@ -82,17 +85,21 @@ def _room_sources(config: dict) -> list[dict[str, object]]:
             priority = str(raw.get("priority", "auto"))
             if priority not in SMART_ROOM_PRIORITIES:
                 priority = "auto"
+            room_type = str(raw.get("room_type", "auto"))
+            if room_type not in SMART_ROOM_TYPES:
+                room_type = "auto"
             source: dict[str, object] = {
                 "name": name[:64],
                 "enabled": bool(raw.get("enabled", True)),
                 "control": bool(raw.get("control", True)),
                 "priority": priority,
+                "room_type": room_type,
             }
-            for kind in ("temperature", "humidity", "co2"):
+            for kind in ROOM_SENSOR_KEYS:
                 entity_id = str(raw.get(kind, "")).strip()
                 if entity_id:
                     source[kind] = entity_id
-            if any(source.get(kind) for kind in ("temperature", "humidity", "co2")):
+            if any(source.get(kind) for kind in ROOM_SENSOR_KEYS):
                 result.append(source)
         return result
 
@@ -116,7 +123,7 @@ def _room_sources(config: dict) -> list[dict[str, object]]:
             entity_id = str(config.get(key_func(slot), "")).strip()
             if entity_id:
                 source[kind] = entity_id
-        if any(source.get(kind) for kind in ("temperature", "humidity", "co2")):
+        if any(source.get(kind) for kind in ROOM_SENSOR_KEYS):
             result.append(source)
     return result
 
@@ -127,14 +134,17 @@ async def _async_reload_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) -> bool:
+    if entry.title == "Dantherm HCH PassiveLink":
+        # The integration was renamed; only the untouched default title moves.
+        hass.config_entries.async_update_entry(entry, title="Dantherm HCH5 Control")
     config = {**entry.data, **entry.options}
     connection_type = config.get(CONF_CONNECTION_TYPE, CONNECTION_TCP)
     if connection_type == CONNECTION_SERIAL:
         client = PassiveSerialClient(config[CONF_SERIAL_PORT], lambda _: None)
-        task_name = "Dantherm HCH PassiveLink USB-RS485"
+        task_name = "Dantherm HCH5 Control USB-RS485"
     else:
         client = PassiveLinkClient(config[CONF_HOST], config[CONF_PORT], lambda _: None)
-        task_name = "Dantherm HCH PassiveLink TCP"
+        task_name = "Dantherm HCH5 Control TCP"
 
     session = async_get_clientsession(hass)
     controller_client = None
@@ -186,6 +196,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: PassiveLinkConfigEntry) 
     )
     await coordinator.async_load_filter_state()
     client.set_update_callback(coordinator.async_handle_update)
+    # Register the main device first so sub-devices can link to its id.
+    coordinator.main_device_id = dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, "hch5_mk1_hac1")},
+        name=DEFAULT_NAME,
+        manufacturer="Dantherm",
+        model="HCH5 MK1 + HAC1",
+    ).id
     entry.runtime_data = coordinator
     coordinator.task = entry.async_create_background_task(hass, client.run(), task_name)
     await coordinator.async_start_controller()

@@ -1,4 +1,4 @@
-"""Binary sensors for HCH PassiveLink."""
+"""Binary sensors for HCH5 Control."""
 
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity, BinarySensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
