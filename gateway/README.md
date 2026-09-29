@@ -58,7 +58,7 @@ Ethernet. Clone this repository on the Pi, then run:
 
 ```bash
 git clone https://github.com/MRDonnii/dantherm-hch5-control-ha.git
-cd dantherm-hch-passivelink
+cd dantherm-hch5-control-ha
 ls -l /dev/serial/by-id/
 sudo gateway/install.sh --device /dev/serial/by-id/YOUR_ADAPTER
 ```

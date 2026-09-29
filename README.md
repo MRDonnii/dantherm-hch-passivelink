@@ -2,7 +2,13 @@
 
 <img src="https://raw.githubusercontent.com/MRDonnii/dantherm-hch5-control-ha/main/assets/logo.png" alt="HCH5 Control logo" width="320">
 
+![Illustrated tour of the 0.8.1-beta.8 Home Assistant integration](docs/images/0.8.1-beta.8/ha-integration-tour.gif)
+
+*Animated feature illustration using example values; it is not a screenshot of a live Home Assistant installation.*
+
 An unofficial Home Assistant integration for a Dantherm HCH5 MK1 with HAC1. Its classic listening data path remains read-only and decodes internal Modbus RTU traffic without transmitting. The optional Raspberry Pi controller connection sends only high-level intent and room observations to the separate Raspberry Pi controller HTTP API; Home Assistant never writes Modbus/RS485 directly.
+
+**Current published version: 0.8.1-beta.8.** It brings the HCH5's measurements into Home Assistant and, with the separate Pi controller, adds fan modes, OFF, Quick Boost, afterheat, Smart Auto rooms, sensor forwarding and air balancing. See the [complete feature list](docs/FEATURES.md), [entity reference](docs/entities.da.md) and [HACS installation](#installation-with-hacs).
 
 > **Unofficial community project:** This software was not developed, supplied, commissioned, approved, certified or supported by Dantherm Group. Dantherm Group is not affiliated with this project. “Dantherm” is used only to identify compatible equipment; all trademarks belong to their respective owners. For product service and safety questions, contact Dantherm or an authorised installer.
 
@@ -16,7 +22,7 @@ Do not use an M-Bus gateway. M-Bus is electrically incompatible with RS485.
 
 ### Optional Raspberry Pi controller
 
-Version `0.8.0` connects to the controller API of [HCH5 Control](https://github.com/MRDonnii/dantherm-hch5-control) `1.2.0` or newer. The architecture is strictly:
+Version `0.8.1-beta.8` connects to the controller API of [HCH5 Control](https://github.com/MRDonnii/dantherm-hch5-control). Current stable Pi version `1.3.2` supports the PM2.5 and air-balance fields described below. The architecture is:
 
 ```text
 Home Assistant -> authenticated controller HTTP API -> Raspberry Pi arbitration -> verified RS485 writes -> HCH5/HAC1
@@ -58,20 +64,22 @@ Values are leased to the Pi for five minutes and renewed every minute, so stale 
 - [HCH5 Control WebUI](https://github.com/MRDonnii/dantherm-hch5-control) on the Raspberry Pi: controller, raw TCP stream and the page **Opdateringer**, which links back to this integration and the dashboard card in HACS.
 - [HCH5 Live Card](https://github.com/MRDonnii/ha-smart-home-cards/tree/main/src/cards/ha-hch5-live-card) in Smart Home Cards: [![Open Smart Home Cards in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=MRDonnii&repository=ha-smart-home-cards&category=plugin)
 
-Smart Auto supports up to 32 rooms, combines HCH5/HAC1's own CO2/RH with HA sensors, uses the worst relevant measurement rather than an average, supports levels 1–6 and falls back to Local Auto when HA input is stale. `control: false` rooms remain visible for diagnostics but do not steer ventilation. Bypass remains read-only because no verified write sequence is documented.
+Smart Auto supports up to 32 rooms, combines HCH5/HAC1's own CO₂/RH with HA sensors, uses the worst relevant measurement rather than an average, supports levels 1–6 and falls back to Local Auto when HA input is stale. `control: false` rooms remain visible for diagnostics but do not steer ventilation. A bypass request is available through the Pi API, while the actual damper position is a separate readback.
 
-## Why it is read-only
+## Why the telemetry connection is read-only
 
 Our observations of the HCH5 MK1 + HAC1 installation show an existing controller acting as the Modbus RTU master. It continuously sends requests, and the ventilation unit replies as a slave. Those request/response frames already contain the operating values needed by Home Assistant, so this integration can decode them without polling the unit itself.
 
 The installation is operated as a single-master Modbus RTU bus. A second device can technically transmit a valid command, and the unit may accept it temporarily. However, the existing master continues its normal control cycle and writes its own state again, so the external value is overwritten. Two independent transmitters on the same RS485 pair also have no arbitration: their frames can overlap, cause CRC and timeout errors, disturb the existing controller and potentially produce unintended behaviour.
 
-Because writes would be unreliable, temporary and potentially disruptive, read-only operation is a deliberate design and safety choice rather than a missing feature:
+Because competing bus writes would be unreliable and potentially disruptive, the classic Home Assistant telemetry path only listens:
 
 - the gateway listens to both directions of the existing RS485 exchange;
 - the gateway forwards the observed bytes as an unchanged raw TCP stream;
 - the Home Assistant integration only receives and decodes that stream;
-- neither the gateway nor the integration may poll, acknowledge or write to the bus.
+- the Home Assistant raw TCP/USB listener never polls, acknowledges or writes to the bus.
+
+The reference Pi gateway can optionally make a read-only HAC1 query for the supply-air setpoint; the separate Pi **controller** can make verified control writes only under its master-arbitration safety checks. Those are different paths from the Home Assistant telemetry listener.
 
 A transparent RS485-to-Ethernet adapter is suitable when it can expose the observed serial bytes as a raw TCP stream without generating its own serial traffic. The integration never writes data to its TCP connection. Do not connect other software that sends data through the adapter.
 

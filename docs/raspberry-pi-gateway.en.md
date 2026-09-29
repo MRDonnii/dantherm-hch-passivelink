@@ -63,7 +63,7 @@ Clone and install the companion project:
 
 ```bash
 git clone https://github.com/MRDonnii/dantherm-hch5-control-ha.git
-cd dantherm-hch-passivelink
+cd dantherm-hch5-control-ha
 sudo gateway/install.sh --device /dev/serial/by-id/YOUR_ADAPTER
 ```
 
