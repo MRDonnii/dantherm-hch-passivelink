@@ -39,6 +39,8 @@ from .const import (
     DEFAULT_SMART_INPUT_VALID_FOR,
     MAX_SMART_ROOMS,
     SMART_ROOM_PRIORITIES,
+    SMART_ROOM_TYPES,
+    ROOM_SENSOR_KEYS,
     ROOM_SLOT_COUNT,
     room_name_key,
     room_temperature_key,
@@ -82,17 +84,21 @@ def _room_sources(config: dict) -> list[dict[str, object]]:
             priority = str(raw.get("priority", "auto"))
             if priority not in SMART_ROOM_PRIORITIES:
                 priority = "auto"
+            room_type = str(raw.get("room_type", "auto"))
+            if room_type not in SMART_ROOM_TYPES:
+                room_type = "auto"
             source: dict[str, object] = {
                 "name": name[:64],
                 "enabled": bool(raw.get("enabled", True)),
                 "control": bool(raw.get("control", True)),
                 "priority": priority,
+                "room_type": room_type,
             }
-            for kind in ("temperature", "humidity", "co2"):
+            for kind in ROOM_SENSOR_KEYS:
                 entity_id = str(raw.get(kind, "")).strip()
                 if entity_id:
                     source[kind] = entity_id
-            if any(source.get(kind) for kind in ("temperature", "humidity", "co2")):
+            if any(source.get(kind) for kind in ROOM_SENSOR_KEYS):
                 result.append(source)
         return result
 
@@ -116,7 +122,7 @@ def _room_sources(config: dict) -> list[dict[str, object]]:
             entity_id = str(config.get(key_func(slot), "")).strip()
             if entity_id:
                 source[kind] = entity_id
-        if any(source.get(kind) for kind in ("temperature", "humidity", "co2")):
+        if any(source.get(kind) for kind in ROOM_SENSOR_KEYS):
             result.append(source)
     return result
 

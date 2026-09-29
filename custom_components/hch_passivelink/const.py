@@ -44,6 +44,17 @@ ENERGY_SIGNAL_ENTITIES = (
 DEFAULT_SMART_INPUT_VALID_FOR = 180
 MAX_SMART_ROOMS = 32
 SMART_ROOM_PRIORITIES = ("auto", "low", "normal", "high", "critical")
+# "auto" lets the Pi guess from the room name (Bad, Bath, Brus).
+SMART_ROOM_TYPES = ("auto", "normal", "bathroom")
+# Room measurements the Pi controller accepts, with the range it validates.
+# A value outside the range makes the Pi reject the whole message (HTTP 400).
+ROOM_SENSOR_RANGES = {
+    "temperature": (-30.0, 60.0),
+    "humidity": (0.0, 100.0),
+    "co2": (250.0, 10000.0),
+    "pm25": (0.0, 1000.0),
+}
+ROOM_SENSOR_KEYS = tuple(ROOM_SENSOR_RANGES)
 
 # Legacy fixed slots are kept only for migration/backwards compatibility.
 ROOM_SLOT_COUNT = 8

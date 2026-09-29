@@ -120,13 +120,19 @@
       },
       "controller": {
         "title": "Raspberry Pi-controller og Smart Auto",
-        "description": "Forbind Home Assistant til Pi-controllerens lokale API. Home Assistant sender kun kommandoer og sensorobservationer; Pi'en træffer alle ventilationsbeslutninger.",
+        "description": "Angiv hvilken IP-adresse og port Raspberry Pi-controlleren ligger på. Home Assistant sender kun kommandoer og de sensorer du vælger; Pi'en træffer alle ventilationsbeslutninger.",
         "data": {
           "controller_host": "Controller IP-adresse eller værtsnavn",
           "controller_port": "Controller API-port",
           "controller_token": "Controller API-token",
           "smart_rooms_enabled": "Brug Home Assistant-sensorer i Smart Auto",
-          "smart_input_valid_for": "Sensorinput gyldigt i (sekunder)",
+          "smart_input_valid_for": "Sensorinput gyldigt i (sekunder)"
+        }
+      },
+      "controller_sensors": {
+        "title": "Sensorer til controlleren",
+        "description": "Vælg hvilke Home Assistant-sensorer der sendes til controlleren på {controller}. Kun sensorer med en enhed controlleren forstår vises: effekt i W/kW, energi i Wh/kWh/MWh og priser i kr, DKK eller øre pr. kWh/MWh. Tøm et felt for at stoppe med at sende sensoren.",
+        "data": {
           "unit_power_entity": "Effektmåler på anlægget (valgfri, vises i Pi'ens WebUI)",
           "unit_energy_today_entity": "Dantherms elforbrug i dag i kWh (valgfri, fx en daglig forbrugsmåler)",
           "electricity_price_entity": "Elpris i kr/kWh (valgfri, øre/kWh omregnes)",
@@ -137,6 +143,7 @@
         "title": "Controlleropsætning",
         "description": "Værdierne læses direkte fra Pi-controlleren. Ændringer gemmes på Pi'en, som fortsat er source of truth.",
         "menu_options": {
+          "controller_sensors": "Sensorer der sendes til controlleren",
           "controller_settings": "Drift, Smart Auto og eftervarme",
           "fan_profiles": "Ventilationsprofiler 1-6",
           "rooms_menu": "Smart Auto-rum",
@@ -179,14 +186,14 @@
       },
       "add_room": {
         "title": "Tilføj Smart Auto-rum",
-        "description": "Vælg mindst én temperatur-, luftfugtigheds- eller CO₂-sensor.",
-        "data": {"name": "Rumnavn", "enabled": "Aktiv", "control": "Brug til styring", "priority": "Prioritet", "temperature": "Temperatursensor (valgfri)", "humidity": "Luftfugtighedssensor (valgfri)", "co2": "CO₂-sensor (valgfri)"}
+        "description": "Vælg mindst én temperatur-, luftfugtigheds-, CO₂- eller PM2.5-sensor. Kun understøttede sensorer vises: temperatur i °C, luftfugtighed i %, CO₂ og PM2.5 i µg/m³. PM2.5 bruges kun, hvis det er slået til på Pi'en.",
+        "data": {"name": "Rumnavn", "enabled": "Aktiv", "control": "Brug til styring", "priority": "Prioritet", "temperature": "Temperatursensor (valgfri)", "humidity": "Luftfugtighedssensor (valgfri)", "co2": "CO₂-sensor (valgfri)", "pm25": "PM2.5-sensor (valgfri)", "room_type": "Rumtype"}
       },
       "edit_room": {"title": "Vælg rum der skal redigeres", "data": {"room": "Rum"}},
       "room_detail": {
         "title": "Redigér Smart Auto-rum",
-        "description": "Deaktiver et rum midlertidigt, brug det kun til overvågning, eller justér prioriteten uden at ændre controllerkoden.",
-        "data": {"name": "Rumnavn", "enabled": "Aktiv", "control": "Brug til styring", "priority": "Prioritet", "temperature": "Temperatursensor (valgfri)", "humidity": "Luftfugtighedssensor (valgfri)", "co2": "CO₂-sensor (valgfri)"}
+        "description": "Deaktiver et rum midlertidigt, brug det kun til overvågning, eller justér prioriteten uden at ændre controllerkoden. Kun understøttede sensorer vises: temperatur i °C, luftfugtighed i %, CO₂ og PM2.5 i µg/m³. PM2.5 bruges kun, hvis det er slået til på Pi'en.",
+        "data": {"name": "Rumnavn", "enabled": "Aktiv", "control": "Brug til styring", "priority": "Prioritet", "temperature": "Temperatursensor (valgfri)", "humidity": "Luftfugtighedssensor (valgfri)", "co2": "CO₂-sensor (valgfri)", "pm25": "PM2.5-sensor (valgfri)", "room_type": "Rumtype"}
       },
       "remove_room": {"title": "Fjern Smart Auto-rum", "description": "Fjerner kun rummet fra Dantherm Smart Auto. Den valgte Home Assistant-sensor slettes ikke.", "data": {"room": "Rum"}},
       "finish_rooms": {"title": "Gem Smart Auto-rum"},

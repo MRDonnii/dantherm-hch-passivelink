@@ -24,6 +24,22 @@ Home Assistant -> authenticated controller HTTP API -> Raspberry Pi arbitration 
 
 The Pi is source of truth. HCP4 always has priority, `UNKNOWN` or unhealthy bus state blocks all controller writes, and any verified foreign FC06/FC16 write makes Pi yield immediately. The HA Options UI manages the API host/port/token, lease TTL, dynamic add/edit/delete rooms, priorities, controller parameters, afterheat setpoint and all six fan profiles. WebUI changes appear in HA on the next controller poll.
 
+#### Choosing which sensors are sent to the controller
+
+In the controller step of the Options UI you enter the IP address and API port (default `8080`) of the Raspberry Pi controller; the raw RS485 stream stays on its own port (default `4196`). The controller menu then has **Sensors sent to the controller** for the energy data below and **Smart Auto rooms** for room sensors. Every sensor picker lists only sensors the controller understands, judged by unit and device class:
+
+| Input | Listed sensors |
+| --- | --- |
+| Room temperature | °C |
+| Room humidity | device class humidity, % |
+| Room CO₂ | device class carbon dioxide (or ppm without a device class) |
+| Room PM2.5 | device class PM2.5, µg/m³ (used only when PM2.5 is enabled on the Pi) |
+| Unit power | W or kW |
+| Unit energy today | Wh, kWh or MWh |
+| Electricity / heat price | kr, DKK or øre per kWh or MWh |
+
+Clearing a field stops sending that sensor. Each room also has a room type (`auto`, `normal`, `bathroom`; `auto` lets the Pi guess from the name). Unknown, unavailable or out-of-range values are left out of the message instead of being sent, and every room tells the Pi which HA sensor each value came from (`entities`).
+
 #### Optional Home Assistant data for the Pi WebUI
 
 The controller options also accept four optional sensors that the Pi only displays; none of them changes ventilation control:
