@@ -35,6 +35,7 @@ CONF_UNIT_POWER_ENTITY = "unit_power_entity"
 CONF_UNIT_ENERGY_TODAY_ENTITY = "unit_energy_today_entity"
 CONF_ELECTRICITY_PRICE_ENTITY = "electricity_price_entity"
 CONF_HEAT_PRICE_ENTITY = "heat_price_entity"
+CONF_WEATHER_ENTITY = "weather_entity"
 ENERGY_SIGNAL_ENTITIES = (
     CONF_UNIT_POWER_ENTITY,
     CONF_UNIT_ENERGY_TODAY_ENTITY,

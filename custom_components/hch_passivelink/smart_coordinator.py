@@ -11,6 +11,7 @@ from homeassistant.helpers.event import async_track_state_change_event, async_tr
 
 from .const import ROOM_SENSOR_KEYS, ROOM_SENSOR_RANGES
 from .coordinator import PassiveLinkCoordinator
+from .weather_source import weather_payload
 
 _LOGGER = logging.getLogger(__name__)
 SIGNAL_VALID_FOR = 300
@@ -22,6 +23,7 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
     def __init__(self, *args, controller_client=None, room_sources=None,
                  smart_input_valid_for: int = 180, unit_power_entity: str | None = None,
                  energy_entities: dict[str, str | None] | None = None,
+                 weather_entity: str | None = None,
                  **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.controller_client = controller_client
@@ -45,6 +47,9 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
         self.energy_entities = {
             field: entity_id for field, entity_id in (energy_entities or {}).items() if entity_id
         }
+        self.weather_entity = weather_entity if weather_entity and weather_entity.startswith("weather.") else None
+        self._remove_weather_listener = None
+        self._weather_sent_at = 0.0
 
     def co2_offset(self) -> int:
         """The Pi's CO2 calibration, so HA shows the same corrected CO2 as the WebUI."""
@@ -226,9 +231,31 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
         except Exception as error:  # noqa: BLE001 - retried on the next minute
             _LOGGER.debug("Unable to send energy data to Pi controller: %s", error)
 
+    async def _async_send_weather(self) -> None:
+        if self.controller_client is None or not self.weather_entity:
+            return
+        state = self.hass.states.get(self.weather_entity)
+        weather = weather_payload(self.weather_entity, state)
+        try:
+            await self.controller_client.async_send_signals({"weather": weather}, SIGNAL_VALID_FOR)
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:  # noqa: BLE001 - weather is optional; retry next minute
+            _LOGGER.debug("Unable to send weather data to Pi controller: %s", error)
+
+    @callback
+    def _schedule_weather_push(self, _event: Event | None = None) -> None:
+        if _event is not None and self.hass.loop.time() - self._weather_sent_at < 10:
+            return
+        self._weather_sent_at = self.hass.loop.time()
+        self.hass.async_create_background_task(
+            self._async_send_weather(), "Dantherm HCH weather push"
+        )
+
     async def _async_renew_signals(self) -> None:
         await self._async_send_unit_power()
         await self._async_send_energy_signals()
+        await self._async_send_weather()
         if self.controller_client is None or not self.fireplace_signal:
             return
         try:
@@ -276,6 +303,11 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             self.hass.async_create_background_task(
                 self._async_send_energy_signals(), "Dantherm HCH energy data push"
             )
+        if self.weather_entity:
+            self._remove_weather_listener = async_track_state_change_event(
+                self.hass, [self.weather_entity], self._schedule_weather_push
+            )
+            self._schedule_weather_push()
         entity_ids = sorted({
             str(entity_id)
             for source in self.room_sources
@@ -295,6 +327,9 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             self._schedule_room_push()
 
     async def async_shutdown(self) -> None:
+        if self._remove_weather_listener is not None:
+            self._remove_weather_listener()
+            self._remove_weather_listener = None
         if self._remove_power_listener is not None:
             self._remove_power_listener()
             self._remove_power_listener = None

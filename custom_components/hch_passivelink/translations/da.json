@@ -131,12 +131,13 @@
       },
       "controller_sensors": {
         "title": "Sensorer til controlleren",
-        "description": "Vælg hvilke Home Assistant-sensorer der sendes til controlleren på {controller}. Kun sensorer med en enhed controlleren forstår vises: effekt i W/kW, energi i Wh/kWh/MWh og priser i kr, DKK eller øre pr. kWh/MWh. Tøm et felt for at stoppe med at sende sensoren.",
+        "description": "Vælg sensorer og en valgfri weather-entitet til controlleren på {controller}. T1 måles altid af anlægget. Vejrkildens forhold vises i WebUI, mens fugt kun bruges til styring, hvis du vælger det på Pi'en og data består T1-kontrollen. Tøm et felt for at stoppe overførslen.",
         "data": {
           "unit_power_entity": "Effektmåler på anlægget (valgfri, vises i Pi'ens WebUI)",
           "unit_energy_today_entity": "Dantherms elforbrug i dag i kWh (valgfri, fx en daglig forbrugsmåler)",
           "electricity_price_entity": "Elpris i kr/kWh (valgfri, øre/kWh omregnes)",
-          "heat_price_entity": "Varmepris i kr/kWh (valgfri, øre/kWh omregnes)"
+          "heat_price_entity": "Varmepris i kr/kWh (valgfri, øre/kWh omregnes)",
+          "weather_entity": "Vejrkilde til WebUI og valgfri fugtstyring"
         }
       },
       "controller_menu": {

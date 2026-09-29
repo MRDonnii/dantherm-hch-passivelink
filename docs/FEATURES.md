@@ -1,6 +1,6 @@
 # Dantherm HCH5 Control for Home Assistant: feature list
 
-This describes the published **0.8.1-beta.8** integration for a Dantherm HCH5 MK1 with HAC1. The [animated tour](images/0.8.1-beta.8/ha-integration-tour.gif) is an illustration with example values, not a capture of a Home Assistant installation. The [Danish entity reference](entities.da.md) explains individual sensors and their limitations.
+This describes the published **0.8.1-beta.9** integration for a Dantherm HCH5 MK1 with HAC1. The [animated tour](images/0.8.1-beta.8/ha-integration-tour.gif) is an illustration with example values, not a capture of a Home Assistant installation. The [Danish entity reference](entities.da.md) explains individual sensors and their limitations.
 
 ## Read the ventilation unit
 
@@ -25,7 +25,12 @@ Controller entities appear only when the separate HCH5 Control Raspberry Pi API 
 
 - Configure up to 32 rooms with a name, type (`auto`, `normal`, `bathroom`), priority and control/monitor-only setting. Choose optional temperature, humidity, CO₂ and PM2.5 sensors per room.
 - Entity pickers list supported units and device classes for each field. Unknown, unavailable and out-of-range values are omitted instead of making the Pi reject the full update. The sent room data includes the source entity IDs.
-- The Pi combines valid room values with its own sensors. Leased inputs expire when Home Assistant stops sending them; the Pi then falls back to local inputs. PM2.5 support requires a compatible Pi controller; current HCH5 Control 1.3.2 includes it.
+- The Pi combines valid room values with its own sensors. Leased inputs expire when Home Assistant stops sending them; the Pi then falls back to local inputs. PM2.5 support requires a compatible Pi controller; current HCH5 Control 1.3.3 includes it.
+
+## Weather from Home Assistant
+
+- Select a `weather.*` entity for current conditions in the Pi WebUI. The HCH5's measured T1 remains the displayed outdoor temperature.
+- Send current temperature, humidity and dew point on a five-minute lease. The Pi can use humidity in its existing drying decision only when explicitly enabled there and when the source agrees with fresh T1 within 6 °C. Missing or stale data falls back to local control.
 
 ## Energy, prices and optional Pi sensors
 
