@@ -13,6 +13,16 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .client import PassiveLinkClient, PassiveSerialClient
 from .controller_api import ControllerApiClient
+from .sensor_support import (
+    KIND_CO2,
+    KIND_ENERGY,
+    KIND_HUMIDITY,
+    KIND_PM25,
+    KIND_POWER,
+    KIND_PRICE,
+    KIND_TEMPERATURE,
+    supported_entity_ids,
+)
 from .const import (
     CONF_CONNECTION_TYPE,
     CONF_SERIAL_PORT,
@@ -45,6 +55,7 @@ from .const import (
     DEFAULT_SMART_INPUT_VALID_FOR,
     MAX_SMART_ROOMS,
     SMART_ROOM_PRIORITIES,
+    SMART_ROOM_TYPES,
     ROOM_SLOT_COUNT,
     room_name_key,
     room_temperature_key,
@@ -52,6 +63,19 @@ from .const import (
     room_co2_key,
     DOMAIN,
 )
+
+ROOM_SENSOR_KINDS = {
+    "temperature": KIND_TEMPERATURE,
+    "humidity": KIND_HUMIDITY,
+    "co2": KIND_CO2,
+    "pm25": KIND_PM25,
+}
+ENERGY_SIGNAL_KINDS = {
+    CONF_UNIT_POWER_ENTITY: KIND_POWER,
+    CONF_UNIT_ENERGY_TODAY_ENTITY: KIND_ENERGY,
+    CONF_ELECTRICITY_PRICE_ENTITY: KIND_PRICE,
+    CONF_HEAT_PRICE_ENTITY: KIND_PRICE,
+}
 
 
 class PassiveLinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -153,13 +177,17 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 priority = str(raw.get("priority", "auto"))
                 if priority not in SMART_ROOM_PRIORITIES:
                     priority = "auto"
+                room_type = str(raw.get("room_type", "auto"))
+                if room_type not in SMART_ROOM_TYPES:
+                    room_type = "auto"
                 room = {
                     "name": name[:64],
                     "enabled": bool(raw.get("enabled", True)),
                     "control": bool(raw.get("control", True)),
                     "priority": priority,
+                    "room_type": room_type,
                 }
-                for key in ("temperature", "humidity", "co2"):
+                for key in ROOM_SENSOR_KINDS:
                     value = str(raw.get(key, "")).strip()
                     if value:
                         room[key] = value
@@ -189,15 +217,18 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 rooms.append(room)
         return rooms
 
-    @staticmethod
-    def _entity_selector():
-        return selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="sensor", multiple=False)
-        )
+    def _entity_selector(self, kind: str, selected: object = None):
+        """Offer only sensors whose unit/device class the controller understands."""
+        return selector.EntitySelector(selector.EntitySelectorConfig(
+            domain="sensor",
+            multiple=False,
+            include_entities=supported_entity_ids(
+                self.hass.states.async_all("sensor"), kind, keep=selected
+            ),
+        ))
 
     def _room_schema(self, room: dict[str, object] | None = None) -> vol.Schema:
         room = room or {}
-        entity_selector = self._entity_selector()
         items: dict = {
             vol.Required("name", default=str(room.get("name", ""))): str,
             vol.Required("enabled", default=bool(room.get("enabled", True))): bool,
@@ -209,11 +240,16 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 "high": "Høj",
                 "critical": "Kritisk",
             }),
+            vol.Required("room_type", default=str(room.get("room_type", "auto"))): vol.In({
+                "auto": "Auto (ud fra rumnavnet)",
+                "normal": "Normalt rum",
+                "bathroom": "Badeværelse",
+            }),
         }
-        for key in ("temperature", "humidity", "co2"):
+        for key, kind in ROOM_SENSOR_KINDS.items():
             existing = room.get(key)
             marker = vol.Optional(key, default=existing) if existing else vol.Optional(key)
-            items[marker] = entity_selector
+            items[marker] = self._entity_selector(kind, existing)
         return vol.Schema(items)
 
     def _validate_room(self, user_input: dict, *, exclude_index: int | None = None) -> tuple[dict, dict]:
@@ -229,7 +265,7 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
 
         sensors = {
             key: str(user_input.get(key, "") or "").strip()
-            for key in ("temperature", "humidity", "co2")
+            for key in ROOM_SENSOR_KINDS
         }
         if not any(sensors.values()):
             errors["base"] = "room_requires_sensor"
@@ -237,12 +273,16 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
         priority = str(user_input.get("priority", "auto"))
         if priority not in SMART_ROOM_PRIORITIES:
             errors["priority"] = "invalid_priority"
+        room_type = str(user_input.get("room_type", "auto"))
+        if room_type not in SMART_ROOM_TYPES:
+            room_type = "auto"
 
         room: dict[str, object] = {
             "name": name[:64],
             "enabled": bool(user_input.get("enabled", True)),
             "control": bool(user_input.get("control", True)),
             "priority": priority,
+            "room_type": room_type,
         }
         room.update({key: value for key, value in sensors.items() if value})
         return room, errors
@@ -277,6 +317,10 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                     options[CONF_PORT] = port
             if not errors:
                 self._pending = options
+                # Chosen on the separate sensor page; keep them unless changed there.
+                for key in ENERGY_SIGNAL_ENTITIES:
+                    if current.get(key):
+                        self._pending[key] = current[key]
                 if user_input.get(CONF_CONTROLLER_API_ENABLED, False):
                     return await self.async_step_controller()
                 self._pending[CONF_SMART_ROOMS] = self._rooms
@@ -351,9 +395,6 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                     errors["base"] = "controller_cannot_connect"
             if not errors:
                 self._controller_client = client
-                # An emptied optional entity selector is absent from user_input.
-                for key in ENERGY_SIGNAL_ENTITIES:
-                    self._pending.pop(key, None)
                 self._pending.update(user_input)
                 return await self.async_step_controller_menu()
 
@@ -379,36 +420,38 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
             ): selector.NumberSelector(selector.NumberSelectorConfig(
                 min=30, max=900, step=30, mode=selector.NumberSelectorMode.BOX
             )),
-            vol.Optional(
-                CONF_UNIT_POWER_ENTITY,
-                description={"suggested_value": current.get(CONF_UNIT_POWER_ENTITY)},
-            ): selector.EntitySelector(selector.EntitySelectorConfig(
-                domain="sensor", device_class="power", multiple=False
-            )),
-            vol.Optional(
-                CONF_UNIT_ENERGY_TODAY_ENTITY,
-                description={"suggested_value": current.get(CONF_UNIT_ENERGY_TODAY_ENTITY)},
-            ): selector.EntitySelector(selector.EntitySelectorConfig(
-                domain="sensor", device_class="energy", multiple=False
-            )),
-            vol.Optional(
-                CONF_ELECTRICITY_PRICE_ENTITY,
-                description={"suggested_value": current.get(CONF_ELECTRICITY_PRICE_ENTITY)},
-            ): selector.EntitySelector(selector.EntitySelectorConfig(
-                domain="sensor", multiple=False
-            )),
-            vol.Optional(
-                CONF_HEAT_PRICE_ENTITY,
-                description={"suggested_value": current.get(CONF_HEAT_PRICE_ENTITY)},
-            ): selector.EntitySelector(selector.EntitySelectorConfig(
-                domain="sensor", multiple=False
-            )),
         })
         return self.async_show_form(step_id="controller", data_schema=schema, errors=errors)
 
+    async def async_step_controller_sensors(self, user_input: dict | None = None) -> FlowResult:
+        """Choose which HA sensors are leased to the controller at the chosen IP."""
+        if user_input is not None:
+            # An emptied optional entity selector is absent from user_input.
+            for key in ENERGY_SIGNAL_ENTITIES:
+                self._pending.pop(key, None)
+            self._pending.update(
+                {key: user_input[key] for key in ENERGY_SIGNAL_ENTITIES if user_input.get(key)}
+            )
+            return await self.async_step_controller_menu()
+
+        fields = {}
+        for key, kind in ENERGY_SIGNAL_KINDS.items():
+            selected = self._pending.get(key)
+            fields[vol.Optional(key, description={"suggested_value": selected})] = (
+                self._entity_selector(kind, selected)
+            )
+        return self.async_show_form(
+            step_id="controller_sensors",
+            data_schema=vol.Schema(fields),
+            description_placeholders={
+                "controller": f"{self._pending.get(CONF_CONTROLLER_HOST, '')}:"
+                f"{self._pending.get(CONF_CONTROLLER_PORT, DEFAULT_CONTROLLER_PORT)}",
+            },
+        )
+
     async def async_step_controller_menu(self, user_input: dict | None = None) -> FlowResult:
         del user_input
-        options = ["controller_settings", "fan_profiles"]
+        options = ["controller_sensors", "controller_settings", "fan_profiles"]
         if self._pending.get(CONF_SMART_ROOMS_ENABLED, False):
             options.append("rooms_menu")
         options.append("finish_controller")

@@ -120,13 +120,19 @@
       },
       "controller": {
         "title": "Raspberry Pi controller and Smart Auto",
-        "description": "Connect Home Assistant to the Pi controller's local API. Home Assistant only sends commands and sensor observations; the Pi makes all ventilation decisions.",
+        "description": "Enter the IP address and port the Raspberry Pi controller runs on. Home Assistant only sends commands and the sensors you choose; the Pi makes all ventilation decisions.",
         "data": {
           "controller_host": "Controller IP address or host name",
           "controller_port": "Controller API port",
           "controller_token": "Controller API token",
           "smart_rooms_enabled": "Use Home Assistant sensors in Smart Auto",
-          "smart_input_valid_for": "Sensor input valid for (seconds)",
+          "smart_input_valid_for": "Sensor input valid for (seconds)"
+        }
+      },
+      "controller_sensors": {
+        "title": "Sensors sent to the controller",
+        "description": "Choose which Home Assistant sensors are sent to the controller at {controller}. Only sensors with a unit the controller understands are listed: power in W/kW, energy in Wh/kWh/MWh and prices in kr, DKK or øre per kWh/MWh. Clear a field to stop sending that sensor.",
+        "data": {
           "unit_power_entity": "Power meter on the unit (optional, shown in the Pi WebUI)",
           "unit_energy_today_entity": "Unit energy today in kWh (optional, e.g. a daily utility meter)",
           "electricity_price_entity": "Electricity price in DKK/kWh (optional, øre/kWh is converted)",
@@ -137,6 +143,7 @@
         "title": "Controller setup",
         "description": "Values are read directly from the Pi controller. Changes are stored on the Pi, which remains the source of truth.",
         "menu_options": {
+          "controller_sensors": "Sensors sent to the controller",
           "controller_settings": "Operation, Smart Auto and afterheat",
           "fan_profiles": "Ventilation profiles 1-6",
           "rooms_menu": "Smart Auto rooms",
@@ -179,14 +186,14 @@
       },
       "add_room": {
         "title": "Add Smart Auto room",
-        "description": "Select at least one temperature, humidity or CO₂ sensor.",
-        "data": {"name": "Room name", "enabled": "Enabled", "control": "Use for control", "priority": "Priority", "temperature": "Temperature sensor (optional)", "humidity": "Humidity sensor (optional)", "co2": "CO₂ sensor (optional)"}
+        "description": "Select at least one temperature, humidity, CO₂ or PM2.5 sensor. Only supported sensors are listed: temperature in °C, humidity in %, CO₂ and PM2.5 in µg/m³. PM2.5 is only used when it is enabled on the Pi.",
+        "data": {"name": "Room name", "enabled": "Enabled", "control": "Use for control", "priority": "Priority", "temperature": "Temperature sensor (optional)", "humidity": "Humidity sensor (optional)", "co2": "CO₂ sensor (optional)", "pm25": "PM2.5 sensor (optional)", "room_type": "Room type"}
       },
       "edit_room": {"title": "Choose room to edit", "data": {"room": "Room"}},
       "room_detail": {
         "title": "Edit Smart Auto room",
-        "description": "Temporarily disable a room, make it monitor-only, or change priority without changing controller code.",
-        "data": {"name": "Room name", "enabled": "Enabled", "control": "Use for control", "priority": "Priority", "temperature": "Temperature sensor (optional)", "humidity": "Humidity sensor (optional)", "co2": "CO₂ sensor (optional)"}
+        "description": "Temporarily disable a room, make it monitor-only, or change priority without changing controller code. Only supported sensors are listed: temperature in °C, humidity in %, CO₂ and PM2.5 in µg/m³. PM2.5 is only used when it is enabled on the Pi.",
+        "data": {"name": "Room name", "enabled": "Enabled", "control": "Use for control", "priority": "Priority", "temperature": "Temperature sensor (optional)", "humidity": "Humidity sensor (optional)", "co2": "CO₂ sensor (optional)", "pm25": "PM2.5 sensor (optional)", "room_type": "Room type"}
       },
       "remove_room": {"title": "Remove Smart Auto room", "description": "Only removes the room from Dantherm Smart Auto. The selected Home Assistant sensor is not deleted.", "data": {"room": "Room"}},
       "finish_rooms": {"title": "Save Smart Auto rooms"},

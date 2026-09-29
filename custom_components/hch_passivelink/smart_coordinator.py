@@ -9,6 +9,7 @@ from homeassistant.components import persistent_notification
 from homeassistant.core import Event, callback
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 
+from .const import ROOM_SENSOR_KEYS, ROOM_SENSOR_RANGES
 from .coordinator import PassiveLinkCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -101,9 +102,11 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
                 "enabled": bool(source.get("enabled", True)),
                 "control": bool(source.get("control", True)),
                 "priority": str(source.get("priority") or "auto"),
+                "room_type": str(source.get("room_type") or "auto"),
             }
-            measurement_count = 0
-            for kind in ("temperature", "humidity", "co2"):
+            # Lets the Pi show which HA sensor each value came from.
+            entities: dict[str, str] = {}
+            for kind, (minimum, maximum) in ROOM_SENSOR_RANGES.items():
                 entity_id = source.get(kind)
                 if not entity_id:
                     continue
@@ -114,15 +117,13 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
                     value = float(state.state)
                 except (TypeError, ValueError):
                     continue
-                if kind == "humidity" and not 0 <= value <= 100:
-                    continue
-                if kind == "co2" and not 250 <= value <= 10000:
-                    continue
-                if kind == "temperature" and not -30 <= value <= 60:
+                # The Pi rejects the whole message on one out-of-range value.
+                if not minimum <= value <= maximum:
                     continue
                 values[kind] = value
-                measurement_count += 1
-            if measurement_count:
+                entities[kind] = str(entity_id)
+            if entities:
+                values["entities"] = entities
                 rooms[name] = values
         return rooms
 
@@ -279,9 +280,7 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             str(entity_id)
             for source in self.room_sources
             if bool(source.get("enabled", True))
-            for entity_id in (
-                source.get("temperature"), source.get("humidity"), source.get("co2")
-            )
+            for entity_id in (source.get(kind) for kind in ROOM_SENSOR_KEYS)
             if entity_id
         })
         if entity_ids:

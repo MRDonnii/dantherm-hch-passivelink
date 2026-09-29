@@ -8,5 +8,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/MRDonnii/dantherm-hch5-control-ha/issues",
   "requirements": ["pyserial==3.5"],
-  "version": "0.8.1-beta.7"
+  "version": "0.8.1-beta.8"
 }
