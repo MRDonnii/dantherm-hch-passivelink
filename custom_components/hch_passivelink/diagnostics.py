@@ -1,4 +1,4 @@
-"""Diagnostics for HCH PassiveLink."""
+"""Diagnostics for HCH5 Control."""
 
 from homeassistant.components.diagnostics import async_redact_data
 

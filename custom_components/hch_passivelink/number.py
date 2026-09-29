@@ -36,6 +36,8 @@ SPECS = (
     NumberSpec("downshift_delay_seconds", "Nedreguleringsforsinkelse", 30, 3600, 30, UnitOfTime.SECONDS, "mdi:timer-sand"),
     NumberSpec("boost_hold_seconds", "Boost holdetid", 60, 3600, 60, UnitOfTime.SECONDS, "mdi:timer-outline"),
     NumberSpec("ha_timeout_seconds", "Home Assistant timeout", 60, 3600, 30, UnitOfTime.SECONDS, "mdi:lan-disconnect"),
+    NumberSpec("balance_extract_excess_percent", "Luftbalance udsugning over indblæsning", 0, 20, 0.5, PERCENTAGE, "mdi:scale-unbalanced"),
+    NumberSpec("balance_duct_ratio", "Luftbalance fast kanalforhold", 0.7, 1.5, 0.01, None, "mdi:pipe"),
 )
 
 

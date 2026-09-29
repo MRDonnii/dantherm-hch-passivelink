@@ -1,4 +1,4 @@
-"""Config flow for HCH PassiveLink."""
+"""Config flow for HCH5 Control."""
 
 from __future__ import annotations
 

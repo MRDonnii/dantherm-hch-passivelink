@@ -46,6 +46,13 @@ class SmartPassiveLinkCoordinator(PassiveLinkCoordinator):
             field: entity_id for field, entity_id in (energy_entities or {}).items() if entity_id
         }
 
+    def co2_offset(self) -> int:
+        """The Pi's CO2 calibration, so HA shows the same corrected CO2 as the WebUI."""
+        offset = self.controller_state.get("co2_offset")
+        if isinstance(offset, (int, float)) and not isinstance(offset, bool) and -1000 <= offset <= 1000:
+            return int(offset)
+        return 0
+
     @callback
     def async_handle_controller_update(self, state: dict[str, object]) -> None:
         self.controller_state = dict(state)
