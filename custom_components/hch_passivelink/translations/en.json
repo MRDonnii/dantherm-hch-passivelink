@@ -131,12 +131,13 @@
       },
       "controller_sensors": {
         "title": "Sensors sent to the controller",
-        "description": "Choose which Home Assistant sensors are sent to the controller at {controller}. Only sensors with a unit the controller understands are listed: power in W/kW, energy in Wh/kWh/MWh and prices in kr, DKK or øre per kWh/MWh. Clear a field to stop sending that sensor.",
+        "description": "Choose sensors and an optional weather entity for the controller at {controller}. T1 always comes from the unit. Weather conditions appear in the WebUI; humidity affects control only if enabled on the Pi and the data pass the T1 check. Clear a field to stop sending it.",
         "data": {
           "unit_power_entity": "Power meter on the unit (optional, shown in the Pi WebUI)",
           "unit_energy_today_entity": "Unit energy today in kWh (optional, e.g. a daily utility meter)",
           "electricity_price_entity": "Electricity price in DKK/kWh (optional, øre/kWh is converted)",
-          "heat_price_entity": "Heat price in DKK/kWh (optional, øre/kWh is converted)"
+          "heat_price_entity": "Heat price in DKK/kWh (optional, øre/kWh is converted)",
+          "weather_entity": "Weather source for the WebUI and optional humidity control"
         }
       },
       "controller_menu": {

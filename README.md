@@ -2,13 +2,13 @@
 
 <img src="https://raw.githubusercontent.com/MRDonnii/dantherm-hch5-control-ha/main/assets/logo.png" alt="HCH5 Control logo" width="320">
 
-![Illustrated tour of the 0.8.1-beta.8 Home Assistant integration](docs/images/0.8.1-beta.8/ha-integration-tour.gif)
+![Illustrated tour of the Home Assistant integration](docs/images/0.8.1-beta.8/ha-integration-tour.gif)
 
 *Animated feature illustration using example values; it is not a screenshot of a live Home Assistant installation.*
 
 An unofficial Home Assistant integration for a Dantherm HCH5 MK1 with HAC1. Its classic listening data path remains read-only and decodes internal Modbus RTU traffic without transmitting. The optional Raspberry Pi controller connection sends only high-level intent and room observations to the separate Raspberry Pi controller HTTP API; Home Assistant never writes Modbus/RS485 directly.
 
-**Current published version: 0.8.1-beta.8.** It brings the HCH5's measurements into Home Assistant and, with the separate Pi controller, adds fan modes, OFF, Quick Boost, afterheat, Smart Auto rooms, sensor forwarding and air balancing. See the [complete feature list](docs/FEATURES.md), [entity reference](docs/entities.da.md) and [HACS installation](#installation-with-hacs).
+**Current published version: 0.8.1-beta.9.** It brings the HCH5's measurements into Home Assistant and, with the separate Pi controller, adds fan modes, OFF, Quick Boost, afterheat, Smart Auto rooms, sensor forwarding and air balancing. See the [complete feature list](docs/FEATURES.md), [entity reference](docs/entities.da.md) and [HACS installation](#installation-with-hacs).
 
 > **Unofficial community project:** This software was not developed, supplied, commissioned, approved, certified or supported by Dantherm Group. Dantherm Group is not affiliated with this project. “Dantherm” is used only to identify compatible equipment; all trademarks belong to their respective owners. For product service and safety questions, contact Dantherm or an authorised installer.
 
@@ -22,7 +22,7 @@ Do not use an M-Bus gateway. M-Bus is electrically incompatible with RS485.
 
 ### Optional Raspberry Pi controller
 
-Version `0.8.1-beta.8` connects to the controller API of [HCH5 Control](https://github.com/MRDonnii/dantherm-hch5-control). Current stable Pi version `1.3.2` supports the PM2.5 and air-balance fields described below. The architecture is:
+Version `0.8.1-beta.9` connects to the controller API of [HCH5 Control](https://github.com/MRDonnii/dantherm-hch5-control). Current stable Pi version `1.3.3` supports the PM2.5 and air-balance fields described below. The architecture is:
 
 ```text
 Home Assistant -> authenticated controller HTTP API -> Raspberry Pi arbitration -> verified RS485 writes -> HCH5/HAC1
@@ -32,7 +32,7 @@ The Pi is source of truth. HCP4 always has priority, `UNKNOWN` or unhealthy bus 
 
 #### Choosing which sensors are sent to the controller
 
-In the controller step of the Options UI you enter the IP address and API port (default `8080`) of the Raspberry Pi controller; the raw RS485 stream stays on its own port (default `4196`). The controller menu then has **Sensors sent to the controller** for the energy data below and **Smart Auto rooms** for room sensors. Every sensor picker lists only sensors the controller understands, judged by unit and device class:
+In the controller step of the Options UI you enter the IP address and API port (default `8080`) of the Raspberry Pi controller; the raw RS485 stream stays on its own port (default `4196`). The controller menu then has **Sensors sent to the controller** for the energy data and weather below and **Smart Auto rooms** for room sensors. Every sensor picker lists only sensors the controller understands, judged by unit and device class:
 
 | Input | Listed sensors |
 | --- | --- |
@@ -46,9 +46,15 @@ In the controller step of the Options UI you enter the IP address and API port (
 
 Clearing a field stops sending that sensor. Each room also has a room type (`auto`, `normal`, `bathroom`; `auto` lets the Pi guess from the name). Unknown, unavailable or out-of-range values are left out of the message instead of being sent, and every room tells the Pi which HA sensor each value came from (`entities`).
 
+#### Optional weather for display and humidity control
+
+Under **Sensors sent to the controller**, choose one `weather.*` entity for the Pi. The integration sends its current condition, temperature, humidity and dew point when available; it does not send a forecast. The Pi WebUI keeps the HCH5's measured T1 as its primary outdoor temperature and labels the weather source separately. A [Met.no weather entity](https://www.home-assistant.io/integrations/met) is one option; choose the entity for the actual installation location.
+
+If you also enable humidity smart control and select **Weather from Home Assistant (checked against T1)** as the Pi's outdoor humidity source, the Pi may use its humidity for the existing drying decision. This is opt-in. The Pi ignores weather older than the five-minute lease, stale T1, and a weather temperature more than 6 °C away from T1. HA does not command a fan level from a forecast. The Pi controller needs version 1.3.3 or newer for this option.
+
 #### Optional Home Assistant data for the Pi WebUI
 
-The controller options also accept four optional sensors that the Pi only displays; none of them changes ventilation control:
+The controller options also accept four optional energy sensors that the Pi only displays; none of these four changes ventilation control:
 
 | Option | Expected sensor | Shown in the Pi WebUI as |
 | --- | --- | --- |

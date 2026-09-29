@@ -45,6 +45,7 @@ from .const import (
     CONF_UNIT_ENERGY_TODAY_ENTITY,
     CONF_ELECTRICITY_PRICE_ENTITY,
     CONF_HEAT_PRICE_ENTITY,
+    CONF_WEATHER_ENTITY,
     ENERGY_SIGNAL_ENTITIES,
     CONF_SMART_ROOMS,
     DEFAULT_CONTROLLER_PORT,
@@ -321,6 +322,8 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
                 for key in ENERGY_SIGNAL_ENTITIES:
                     if current.get(key):
                         self._pending[key] = current[key]
+                if current.get(CONF_WEATHER_ENTITY):
+                    self._pending[CONF_WEATHER_ENTITY] = current[CONF_WEATHER_ENTITY]
                 if user_input.get(CONF_CONTROLLER_API_ENABLED, False):
                     return await self.async_step_controller()
                 self._pending[CONF_SMART_ROOMS] = self._rooms
@@ -427,10 +430,10 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
         """Choose which HA sensors are leased to the controller at the chosen IP."""
         if user_input is not None:
             # An emptied optional entity selector is absent from user_input.
-            for key in ENERGY_SIGNAL_ENTITIES:
+            for key in (*ENERGY_SIGNAL_ENTITIES, CONF_WEATHER_ENTITY):
                 self._pending.pop(key, None)
             self._pending.update(
-                {key: user_input[key] for key in ENERGY_SIGNAL_ENTITIES if user_input.get(key)}
+                {key: user_input[key] for key in (*ENERGY_SIGNAL_ENTITIES, CONF_WEATHER_ENTITY) if user_input.get(key)}
             )
             return await self.async_step_controller_menu()
 
@@ -440,6 +443,9 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
             fields[vol.Optional(key, description={"suggested_value": selected})] = (
                 self._entity_selector(kind, selected)
             )
+        fields[vol.Optional(CONF_WEATHER_ENTITY, description={"suggested_value": self._pending.get(CONF_WEATHER_ENTITY)})] = selector.EntitySelector(
+            selector.EntitySelectorConfig(domain="weather", multiple=False)
+        )
         return self.async_show_form(
             step_id="controller_sensors",
             data_schema=vol.Schema(fields),
