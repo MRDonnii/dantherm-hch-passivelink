@@ -34,6 +34,13 @@ temperaturer fra forskellige måletidspunkter.
 | Driftstilstand og ventilationstrin | Afledt af observerede HCP4/HRC2-kommandoer. Automatisk og ugeprogram kan ikke altid skelnes. |
 | Pejsefunktion, standby og natdrift | Observerede specialtilstande fra kommando- og ventilatortrafik. |
 
+Ventilatorstyring, balance, driftstilstand, ventilationstrin, pejsefunktion og
+standby kommer kun fra HCP4/HRC2-panelets skrivninger på bussen. Når Pi-controlleren
+er sat op og er master, og der ikke sidder et panel på bussen, oprettes disse
+entiteter først, når den første værdi er observeret, i stedet for at stå som
+utilgængelige. Pi'ens egne værdier findes i stedet som Faktisk udsugning,
+Faktisk indblæsning og Effektivt ventilationsniveau.
+
 ## Eftervarme, vand og filter
 
 | Entitet | Betydning og kilde |

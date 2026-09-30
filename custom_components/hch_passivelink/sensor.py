@@ -24,7 +24,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from .controller_entity import ControllerEntity
 from .coordinator import PassiveLinkCoordinator
-from .entity import PI_KEYS, PREHEATER_KEYS, PassiveLinkEntity
+from .entity import PI_KEYS, PREHEATER_KEYS, PassiveLinkEntity, async_add_entities_when_ready
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -291,6 +291,10 @@ class ControllerStatusSensor(ControllerEntity, SensorEntity):
     @property
     def native_value(self):
         value = self.controller_value
+        if value is None and self.key == "standby_remaining_seconds":
+            # The Pi has no end time while the unit is on; that is zero seconds left.
+            state = self.coordinator.controller_state
+            return 0 if "standby_active" in state and not state["standby_active"] else None
         if not self._temperature or not isinstance(value, (int, float)):
             return value
         # Each controller poll replaces controller_state with a new dict; filter a
@@ -334,4 +338,4 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
             BalanceStatusSensor(coordinator, "balance_duct_ratio_in_use", "Luftbalance kanalforhold i brug", "mdi:pipe"),
             BalanceStatusSensor(coordinator, "balance_heat_balance", "Luftbalance varmebalance", "mdi:heat-wave"),
         ])
-    async_add_entities(entities)
+    async_add_entities_when_ready(entry, coordinator, async_add_entities, entities)

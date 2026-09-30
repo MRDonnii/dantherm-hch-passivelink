@@ -1,5 +1,6 @@
 """Base entity for HCH5 Control."""
 
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -62,6 +63,24 @@ ALARM_KEYS = {
     "exhaust_temperature_sensor_fault", "room_temperature_sensor_fault",
     "outdoor_temperature_low", "supply_temperature_low", "fire_temperature_alarm",
 }
+# Values that only exist once an HCP4/HRC2 panel has written on the bus. With the
+# Pi as master and no panel, nothing ever produces them, so they are created when
+# the first value arrives instead of sitting unavailable from the start.
+HCP4_KEYS = {
+    "extract_fan_percent",
+    "supply_fan_percent",
+    "fan_control_delta",
+    "afterheat_raw",
+    "operating_mode",
+    "current_level",
+    "fireplace",
+    "standby",
+}
+# Pi values that are reported only in some installations.
+OPTIONAL_CONTROLLER_KEYS = {
+    "hcp4_last_foreign_write_age",
+    "actual_afterheat_valve_percent",
+}
 
 
 class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
@@ -122,3 +141,35 @@ class PassiveLinkEntity(CoordinatorEntity[PassiveLinkCoordinator]):
     @property
     def available(self) -> bool:
         return self.coordinator.available and self.key in self.coordinator.data and self.coordinator.data.get(self.key) is not None
+
+    @property
+    def defer_until_data(self) -> bool:
+        """Whether the entity is created only when its first value arrives."""
+        return self.key in HCP4_KEYS and getattr(self.coordinator, "controller_client", None) is not None
+
+    @property
+    def has_data(self) -> bool:
+        return self.coordinator.data.get(self.key) is not None
+
+
+@callback
+def async_add_entities_when_ready(entry, coordinator, async_add_entities, entities) -> None:
+    """Add entities now, or as soon as their first value arrives when they defer."""
+    pending = [entity for entity in entities if entity.defer_until_data]
+    now = [entity for entity in entities if not entity.defer_until_data]
+    if now:
+        async_add_entities(now)
+    if not pending:
+        return
+
+    @callback
+    def _add_ready() -> None:
+        ready = [entity for entity in pending if entity.has_data]
+        if not ready:
+            return
+        for entity in ready:
+            pending.remove(entity)
+        async_add_entities(ready)
+
+    entry.async_on_unload(coordinator.async_add_listener(_add_ready))
+    _add_ready()
