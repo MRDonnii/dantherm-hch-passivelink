@@ -44,6 +44,35 @@ class CoolingSwitch(ControllerEntity, SwitchEntity):
         await self.async_command({"cooling_enabled": False})
 
 
+class VacationSwitch(ControllerEntity, SwitchEntity):
+    """Vacation on the Pi: the unit runs the vacation step until switched off.
+
+    Switched on from Home Assistant it starts now and has no end date, so the
+    house mode (or the alarm) decides when it ends.
+    """
+
+    _attr_icon = "mdi:palm-tree"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "vacation_enabled", "Ferie")
+
+    @property
+    def is_on(self) -> bool:
+        return self.controller_value is True
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object]:
+        state = self.coordinator.controller_state
+        return {"trin": state.get("vacation_level"), "aktiv": state.get("vacation_active"),
+                "slut": state.get("vacation_until"), "venter_på_start": state.get("vacation_pending")}
+
+    async def async_turn_on(self, **kwargs) -> None:
+        await self.async_command({"vacation_enabled": True, "vacation_from": None, "vacation_until": None})
+
+    async def async_turn_off(self, **kwargs) -> None:
+        await self.async_command({"vacation_enabled": False})
+
+
 class FireplaceSignalSwitch(ControllerEntity, RestoreEntity, SwitchEntity):
     """External fireplace signal for the Pi's automatic fireplace mode.
 
@@ -128,4 +157,4 @@ async def async_setup_entry(
     if coordinator.controller_client is not None:
         # The fireplace switch is retired: the Pejsetid select (Fra/15/30 min) is
         # the canonical control, so only the cooling switch is set up here.
-        async_add_entities([CoolingSwitch(coordinator), FireplaceSignalSwitch(coordinator), BalanceSwitch(coordinator)])
+        async_add_entities([CoolingSwitch(coordinator), VacationSwitch(coordinator), FireplaceSignalSwitch(coordinator), BalanceSwitch(coordinator)])

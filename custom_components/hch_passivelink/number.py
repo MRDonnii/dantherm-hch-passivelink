@@ -33,6 +33,7 @@ SPECS = (
     NumberSpec("local_normal_level", "Auto normalniveau", 1, 6, 1, None, "mdi:fan-auto"),
     NumberSpec("local_min_level", "Auto minimumsniveau", 1, 6, 1, None, "mdi:fan-minus"),
     NumberSpec("local_max_level", "Auto maksimumsniveau", 1, 6, 1, None, "mdi:fan-plus"),
+    NumberSpec("vacation_level", "Ferie trin", 1, 6, 1, None, "mdi:palm-tree"),
     NumberSpec("downshift_delay_seconds", "Nedreguleringsforsinkelse", 30, 3600, 30, UnitOfTime.SECONDS, "mdi:timer-sand"),
     NumberSpec("boost_hold_seconds", "Boost holdetid", 60, 3600, 60, UnitOfTime.SECONDS, "mdi:timer-outline"),
     NumberSpec("ha_timeout_seconds", "Home Assistant timeout", 60, 3600, 30, UnitOfTime.SECONDS, "mdi:lan-disconnect"),
@@ -42,7 +43,7 @@ SPECS = (
 
 
 # Step choices whose maximum follows the Pi's step control (4 or 6).
-LEVEL_KEYS = {"local_normal_level", "local_min_level", "local_max_level"}
+LEVEL_KEYS = {"local_normal_level", "local_min_level", "local_max_level", "vacation_level"}
 
 
 class ControllerNumber(ControllerEntity, NumberEntity):

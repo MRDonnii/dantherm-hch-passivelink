@@ -65,3 +65,16 @@ def test_six_steps_and_older_controllers_keep_six_levels():
     assert HCHControllerFan(coordinator).preset_mode == "Boost"
     assert not FanSettingNumber(coordinator, *FAN_SETTINGS[0]).available
     assert not StepControlSelect(coordinator).available
+
+
+def test_vacation_switch_starts_now_without_end_and_level_follows_steps():
+    from hch_passivelink.switch import VacationSwitch
+    coordinator = Coordinator({**FOUR, "vacation_enabled": False, "vacation_level": 1})
+    switch = VacationSwitch(coordinator)
+    assert switch.available and not switch.is_on
+    asyncio.run(switch.async_turn_on())
+    assert coordinator.sent[-1] == {"vacation_enabled": True, "vacation_from": None, "vacation_until": None}
+    asyncio.run(switch.async_turn_off())
+    assert coordinator.sent[-1] == {"vacation_enabled": False}
+    level = ControllerNumber(coordinator, next(spec for spec in SPECS if spec.key == "vacation_level"))
+    assert level.native_value == 1 and level.native_max_value == 4
