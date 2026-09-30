@@ -9,6 +9,7 @@ import logging
 import platform
 import shutil
 import subprocess
+import threading
 import time
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -40,6 +41,12 @@ THROTTLED_BITS = {
 # service works exactly as before.
 CONTROLLER_URL = "http://127.0.0.1:8080/api/onewire/water"
 CONTROLLER_CACHE_SECONDS = 30.0
+
+# The sensors are read in the background at this interval and every request is
+# answered from the latest reading. An answer older than STALE_AFTER_SECONDS
+# means the reader is stuck, and the temperatures are reported as missing.
+READ_INTERVAL_SECONDS = 10.0
+STALE_AFTER_SECONDS = 60.0
 
 
 class SensorReader:
@@ -295,7 +302,59 @@ class SensorReader:
         return payload
 
 
-def handler_factory(reader: SensorReader):
+class CachedReader:
+    """Reads the sensors in a background thread so a request never waits.
+
+    A DS18B20 conversion takes about 0.75 s and the kernel reads one sensor
+    at a time. Reading on every request made callers that asked at the same
+    time (Home Assistant, the HCH5 Control WebUI) wait up to six seconds.
+    """
+
+    def __init__(self, reader: SensorReader, interval: float = READ_INTERVAL_SECONDS) -> None:
+        self.reader = reader
+        self.interval = interval
+        self._lock = threading.Lock()
+        self._payload: dict[str, object] | None = None
+        self._read_at = 0.0
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def refresh(self) -> None:
+        try:
+            payload = self.reader.payload()
+        except Exception:  # noqa: BLE001 - one failed read must not stop the reader
+            LOGGER.exception("1-Wire read failed")
+            return
+        with self._lock:
+            self._payload, self._read_at = payload, time.monotonic()
+
+    def _run(self) -> None:
+        while not self._stop.wait(self.interval):
+            self.refresh()
+
+    def start(self) -> None:
+        # The first reading is ready before the port opens.
+        self.refresh()
+        self._thread = threading.Thread(target=self._run, name="onewire-reader", daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+
+    def payload(self) -> dict[str, object]:
+        with self._lock:
+            payload, read_at = self._payload, self._read_at
+        if payload is None:
+            return {"available": False, "flow_temperature": None, "return_temperature": None}
+        age = time.monotonic() - read_at
+        result = dict(payload)
+        result["onewire_sample_age_seconds"] = round(age, 1)
+        if age > STALE_AFTER_SECONDS:
+            result.update(available=False, flow_temperature=None, return_temperature=None)
+        return result
+
+
+def handler_factory(reader: SensorReader | CachedReader):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802
             if self.path not in ("/temperatures", "/health"):
@@ -325,7 +384,8 @@ def main() -> None:
                         help="HCH5 Control flow/return choice; empty to ignore")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    reader = SensorReader(args.config, args.controller_url or None)
+    reader = CachedReader(SensorReader(args.config, args.controller_url or None))
+    reader.start()
     server = ThreadingHTTPServer((args.bind, args.port), handler_factory(reader))
     LOGGER.info("Optional DS18B20 service listening on %s:%d", args.bind, args.port)
     server.serve_forever()
