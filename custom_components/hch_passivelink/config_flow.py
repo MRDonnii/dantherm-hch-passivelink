@@ -476,6 +476,8 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
             else:
                 return await self.async_step_controller_menu()
 
+        # Highest step: 4 with Dantherm steps (HCH5 Control 1.4.0+), else 6.
+        top = int(state.get("max_level") or 6)
         number = lambda minimum, maximum, step=1: selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=minimum, max=maximum, step=step,
@@ -486,10 +488,10 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
             vol.Required("mode", default=state.get("mode", "local_auto")): vol.In({
                 "local_auto": "Local Auto", "smart_auto": "Smart Auto", "manual": "Manual",
             }),
-            vol.Required("manual_level", default=state.get("manual_level", 3)): number(1, 6),
-            vol.Required("local_normal_level", default=state.get("local_normal_level", 3)): number(1, 6),
-            vol.Required("local_min_level", default=state.get("local_min_level", 1)): number(1, 6),
-            vol.Required("local_max_level", default=state.get("local_max_level", 6)): number(1, 6),
+            vol.Required("manual_level", default=state.get("manual_level", 3)): number(1, top),
+            vol.Required("local_normal_level", default=state.get("local_normal_level", 3)): number(1, top),
+            vol.Required("local_min_level", default=state.get("local_min_level", 1)): number(1, top),
+            vol.Required("local_max_level", default=state.get("local_max_level", top)): number(1, top),
             vol.Required("rh_setpoint", default=state.get("rh_setpoint", 50)): number(25, 80),
             vol.Required("rh_hysteresis", default=state.get("rh_hysteresis", 3)): number(1, 10),
             vol.Required("co2_setpoint", default=state.get("co2_setpoint", 800)): number(500, 2000, 50),
@@ -506,6 +508,8 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
         )
 
     async def async_step_fan_profiles(self, user_input: dict | None = None) -> FlowResult:
+        if self._controller_state.get("fan_step_count") == 4:
+            return await self.async_step_fan_steps(user_input)
         errors = {}
         profiles = self._controller_state.get("profiles") or {}
         if user_input is not None:
@@ -536,13 +540,37 @@ class PassiveLinkOptionsFlow(config_entries.OptionsFlow):
             )] = str
             fields[vol.Required(
                 f"profile_{level}_extract", default=current.get("extract", extract)
-            )] = vol.All(vol.Coerce(int), vol.Range(min=11, max=100))
+            )] = vol.All(vol.Coerce(int), vol.Range(min=1, max=100))
             fields[vol.Required(
                 f"profile_{level}_supply", default=current.get("supply", supply)
-            )] = vol.All(vol.Coerce(int), vol.Range(min=10, max=99))
+            )] = vol.All(vol.Coerce(int), vol.Range(min=1, max=100))
         return self.async_show_form(
             step_id="fan_profiles", data_schema=vol.Schema(fields), errors=errors
         )
+
+    async def async_step_fan_steps(self, user_input: dict | None = None) -> FlowResult:
+        """Four Dantherm steps: commission step 3 per fan, the offset and step 4."""
+        errors = {}
+        settings = self._controller_state.get("fan_settings") or {}
+        if user_input is not None:
+            try:
+                if self._controller_client is None:
+                    raise ConnectionError("Controller API is not connected")
+                self._controller_state = await self._controller_client.async_command(
+                    {"fan_settings": {key: int(value) for key, value in user_input.items()}})
+            except (OSError, ConnectionError, asyncio.TimeoutError):
+                errors["base"] = "controller_update_failed"
+            else:
+                return await self.async_step_controller_menu()
+        gear = lambda minimum, maximum: vol.All(vol.Coerce(int), vol.Range(min=minimum, max=maximum))
+        fields = {
+            vol.Required("extract", default=settings.get("extract", 64)): gear(46, 91),
+            vol.Required("supply", default=settings.get("supply", 64)): gear(46, 91),
+            vol.Required("offset", default=settings.get("offset", 25)): gear(10, 30),
+            vol.Required("max_extract", default=settings.get("max_extract", 100)): gear(46, 100),
+            vol.Required("max_supply", default=settings.get("max_supply", 100)): gear(46, 100),
+        }
+        return self.async_show_form(step_id="fan_steps", data_schema=vol.Schema(fields), errors=errors)
 
     async def async_step_rooms_menu(self, user_input: dict | None = None) -> FlowResult:
         del user_input

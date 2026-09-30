@@ -146,7 +146,7 @@
         "menu_options": {
           "controller_sensors": "Sensors sent to the controller",
           "controller_settings": "Operation, Smart Auto and afterheat",
-          "fan_profiles": "Ventilation profiles 1-6",
+          "fan_profiles": "Fan steps",
           "rooms_menu": "Smart Auto rooms",
           "finish_controller": "Save integration settings"
         }
@@ -163,8 +163,9 @@
           "ha_timeout_seconds": "HA timeout (seconds)", "afterheat_setpoint": "Afterheat setpoint"
         }
       },
+      "fan_steps": {"title": "Dantherm 4 steps", "description": "Commission as on Dantherm's HCP4 panel: step 3 is the nominal airflow (gear 46-91 per fan). Steps 2 and 1 lie one and two offsets below, and step 4 is the maximum. Supply follows the air balance when it is on Auto.", "data": {"extract": "Step 3 extract (gear)", "supply": "Step 3 supply (gear)", "offset": "Offset to steps 2 and 1", "max_extract": "Step 4 maximum extract (gear)", "max_supply": "Step 4 maximum supply (gear)"}},
       "fan_profiles": {
-        "title": "Ventilation profiles 1-6",
+        "title": "Ventilation profiles 1-6 (six-step control)",
         "description": "Extract must be higher than supply, and both values must increase from level 1 through 6.",
         "data": {
           "profile_1_name": "Level 1 name", "profile_1_extract": "Level 1 extract %", "profile_1_supply": "Level 1 supply %",

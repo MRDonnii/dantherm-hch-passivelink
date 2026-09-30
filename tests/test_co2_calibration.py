@@ -45,8 +45,9 @@ def test_bonfire_select_maps_options_to_minutes():
 
 
 def test_level_select_offers_off_and_shows_it_in_standby():
-    from hch_passivelink.select import LEVEL_OPTIONS, ControllerLevelSelect
-    assert LEVEL_OPTIONS[0] == "OFF" and LEVEL_OPTIONS[-1] == "6"
+    from hch_passivelink.select import ControllerLevelSelect
+    options = ControllerLevelSelect.options.fget(SimpleNamespace(max_level=4))
+    assert options == ["OFF", "1", "2", "3", "4"]
     fake = SimpleNamespace(coordinator=SimpleNamespace(controller_state={"standby_active": True, "manual_level": 3}))
     assert ControllerLevelSelect.current_option.fget(fake) == "OFF"
     fake.coordinator.controller_state = {"standby_active": False, "manual_level": 3}

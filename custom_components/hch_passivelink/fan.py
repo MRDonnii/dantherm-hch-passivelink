@@ -8,22 +8,15 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .controller_entity import ControllerEntity
 
-PRESETS = [
-    "Auto",
-    "Smart Auto",
-    "Niveau 1",
-    "Niveau 2",
-    "Niveau 3",
-    "Niveau 4",
-    "Niveau 5",
-    "Boost",
-]
-
-
 class HCHControllerFan(ControllerEntity, FanEntity):
+    """Presets follow the Pi's step control: Boost is the highest step (4 or 6)."""
+
     _attr_supported_features = FanEntityFeature.PRESET_MODE
-    _attr_preset_modes = PRESETS
     _attr_icon = "mdi:fan"
+
+    @property
+    def preset_modes(self) -> list[str]:
+        return ["Auto", "Smart Auto", *(f"Niveau {level}" for level in range(1, self.max_level)), "Boost"]
 
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator, "effective_level", "Ventilation")
@@ -42,9 +35,9 @@ class HCHControllerFan(ControllerEntity, FanEntity):
         if mode == "smart_auto":
             return "Smart Auto"
         level = int(state.get("manual_level") or state.get("effective_level") or 0)
-        if level == 6:
+        if level == self.max_level:
             return "Boost"
-        if 1 <= level <= 5:
+        if 1 <= level < self.max_level:
             return f"Niveau {level}"
         return None
 
@@ -56,7 +49,7 @@ class HCHControllerFan(ControllerEntity, FanEntity):
             await self.async_command({"mode": "smart_auto"})
             return
         if preset_mode == "Boost":
-            level = 6
+            level = self.max_level
         elif preset_mode.startswith("Niveau "):
             level = int(preset_mode.split()[-1])
         else:

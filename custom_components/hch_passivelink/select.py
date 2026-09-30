@@ -23,12 +23,12 @@ class ControllerSelect(ControllerEntity, SelectEntity):
         await self.async_command({self.key: option})
 
 
-# OFF switches the unit off until it is switched on again (as in the WebUI).
-LEVEL_OPTIONS = ["OFF", "1", "2", "3", "4", "5", "6"]
-
-
 class ControllerLevelSelect(ControllerEntity, SelectEntity):
-    _attr_options = LEVEL_OPTIONS
+    """OFF switches the unit off until switched on again (as in the WebUI)."""
+
+    @property
+    def options(self) -> list[str]:
+        return ["OFF", *(str(level) for level in range(1, self.max_level + 1))]
 
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator, "manual_level", "Ventilationsniveau")
@@ -49,6 +49,27 @@ class ControllerLevelSelect(ControllerEntity, SelectEntity):
         if self.coordinator.controller_state.get("standby_active"):
             patch["standby_minutes"] = 0
         await self.async_command(patch)
+
+
+STEP_CONTROL_OPTIONS = {"4 trin (Dantherm)": 4, "6 trin": 6}
+
+
+class StepControlSelect(ControllerEntity, SelectEntity):
+    """Four Dantherm steps or the free six-step table (HCH5 Control 1.4.0+)."""
+
+    _attr_options = list(STEP_CONTROL_OPTIONS)
+    _attr_icon = "mdi:stairs"
+
+    def __init__(self, coordinator) -> None:
+        super().__init__(coordinator, "fan_step_count", "Trinstyring")
+
+    @property
+    def current_option(self) -> str | None:
+        count = self.controller_value
+        return next((label for label, value in STEP_CONTROL_OPTIONS.items() if value == count), None)
+
+    async def async_select_option(self, option: str) -> None:
+        await self.async_command({"fan_step_count": STEP_CONTROL_OPTIONS[option]})
 
 
 class FireplaceDurationSelect(ControllerEntity, SelectEntity):
@@ -144,6 +165,7 @@ async def async_setup_entry(
             ["local_auto", "smart_auto", "manual"],
         ),
         ControllerLevelSelect(coordinator),
+        StepControlSelect(coordinator),
         ControllerSelect(coordinator, "bypass", "Bypassstyring", ["off", "on"]),
         FireplaceDurationSelect(coordinator),
         BonfireDurationSelect(coordinator),

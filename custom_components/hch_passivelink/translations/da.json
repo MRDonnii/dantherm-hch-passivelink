@@ -146,7 +146,7 @@
         "menu_options": {
           "controller_sensors": "Sensorer der sendes til controlleren",
           "controller_settings": "Drift, Smart Auto og eftervarme",
-          "fan_profiles": "Ventilationsprofiler 1-6",
+          "fan_profiles": "Ventilationstrin",
           "rooms_menu": "Smart Auto-rum",
           "finish_controller": "Gem integrationsindstillinger"
         }
@@ -163,9 +163,10 @@
           "ha_timeout_seconds": "HA timeout (sekunder)", "afterheat_setpoint": "Eftervarme setpunkt"
         }
       },
+      "fan_steps": {"title": "Dantherm 4 trin", "description": "Indregulér som på Dantherms HCP4-panel: trin 3 er den nominelle luftmængde (gear 46-91 pr. ventilator). Trin 2 og 1 ligger én og to gearafstande under, og trin 4 er maksimum. Indblæsningen følger luftbalancen, når den står på Auto.", "data": {"extract": "Trin 3 udsugning (gear)", "supply": "Trin 3 indblæsning (gear)", "offset": "Gearafstand til trin 2 og 1", "max_extract": "Trin 4 maks. udsugning (gear)", "max_supply": "Trin 4 maks. indblæsning (gear)"}},
       "fan_profiles": {
-        "title": "Ventilationsprofiler 1-6",
-        "description": "Udsugning skal være højere end indblæsning, og begge værdier skal stige fra niveau 1 til 6.",
+        "title": "Ventilationsprofiler 1-6 (6-trins styring)",
+        "description": "Indblæsningen må ikke være højere end udsugningen, og begge værdier må ikke falde fra niveau 1 til 6.",
         "data": {
           "profile_1_name": "Niveau 1 navn", "profile_1_extract": "Niveau 1 udsugning %", "profile_1_supply": "Niveau 1 indblæsning %",
           "profile_2_name": "Niveau 2 navn", "profile_2_extract": "Niveau 2 udsugning %", "profile_2_supply": "Niveau 2 indblæsning %",

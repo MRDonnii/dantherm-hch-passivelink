@@ -41,8 +41,16 @@ SPECS = (
 )
 
 
+# Step choices whose maximum follows the Pi's step control (4 or 6).
+LEVEL_KEYS = {"local_normal_level", "local_min_level", "local_max_level"}
+
+
 class ControllerNumber(ControllerEntity, NumberEntity):
     _attr_mode = NumberMode.BOX
+
+    @property
+    def native_max_value(self) -> float:
+        return float(self.max_level) if self.key in LEVEL_KEYS else self._attr_native_max_value
 
     def __init__(self, coordinator, spec: NumberSpec) -> None:
         super().__init__(coordinator, spec.key, spec.name)
@@ -63,6 +71,45 @@ class ControllerNumber(ControllerEntity, NumberEntity):
         await self.async_command({self.key: value})
 
 
+# Dantherm commissioning (HCH5 Control 1.4.0+, four steps): key, name, min, max.
+FAN_SETTINGS = (
+    ("extract", "Trin 3 udsugning", 46, 91, "mdi:fan-chevron-up"),
+    ("supply", "Trin 3 indblæsning", 46, 91, "mdi:fan-chevron-down"),
+    ("offset", "Gearafstand trin 1-2", 10, 30, "mdi:stairs-down"),
+    ("max_extract", "Trin 4 maks. udsugning", 46, 100, "mdi:fan-plus"),
+    ("max_supply", "Trin 4 maks. indblæsning", 46, 100, "mdi:fan-plus"),
+)
+
+
+class FanSettingNumber(ControllerEntity, NumberEntity):
+    """Step 3 per fan, the offset to steps 2 and 1 and the step-4 maximum, as on the HCP4."""
+
+    _attr_mode = NumberMode.BOX
+    _attr_native_step = 1
+    _attr_native_unit_of_measurement = "gear"
+
+    def __init__(self, coordinator, field: str, name: str, minimum: int, maximum: int, icon: str) -> None:
+        super().__init__(coordinator, f"fan_settings_{field}", name)
+        self.field = field
+        self._attr_native_min_value = minimum
+        self._attr_native_max_value = maximum
+        self._attr_icon = icon
+
+    @property
+    def available(self) -> bool:
+        client = getattr(self.coordinator, "controller_client", None)
+        state = self.coordinator.controller_state
+        return bool(client and client.connected and state.get("fan_step_count") == 4 and isinstance(state.get("fan_settings"), dict))
+
+    @property
+    def native_value(self) -> float | None:
+        value = (self.coordinator.controller_state.get("fan_settings") or {}).get(self.field)
+        return float(value) if isinstance(value, (int, float)) else None
+
+    async def async_set_native_value(self, value: float) -> None:
+        await self.async_command({"fan_settings": {self.field: int(round(value))}})
+
+
 class FanProfileNumber(ControllerEntity, NumberEntity):
     _attr_mode = NumberMode.BOX
     _attr_native_unit_of_measurement = PERCENTAGE
@@ -75,17 +122,15 @@ class FanProfileNumber(ControllerEntity, NumberEntity):
         self.level = level
         self.kind = kind
         self._attr_icon = "mdi:fan-chevron-up" if kind == "extract" else "mdi:fan-chevron-down"
-        if kind == "extract":
-            self._attr_native_min_value = 11
-            self._attr_native_max_value = 100
-        else:
-            self._attr_native_min_value = 10
-            self._attr_native_max_value = 99
+        self._attr_native_min_value = 1
+        self._attr_native_max_value = 100
 
     @property
     def available(self) -> bool:
+        # With four steps, levels 5 and 6 do not exist; steps 1-2 follow the offset.
         client = getattr(self.coordinator, "controller_client", None)
-        return bool(client and client.connected and self.coordinator.controller_state.get("profiles"))
+        profiles = self.coordinator.controller_state.get("profiles") or {}
+        return bool(client and client.connected and (str(self.level) in profiles or self.level in profiles))
 
     @property
     def native_value(self) -> float | None:
@@ -112,4 +157,5 @@ async def async_setup_entry(
         for level in range(1, 7)
         for kind in ("extract", "supply")
     )
+    entities.extend(FanSettingNumber(coordinator, *spec) for spec in FAN_SETTINGS)
     async_add_entities(entities)

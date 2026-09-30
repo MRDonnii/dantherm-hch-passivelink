@@ -32,6 +32,14 @@ class ControllerEntity(CoordinatorEntity):
         return bool(client and client.connected and self.key in self.coordinator.controller_state)
 
     @property
+    def max_level(self) -> int:
+        """Highest fan step: 4 with Dantherm steps, 6 otherwise (and before 1.4.0)."""
+        try:
+            return int(self.coordinator.controller_state.get("max_level") or 6)
+        except (TypeError, ValueError):
+            return 6
+
+    @property
     def controller_value(self):
         return self.coordinator.controller_state.get(self.key)
 
