@@ -83,6 +83,10 @@ OPTIONAL_CONTROLLER_KEYS = {
     # HCH5 Control 1.4.3+: the unit's filter counter and the clean-filter power reference.
     "filter_power_change_percent",
     "filter_hours_since_change",
+    # HCH5 Control 1.4.8+: extract duct cooling, once an extract room is chosen.
+    "extract_rooms_temperature",
+    "extract_duct_loss_k",
+    "extract_duct_loss_percent",
 }
 
 

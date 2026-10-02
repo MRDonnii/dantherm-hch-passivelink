@@ -1,6 +1,6 @@
 # Dantherm HCH5 Control for Home Assistant: feature list
 
-This describes the published **0.8.1-beta.15** integration for a Dantherm HCH5 MK1 with HAC1. The [animated tour](images/0.8.1-beta.8/ha-integration-tour.gif) is an illustration with example values, not a capture of a Home Assistant installation. The [Danish entity reference](entities.da.md) explains individual sensors and their limitations.
+This describes the published **0.8.1-beta.16** integration for a Dantherm HCH5 MK1 with HAC1. The [animated tour](images/0.8.1-beta.8/ha-integration-tour.gif) is an illustration with example values, not a capture of a Home Assistant installation. The [Danish entity reference](entities.da.md) explains individual sensors and their limitations.
 
 ## Read the ventilation unit
 
