@@ -185,3 +185,11 @@ def test_tcp_client_callback_can_be_rebound():
     client.decoder.decode(frame(bytes.fromhex("010600420019")))
     assert initial == []
     assert rebound[-1]["extract_fan_percent"] == 25
+
+
+def test_block_1024_is_the_units_filter_counter():
+    updates = {}
+    decoder = DanthermDecoder(updates.update)
+    decoder.decode(frame(bytes([1, 3, 0x04, 0x00, 0x00, 0x06])))
+    decoder.decode(frame(bytes([1, 3, 12]) + b"".join(v.to_bytes(2, "big") for v in (1, 12, 249, 235, 0, 0))))
+    assert (updates["filter_unit_period_months"], updates["filter_unit_life_raw"], updates["filter_unit_hours"]) == (12, 249, 235)

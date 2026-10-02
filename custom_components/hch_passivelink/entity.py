@@ -80,6 +80,9 @@ HCP4_KEYS = {
 OPTIONAL_CONTROLLER_KEYS = {
     "hcp4_last_foreign_write_age",
     "actual_afterheat_valve_percent",
+    # HCH5 Control 1.4.3+: the unit's filter counter and the clean-filter power reference.
+    "filter_power_change_percent",
+    "filter_hours_since_change",
 }
 
 

@@ -125,6 +125,10 @@ def test_pi_optional_sensors_wait_for_a_reported_value():
 
     coordinator.publish_controller(hcp4_last_foreign_write_age=12)
     created = keys(batches)
+    assert "hcp4_last_foreign_write_age" in created
+    # Filter values from HCH5 Control 1.4.3 arrive later on older Pis.
+    coordinator.publish_controller(filter_power_change_percent=-1.5, filter_hours_since_change=2)
+    created = keys(batches)
     assert OPTIONAL_CONTROLLER_KEYS <= set(created)
     assert len(created) == len(set(created))
 

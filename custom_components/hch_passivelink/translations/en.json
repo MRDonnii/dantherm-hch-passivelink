@@ -37,7 +37,7 @@
       "filter_days_remaining": {"name": "Days until filter change"},
       "filter_life_percent": {"name": "Filter life remaining"},
       "filter_status": {"name": "Filter status", "state": {"ok": "OK", "change_soon": "Change soon", "overdue": "Overdue"}},
-      "filter_source": {"name": "Filter data source", "state": {"hcp4_synchronized": "HCP4 synchronized"}},
+      "filter_source": {"name": "Filter data source", "state": {"hcp4_synchronized": "HCP4 synchronized", "unit": "The unit's filter counter"}},
       "heat_recovery_raw": {"name": "Heat recovery raw value"},
       "bypass_raw": {"name": "Bypass raw status"},
       "status_code": {"name": "Status code"},

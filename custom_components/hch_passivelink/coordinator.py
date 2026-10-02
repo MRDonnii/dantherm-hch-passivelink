@@ -300,6 +300,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
                     data[key] = self.data[key]
                 else:
                     data.pop(key, None)
+        self._sync_unit_filter(data)
         interval = data.get("filter_interval_days")
         night_mode = data.get("night_mode")
         if isinstance(night_mode, bool) and night_mode != self._night_mode:
@@ -318,6 +319,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             merged.setdefault("night_mode", self._night_mode)
         if self._filter_reset_epoch is not None and self._filter_interval_days is not None:
             merged.update(filter_values(self._filter_reset_epoch, self._filter_interval_days))
+            self._apply_unit_filter(merged)
         self._apply_co2_calibration(merged)
         self._update_derived_temperatures(merged)
         self._update_filter_history_values(merged)
@@ -325,6 +327,40 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
         self.async_set_updated_data(merged)
         self._schedule_notification_check()
         self._update_health_issues()
+
+    def _sync_unit_filter(self, data: dict[str, object]) -> None:
+        """Follow the unit's own filter counter (block 1024) when the bus carries it.
+
+        The counter is reset with the button on the unit, so a new start of its
+        hour count is a filter change: it joins the history and re-arms the
+        reminder, exactly like the reset button in Home Assistant.
+        """
+        hours, months = data.get("filter_unit_hours"), data.get("filter_unit_period_months")
+        if not isinstance(hours, int) or not isinstance(months, int):
+            return
+        reset = time.time() - hours * 3600
+        interval = round(months * 730 / 24)
+        changed = False
+        if self._filter_reset_epoch is None or abs(reset - self._filter_reset_epoch) > 2 * 3600:
+            if self._filter_reset_epoch is not None and reset > self._filter_reset_epoch:
+                self._filter_reset_history.append(reset)
+                self._filter_reset_history = self._filter_reset_history[-20:]
+                self._filter_notification_reset_epoch = None
+            self._filter_reset_epoch = reset
+            changed = True
+        if interval != self._filter_interval_days:
+            self._filter_interval_days = interval
+            changed = True
+        if not self._filter_reset_history:
+            self._filter_reset_history = [reset]
+        if changed:
+            self.hass.async_create_task(self._async_save_filter_state())
+
+    def _apply_unit_filter(self, data: dict[str, object]) -> None:
+        life = data.get("filter_unit_life_raw", self.data.get("filter_unit_life_raw"))
+        if isinstance(life, int):
+            data["filter_life_percent"] = max(0, min(100, round(life * 100 / 255)))
+            data["filter_source"] = "unit"
 
     def async_reset_filter(self) -> None:
         """Reset the filter cycle to now, keeping the last known interval."""
@@ -346,6 +382,7 @@ class PassiveLinkCoordinator(DataUpdateCoordinator[dict[str, object]]):
             return
         merged = dict(self.data)
         merged.update(filter_values(self._filter_reset_epoch, self._filter_interval_days))
+        self._apply_unit_filter(merged)
         efficiency = merged.get("heat_recovery_efficiency")
         if isinstance(efficiency, (int, float)):
             previous = self._efficiency_reference

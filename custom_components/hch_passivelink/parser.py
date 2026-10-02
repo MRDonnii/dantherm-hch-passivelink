@@ -206,6 +206,19 @@ class DanthermDecoder:
             return
         if function in (3, 4) and len(frame) == 8:
             return
+        if slave == 1 and function == 3 and len(frame) == 17 and frame[2] == 12:
+            # Block 1024 (the only six-word holding read from slave 1) is the
+            # unit's own filter counter, verified 2026-10-02 with the reset
+            # button on the unit: [1, period months, life (255 = 100 %),
+            # hours since reset, 0, 0].
+            values = [int.from_bytes(frame[i:i + 2], "big") for i in range(3, 15, 2)]
+            if values[0] == 1 and 3 <= values[1] <= 12 and values[2] <= 255 and values[3] <= 20000:
+                self._set(
+                    filter_unit_period_months=values[1],
+                    filter_unit_life_raw=values[2],
+                    filter_unit_hours=values[3],
+                )
+            return
         if slave == 0x40 and function == 3 and len(frame) == 7 and frame[2] == 2:
             # Register 184 er HRC2-fjernbetjeningens egen temperaturføler
             # (T5). Verificeret 2026-08-28 mod HRC2-displayet (rå 2190 =
