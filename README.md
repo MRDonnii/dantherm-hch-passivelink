@@ -8,7 +8,7 @@
 
 An unofficial Home Assistant integration for a Dantherm HCH5 MK1 with HAC1. Its classic listening data path remains read-only and decodes internal Modbus RTU traffic without transmitting. The optional Raspberry Pi controller connection sends only high-level intent and room observations to the separate Raspberry Pi controller HTTP API; Home Assistant never writes Modbus/RS485 directly.
 
-**Current published version: 0.8.1-beta.14.** It brings the HCH5's measurements into Home Assistant and, with the separate Pi controller, adds fan modes, OFF, Quick Boost, afterheat, Smart Auto rooms, sensor forwarding and air balancing. See the [complete feature list](docs/FEATURES.md), [entity reference](docs/entities.da.md) and [HACS installation](#installation-with-hacs).
+**Current published version: 0.8.1-beta.15.** It brings the HCH5's measurements into Home Assistant and, with the separate Pi controller, adds fan modes, OFF, Quick Boost, afterheat, Smart Auto rooms, sensor forwarding and air balancing. See the [complete feature list](docs/FEATURES.md), [entity reference](docs/entities.da.md) and [HACS installation](#installation-with-hacs).
 
 > **Unofficial community project:** This software was not developed, supplied, commissioned, approved, certified or supported by Dantherm Group. Dantherm Group is not affiliated with this project. “Dantherm” is used only to identify compatible equipment; all trademarks belong to their respective owners. For product service and safety questions, contact Dantherm or an authorised installer.
 
@@ -22,7 +22,7 @@ Do not use an M-Bus gateway. M-Bus is electrically incompatible with RS485.
 
 ### Optional Raspberry Pi controller
 
-Version `0.8.1-beta.14` connects to the controller API of [HCH5 Control](https://github.com/MRDonnii/dantherm-hch5-control). Current stable Pi version `1.4.0` supports the PM2.5, air-balance and fan-step fields described below. With Pi 1.4.0 the controller runs Dantherm's four fan steps (or six, chosen in the WebUI or with the *Trinstyring* select): the level select, fan presets (Boost = highest step) and level numbers follow the chosen step count, and *Trin 3 udsugning/indblæsning*, *Gearafstand trin 1-2* and *Trin 4 maks.* commission the steps as on Dantherm's HCP4 panel. The architecture is:
+Version `0.8.1-beta.15` connects to the controller API of [HCH5 Control](https://github.com/MRDonnii/dantherm-hch5-control). Current stable Pi version `1.4.0` supports the PM2.5, air-balance and fan-step fields described below. With Pi 1.4.0 the controller runs Dantherm's four fan steps (or six, chosen in the WebUI or with the *Trinstyring* select): the level select, fan presets (Boost = highest step) and level numbers follow the chosen step count, and *Trin 3 udsugning/indblæsning*, *Gearafstand trin 1-2* and *Trin 4 maks.* commission the steps as on Dantherm's HCP4 panel. The architecture is:
 
 ```text
 Home Assistant -> authenticated controller HTTP API -> Raspberry Pi arbitration -> verified RS485 writes -> HCH5/HAC1

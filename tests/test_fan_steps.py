@@ -78,3 +78,12 @@ def test_vacation_switch_starts_now_without_end_and_level_follows_steps():
     assert coordinator.sent[-1] == {"vacation_enabled": False}
     level = ControllerNumber(coordinator, next(spec for spec in SPECS if spec.key == "vacation_level"))
     assert level.native_value == 1 and level.native_max_value == 4
+
+
+def test_bathroom_humidity_settings_are_numbers():
+    coordinator = Coordinator({**FOUR, "bathroom_rh_setpoint": 65.0, "bathroom_rh_hysteresis": 5.0, "bathroom_max_level": 4})
+    numbers = {spec.key: ControllerNumber(coordinator, spec) for spec in SPECS if spec.key.startswith("bathroom_")}
+    assert numbers["bathroom_rh_setpoint"].native_value == 65.0
+    assert numbers["bathroom_max_level"].native_max_value == 4
+    asyncio.run(numbers["bathroom_rh_setpoint"].async_set_native_value(70))
+    assert coordinator.sent[-1] == {"bathroom_rh_setpoint": 70}

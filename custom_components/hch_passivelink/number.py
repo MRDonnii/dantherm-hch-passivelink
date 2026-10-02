@@ -26,6 +26,10 @@ class NumberSpec:
 SPECS = (
     NumberSpec("rh_setpoint", "RH setpunkt", 25, 80, 1, PERCENTAGE, "mdi:water-percent"),
     NumberSpec("rh_hysteresis", "RH hysterese", 1, 10, 1, PERCENTAGE, "mdi:arrow-expand-vertical"),
+    # Bathrooms: drying starts above this RH (or on a fast rise) and runs up to the drying step.
+    NumberSpec("bathroom_rh_setpoint", "Badeværelse RH start", 35, 90, 1, PERCENTAGE, "mdi:shower"),
+    NumberSpec("bathroom_rh_hysteresis", "Badeværelse RH hysterese", 1, 20, 1, PERCENTAGE, "mdi:arrow-expand-vertical"),
+    NumberSpec("bathroom_max_level", "Badeværelse udtørringstrin", 1, 6, 1, None, "mdi:fan-plus"),
     NumberSpec("co2_setpoint", "CO₂ setpunkt", 500, 2000, 50, "ppm", "mdi:molecule-co2"),
     NumberSpec("co2_hysteresis", "CO₂ hysterese", 25, 500, 25, "ppm", "mdi:arrow-expand-vertical"),
     NumberSpec("auto_step_rh", "RH pr. ventilationstrin", 2, 20, 1, PERCENTAGE, "mdi:stairs-up"),
@@ -43,7 +47,7 @@ SPECS = (
 
 
 # Step choices whose maximum follows the Pi's step control (4 or 6).
-LEVEL_KEYS = {"local_normal_level", "local_min_level", "local_max_level", "vacation_level"}
+LEVEL_KEYS = {"local_normal_level", "local_min_level", "local_max_level", "vacation_level", "bathroom_max_level"}
 
 
 class ControllerNumber(ControllerEntity, NumberEntity):
