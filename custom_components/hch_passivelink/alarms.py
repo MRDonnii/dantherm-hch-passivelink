@@ -33,6 +33,9 @@ def derive_alarm_values(data: Mapping[str, object]) -> dict[str, bool]:
     }
     complete_snapshot = data.get("temperature_source") == "hac1_snapshot_180_209" and data.get("temperature_sample_monotonic") is not None
     alarms.update({key: complete_snapshot and data.get(sensor) is None for key, sensor in TEMPERATURE_SENSOR_ALARMS.items()})
+    # T5 is the HRC2 remote's sensor; without an HRC2 it is absent, not faulty.
+    if data.get("room_sensor_missing") is True:
+        alarms["room_temperature_sensor_fault"] = False
     outdoor, supply, extract = data.get("outdoor_temperature"), data.get("supply_temperature"), data.get("extract_temperature")
     alarms.update(
         outdoor_temperature_low=_is_number(outdoor) and outdoor < OUTDOOR_TEMPERATURE_ALARM_C,

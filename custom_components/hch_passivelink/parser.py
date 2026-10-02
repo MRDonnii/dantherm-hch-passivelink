@@ -170,10 +170,14 @@ class DanthermDecoder:
             # T5 (register 184) is the HRC2 remote's sensor. Without an HRC2
             # the unit reports 0 after a power cut, which is no room value.
             room = temperatures.get("room_temperature")
-            if room is not None and not 5 <= room <= 40:
+            # Missing HRC2 is not a sensor fault: only the unit's fault words
+            # (decoded to None by temperature_value) raise that alarm.
+            hrc2_missing = room is not None and not 5 <= room <= 40
+            if hrc2_missing:
                 temperatures["room_temperature"] = None
             self._set(
                 **temperatures,
+                room_sensor_missing=hrc2_missing,
                 # Register 209 is a verified binary afterheat flag: 0=off,
                 # 16=on. It is not a valve-opening percentage.
                 afterheat_active=values[29] == 16,

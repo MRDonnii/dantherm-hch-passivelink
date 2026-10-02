@@ -203,3 +203,10 @@ def test_missing_hrc2_t5_is_not_a_room_temperature():
     decoder.decode(frame(bytes([0x40, 3, 60]) + b"".join(w.to_bytes(2, "big") for w in words)))
     assert decoder.data.get("room_temperature") is None
     assert decoder.data["outdoor_temperature"] == 13.0
+    from alarms import derive_alarm_values
+    assert derive_alarm_values(decoder.data)["room_temperature_sensor_fault"] is False
+    # A real fault word from the unit still raises the alarm.
+    decoder.decode(frame(bytes.fromhex("400300b4001e")))
+    words[4] = 0x7FFF
+    decoder.decode(frame(bytes([0x40, 3, 60]) + b"".join(w.to_bytes(2, "big") for w in words)))
+    assert derive_alarm_values(decoder.data)["room_temperature_sensor_fault"] is True
