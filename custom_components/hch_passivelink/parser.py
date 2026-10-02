@@ -164,10 +164,16 @@ class DanthermDecoder:
             values = [int.from_bytes(frame[i:i + 2], "big") for i in range(3, 63, 2)]
             self._snapshot_mode = True
             self._snapshot_at = now
+            temperatures = dict(zip(TEMPERATURE_KEYS, (
+                temperature_value(values[i]) for i in (0, 1, 2, 3, 4, 25, 26)
+            )))
+            # T5 (register 184) is the HRC2 remote's sensor. Without an HRC2
+            # the unit reports 0 after a power cut, which is no room value.
+            room = temperatures.get("room_temperature")
+            if room is not None and not 5 <= room <= 40:
+                temperatures["room_temperature"] = None
             self._set(
-                **dict(zip(TEMPERATURE_KEYS, (
-                    temperature_value(values[i]) for i in (0, 1, 2, 3, 4, 25, 26)
-                ))),
+                **temperatures,
                 # Register 209 is a verified binary afterheat flag: 0=off,
                 # 16=on. It is not a valve-opening percentage.
                 afterheat_active=values[29] == 16,

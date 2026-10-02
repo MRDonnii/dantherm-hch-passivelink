@@ -193,3 +193,13 @@ def test_block_1024_is_the_units_filter_counter():
     decoder.decode(frame(bytes([1, 3, 0x04, 0x00, 0x00, 0x06])))
     decoder.decode(frame(bytes([1, 3, 12]) + b"".join(v.to_bytes(2, "big") for v in (1, 12, 249, 235, 0, 0))))
     assert (updates["filter_unit_period_months"], updates["filter_unit_life_raw"], updates["filter_unit_hours"]) == (12, 249, 235)
+
+
+def test_missing_hrc2_t5_is_not_a_room_temperature():
+    updates = {}
+    decoder = DanthermDecoder(updates.update)
+    decoder.decode(frame(bytes.fromhex("400300b4001e")))
+    words = [1300, 2100, 2200, 1500, 0] + [0] * 20 + [2100, 2000, 0x8000, 0x8000, 0]
+    decoder.decode(frame(bytes([0x40, 3, 60]) + b"".join(w.to_bytes(2, "big") for w in words)))
+    assert decoder.data.get("room_temperature") is None
+    assert decoder.data["outdoor_temperature"] == 13.0
